@@ -46,9 +46,9 @@ func main() {
 		maxIdleConns = kingpin.Flag("maxIdleConns", "Maximum idle connections (number)").Default(fmt.Sprint(config.DefaultConfig.MaxIdleConns)).Int()
 		connMaxLife  = kingpin.Flag("connMaxLifetime", "Connection maximum lifetime (Minute)").Default(fmt.Sprint(config.DefaultConfig.ConnMaxLifetime)).Int()
 
-		registerHostMetrics     = kingpin.Flag("registerHostMetrics", "Register host metrics").Default(strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Bool()
-		registerDatabaseMetrics = kingpin.Flag("registerDatabaseMetrics", "Register database metrics").Default(strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Bool()
-		registerDmhsMetrics     = kingpin.Flag("registerDmhsMetrics", "Register dmhs metrics").Default(strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Bool()
+		registerHostMetrics     = kingpin.Flag("registerHostMetrics", "Register host metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Bool()
+		registerDatabaseMetrics = kingpin.Flag("registerDatabaseMetrics", "Register database metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Bool()
+		registerDmhsMetrics     = kingpin.Flag("registerDmhsMetrics", "Register dmhs metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Bool()
 
 		bigKeyDataCacheTime = kingpin.Flag("bigKeyDataCacheTime", "Big key data cache time (Minute)").Default(fmt.Sprint(config.DefaultConfig.BigKeyDataCacheTime)).Int()
 		AlarmKeyCacheTime   = kingpin.Flag("alarmKeyCacheTime", "Alarm key cache time (Minute)").Default(fmt.Sprint(config.DefaultConfig.AlarmKeyCacheTime)).Int()
@@ -58,7 +58,7 @@ func main() {
 		logMaxAge     = kingpin.Flag("logMaxAge", "Maximum log file age (Day)").Default(fmt.Sprint(config.DefaultConfig.LogMaxAge)).Int()
 
 		encryptPwd      = kingpin.Flag("encryptPwd", "Password to encrypt and exit").Default("").String()
-		encodeConfigPwd = kingpin.Flag("encodeConfigPwd", "Encode the password in the config file").Default("true").Bool()
+		encodeConfigPwd = kingpin.Flag("encodeConfigPwd", "Encode the password in the config file,default:"+strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Default(strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Bool()
 		Version         = "0.0.1"
 		landingPage     = []byte("<html><head><title>DAMENG DB Exporter " + Version + "</title></head><body><h1>DAMENG DB Exporter " + Version + "</h1><p><a href='/metrics'>Metrics</a></p></body></html>")
 	)
@@ -68,7 +68,7 @@ func main() {
 		return
 	}
 	//合并配置文件属性
-	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime)
+	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd)
 	// 初始化全局日志记录器，必须合并完配置在初始化 不然日志控制参数会失效
 	logger.InitLogger()
 	defer logger.Sync()
@@ -134,14 +134,14 @@ func EncryptPasswordConfig(configFile *string, encodeConfigPwd *bool) /*error*/ 
 }
 
 // 把 默认参数以及配置文件进行合并
-func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int) /*(config.Config, error)*/ {
+func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool) /*(config.Config, error)*/ {
 	//读取预先设定的配置文件
 	glocal_config, err := config.LoadConfig(*configFile)
 	if err != nil {
 		fmt.Printf("Error loading config file: %v", err)
 	}
 	// 对默认值以及配置文件的参数进行合并覆盖
-	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime)
+	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd)
 
 	config.GlobalConfig = &glocal_config
 	//return glocal_config, err
@@ -171,7 +171,7 @@ func fileExists(filename string) bool {
 	return true /*, err*/
 }
 
-func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int) {
+func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool) {
 	if listenAddr != nil && *listenAddr != config.DefaultConfig.ListenAddress {
 		glocal_config.ListenAddress = *listenAddr
 	}
@@ -222,6 +222,9 @@ func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *
 	}
 	if AlarmKeyCacheTime != nil && *AlarmKeyCacheTime != config.DefaultConfig.AlarmKeyCacheTime {
 		glocal_config.AlarmKeyCacheTime = *AlarmKeyCacheTime
+	}
+	if encodeConfigPwd != nil && *encodeConfigPwd != config.DefaultConfig.EncodeConfigPwd {
+		glocal_config.EncodeConfigPwd = *encodeConfigPwd
 	}
 
 }

@@ -45,6 +45,7 @@ type Config struct {
 	RegisterHostMetrics     bool
 	RegisterDatabaseMetrics bool
 	RegisterDmhsMetrics     bool
+	EncodeConfigPwd         bool
 }
 
 var DefaultConfig = Config{
@@ -64,6 +65,7 @@ var DefaultConfig = Config{
 	RegisterHostMetrics:     true,
 	RegisterDatabaseMetrics: true,
 	RegisterDmhsMetrics:     false,
+	EncodeConfigPwd:         true,
 	DbUser:                  "SYSDBA",
 	DbPwd:                   "SYSDBA",
 	DbHost:                  "127.0.0.1:5236",
@@ -162,7 +164,12 @@ func LoadConfig(filePath string) (Config, error) {
 			if val, err := strconv.ParseBool(value); err == nil {
 				config.RegisterDmhsMetrics = val
 			}
+		case "encodeConfigPwd":
+			if val, err := strconv.ParseBool(value); err == nil {
+				config.EncodeConfigPwd = val
+			}
 		}
+
 	}
 
 	return config, scanner.Err()
