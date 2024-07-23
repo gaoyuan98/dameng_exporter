@@ -8,6 +8,7 @@ import (
 const salt = "dameng_exporter"
 const xorKey = 0xAA
 const encryptedPrefix = "ENC:"
+const encryptedSuffix = ")"
 
 // EncryptPassword encrypts the password with a simple XOR and Base64 encoding
 func EncryptPassword(password string) string {
@@ -20,7 +21,7 @@ func EncryptPassword(password string) string {
 	for i := 0; i < len(saltedPwd); i++ {
 		encrypted[i] = saltedPwd[i] ^ xorKey
 	}
-	return encryptedPrefix + base64.StdEncoding.EncodeToString(encrypted)
+	return encryptedPrefix + base64.StdEncoding.EncodeToString(encrypted) + encryptedSuffix
 }
 
 // DecryptPassword decrypts the password that was encrypted with EncryptPassword
@@ -30,6 +31,7 @@ func DecryptPassword(encoded string) (string, error) {
 		return encoded, nil
 	}
 	encoded = strings.TrimPrefix(encoded, encryptedPrefix)
+	encoded = strings.TrimSuffix(encoded, encryptedSuffix)
 	decodedBytes, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return "", err

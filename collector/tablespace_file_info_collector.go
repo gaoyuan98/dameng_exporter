@@ -112,6 +112,6 @@ func (c *TablespaceFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 	// 将查询结果存入缓存
-	config.SetCache(dmdbms_tablespace_file_total_info, string(valueJSON), time.Minute*5) // 设置缓存有效时间为5分钟
+	config.SetCache(dmdbms_tablespace_file_total_info, string(valueJSON), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime)) // 设置缓存有效时间为5分钟
 	logger.Logger.Infof("TablespaceFileInfoCollector exec finish")
 }

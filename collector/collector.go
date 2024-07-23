@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
 	"database/sql"
@@ -55,20 +56,20 @@ type MetricCollector interface {
 }
 
 // 注册所有的收集器
-func RegisterCollectors(reg *prometheus.Registry, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics bool) {
+func RegisterCollectors(reg *prometheus.Registry) {
 	registerMux.Lock()
 	defer registerMux.Unlock()
 
-	if registerHostMetrics {
+	if config.GlobalConfig.RegisterHostMetrics {
 		//collectors = append(collectors, NewExampleCounterCollector())
 	}
-	if registerDatabaseMetrics {
+	if config.GlobalConfig.RegisterDatabaseMetrics {
 		collectors = append(collectors, NewDBSessionsCollector(db.DBPool))
 		collectors = append(collectors, NewTablespaceFileInfoCollector(db.DBPool))
 		collectors = append(collectors, NewDBInstanceRunningInfoCollector(db.DBPool))
 
 	}
-	if registerDmhsMetrics {
+	if config.GlobalConfig.RegisterDmhsMetrics {
 		// 添加中间件指标收集器
 		// collectors = append(collectors, NewMiddlewareCollector())
 	}

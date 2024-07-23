@@ -36,6 +36,15 @@ type Config struct {
 	DbHost          string
 	DbUser          string
 	DbPwd           string
+
+	//大key的保留时间
+	BigKeyDataCacheTime int
+	AlarmKeyCacheTime   int
+
+	//指标是否注册选项
+	RegisterHostMetrics     bool
+	RegisterDatabaseMetrics bool
+	RegisterDmhsMetrics     bool
 }
 
 var DefaultConfig = Config{
@@ -43,16 +52,21 @@ var DefaultConfig = Config{
 	ListenAddress: ":9100",
 	MetricPath:    "/metrics",
 	//QueryTimeout:    30 * time.Second,
-	QueryTimeout:    30, //秒
-	MaxIdleConns:    1,
-	MaxOpenConns:    5,
-	ConnMaxLifetime: 30, //分钟
-	LogMaxSize:      10, //MB
-	LogMaxBackups:   3,  //个数
-	LogMaxAge:       30, //天
-	DbUser:          "SYSDBA",
-	DbPwd:           "SYSDBA",
-	DbHost:          "127.0.0.1:5236",
+	QueryTimeout:            30, //秒
+	MaxIdleConns:            1,  //个数
+	MaxOpenConns:            5,  //个数
+	ConnMaxLifetime:         30, //分钟
+	LogMaxSize:              10, //MB
+	LogMaxBackups:           3,  //个数
+	LogMaxAge:               30, //天
+	BigKeyDataCacheTime:     60, //分
+	AlarmKeyCacheTime:       60,
+	RegisterHostMetrics:     true,
+	RegisterDatabaseMetrics: true,
+	RegisterDmhsMetrics:     false,
+	DbUser:                  "SYSDBA",
+	DbPwd:                   "SYSDBA",
+	DbHost:                  "127.0.0.1:5236",
 }
 
 func LoadConfig(filePath string) (Config, error) {
@@ -128,6 +142,26 @@ func LoadConfig(filePath string) (Config, error) {
 						config.DbHost = val
 					}*/
 			config.DbHost = value
+		case "bigKeyDataCacheTime":
+			if val, err := strconv.Atoi(value); err == nil {
+				config.BigKeyDataCacheTime = val
+			}
+		case "alarmKeyCacheTime":
+			if val, err := strconv.Atoi(value); err == nil {
+				config.AlarmKeyCacheTime = val
+			}
+		case "registerHostMetrics":
+			if val, err := strconv.ParseBool(value); err == nil {
+				config.RegisterHostMetrics = val
+			}
+		case "registerDatabaseMetrics":
+			if val, err := strconv.ParseBool(value); err == nil {
+				config.RegisterDatabaseMetrics = val
+			}
+		case "registerDmhsMetrics":
+			if val, err := strconv.ParseBool(value); err == nil {
+				config.RegisterDmhsMetrics = val
+			}
 		}
 	}
 
