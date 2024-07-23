@@ -1,0 +1,161 @@
+package config
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"time"
+)
+
+var hostName string
+
+func SetHostName(hn string) {
+	hostName = hn
+}
+
+func GetHostName() string {
+	return hostName
+}
+
+type Config struct {
+	ConfigFile      string
+	ListenAddress   string
+	MetricPath      string
+	QueryTimeout    time.Duration
+	MaxIdleConns    int
+	MaxOpenConns    int
+	ConnMaxLifetime time.Duration
+	LogMaxSize      int
+	LogMaxBackups   int
+	LogMaxAge       int
+	DbHost          string
+	DbUser          string
+	DbPwd           string
+}
+
+var DefaultConfig = Config{
+	ConfigFile:      "./dameng_exporter.config",
+	ListenAddress:   ":9100",
+	MetricPath:      "/metrics",
+	QueryTimeout:    30 * time.Second,
+	MaxIdleConns:    10,
+	MaxOpenConns:    100,
+	ConnMaxLifetime: 30 * time.Minute,
+	LogMaxSize:      100,
+	LogMaxBackups:   7,
+	LogMaxAge:       30,
+	DbUser:          "SYSDBA",
+	DbPwd:           "SYSDBA",
+	DbHost:          "127.0.0.1:5236",
+}
+
+func LoadConfig(filePath string) (Config, error) {
+	config := DefaultConfig
+	file, err := os.Open(filePath)
+	if err != nil {
+		return config, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+		switch key {
+		case "configFile":
+			config.ConfigFile = value
+		case "listenAddress":
+			config.ListenAddress = value
+		case "metricPath":
+			config.MetricPath = value
+		case "queryTimeout":
+			d, err := time.ParseDuration(value)
+			if err == nil {
+				config.QueryTimeout = d
+			}
+		case "maxIdleConns":
+			if val, err := strconv.Atoi(value); err == nil {
+				config.MaxIdleConns = val
+			}
+		case "maxOpenConns":
+			if val, err := strconv.Atoi(value); err == nil {
+				config.MaxOpenConns = val
+			}
+		case "connMaxLifetime":
+			d, err := time.ParseDuration(value)
+			if err == nil {
+				config.ConnMaxLifetime = d
+			}
+		case "logMaxSize":
+			if val, err := strconv.Atoi(value); err == nil {
+				config.LogMaxSize = val
+			}
+		case "logMaxBackups":
+			if val, err := strconv.Atoi(value); err == nil {
+				config.LogMaxBackups = val
+			}
+		case "logMaxAge":
+			if val, err := strconv.Atoi(value); err == nil {
+				config.LogMaxAge = val
+			}
+		case "dbUser":
+			config.DbUser = value
+		case "dbPwd":
+			config.DbPwd = value
+		case "dbHost":
+			/*			if val, err := strconv.Atoi(value); err == nil {
+						config.DbHost = val
+					}*/
+			config.DbHost = value
+		}
+	}
+
+	return config, scanner.Err()
+}
+func UpdateConfigPassword(filePath, encryptedPwd string) error {
+	// Read the existing file
+	inputFile, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer inputFile.Close()
+
+	var fileLines []string
+	scanner := bufio.NewScanner(inputFile)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "dbPwd=") {
+			line = fmt.Sprintf("dbPwd=%s", encryptedPwd)
+		}
+		fileLines = append(fileLines, line)
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	inputFile.Close()
+
+	// Write the updated lines to the same file
+	outputFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer outputFile.Close()
+
+	writer := bufio.NewWriter(outputFile)
+	for _, line := range fileLines {
+		fmt.Fprintln(writer, line)
+	}
+	writer.Flush()
+
+	return nil
+}
