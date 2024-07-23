@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"dameng_exporter/config"
 	"fmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -18,11 +19,11 @@ func InitLogger() {
 
 	// 配置日志切割器
 	lumberjackLogger := &lumberjack.Logger{
-		Filename:   logFileName, // 日志文件路径
-		MaxSize:    10,          // 每个日志文件最大为 10 MB
-		MaxBackups: 3,           // 保留最近的 3 个日志文件备份
-		MaxAge:     31,          // 保留 28 天的日志文件
-		Compress:   true,        // 启用日志文件压缩
+		Filename:   logFileName,                       // 日志文件路径
+		MaxSize:    config.GlobalConfig.LogMaxSize,    // 每个日志文件最大为 10 MB
+		MaxBackups: config.GlobalConfig.LogMaxBackups, // 保留最近的 3 个日志文件备份
+		MaxAge:     config.GlobalConfig.LogMaxAge,     // 保留 28 天的日志文件
+		Compress:   true,                              // 启用日志文件压缩
 	}
 
 	// 创建日志写入目标

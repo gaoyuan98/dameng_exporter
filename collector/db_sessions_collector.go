@@ -6,6 +6,7 @@ import (
 	"dameng_exporter/logger"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
+	"time"
 )
 
 type DBSessionsCollector struct {
@@ -35,7 +36,7 @@ func (c *DBSessionsCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 	//设置超时时间的ctx对象
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
 	defer cancel()
 
 	var value float64

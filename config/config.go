@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 var hostName string
@@ -19,14 +18,18 @@ func GetHostName() string {
 	return hostName
 }
 
+var GlobalConfig *Config
+
 type Config struct {
-	ConfigFile      string
-	ListenAddress   string
-	MetricPath      string
-	QueryTimeout    time.Duration
-	MaxIdleConns    int
-	MaxOpenConns    int
-	ConnMaxLifetime time.Duration
+	ConfigFile    string
+	ListenAddress string
+	MetricPath    string
+	//QueryTimeout  time.Duration
+	QueryTimeout int
+	MaxIdleConns int
+	MaxOpenConns int
+	//ConnMaxLifetime time.Duration
+	ConnMaxLifetime int
 	LogMaxSize      int
 	LogMaxBackups   int
 	LogMaxAge       int
@@ -36,16 +39,17 @@ type Config struct {
 }
 
 var DefaultConfig = Config{
-	ConfigFile:      "./dameng_exporter.config",
-	ListenAddress:   ":9100",
-	MetricPath:      "/metrics",
-	QueryTimeout:    30 * time.Second,
-	MaxIdleConns:    10,
-	MaxOpenConns:    100,
-	ConnMaxLifetime: 30 * time.Minute,
-	LogMaxSize:      100,
-	LogMaxBackups:   7,
-	LogMaxAge:       30,
+	ConfigFile:    "./dameng_exporter.config",
+	ListenAddress: ":9100",
+	MetricPath:    "/metrics",
+	//QueryTimeout:    30 * time.Second,
+	QueryTimeout:    30, //秒
+	MaxIdleConns:    1,
+	MaxOpenConns:    5,
+	ConnMaxLifetime: 30, //分钟
+	LogMaxSize:      10, //MB
+	LogMaxBackups:   3,  //个数
+	LogMaxAge:       30, //天
 	DbUser:          "SYSDBA",
 	DbPwd:           "SYSDBA",
 	DbHost:          "127.0.0.1:5236",
@@ -79,9 +83,12 @@ func LoadConfig(filePath string) (Config, error) {
 		case "metricPath":
 			config.MetricPath = value
 		case "queryTimeout":
-			d, err := time.ParseDuration(value)
-			if err == nil {
-				config.QueryTimeout = d
+			/*			d, err := time.ParseDuration(value)
+						if err == nil {
+							config.QueryTimeout = d
+						}*/
+			if val, err := strconv.Atoi(value); err == nil {
+				config.QueryTimeout = val
 			}
 		case "maxIdleConns":
 			if val, err := strconv.Atoi(value); err == nil {
@@ -92,10 +99,14 @@ func LoadConfig(filePath string) (Config, error) {
 				config.MaxOpenConns = val
 			}
 		case "connMaxLifetime":
-			d, err := time.ParseDuration(value)
-			if err == nil {
-				config.ConnMaxLifetime = d
+			/*			d, err := time.ParseDuration(value)
+						if err == nil {
+							config.ConnMaxLifetime = d
+						}*/
+			if val, err := strconv.Atoi(value); err == nil {
+				config.ConnMaxLifetime = val
 			}
+
 		case "logMaxSize":
 			if val, err := strconv.Atoi(value); err == nil {
 				config.LogMaxSize = val

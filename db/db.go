@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
 	"fmt"
@@ -30,11 +31,11 @@ func InitDBPool(dsnStr string) error {
 	}
 
 	// Set the maximum number of open connections
-	DBPool.SetMaxOpenConns(25)
+	DBPool.SetMaxOpenConns(config.GlobalConfig.MaxOpenConns)
 	// Set the maximum number of idle connections
-	DBPool.SetMaxIdleConns(5)
+	DBPool.SetMaxIdleConns(config.GlobalConfig.MaxIdleConns)
 	// Set the maximum lifetime of each connection
-	DBPool.SetConnMaxLifetime(5 * time.Minute)
+	DBPool.SetConnMaxLifetime(time.Duration(config.GlobalConfig.ConnMaxLifetime) * time.Minute)
 
 	// Test the database connection
 	err = DBPool.Ping()

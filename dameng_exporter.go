@@ -10,11 +10,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 var (
@@ -33,23 +31,24 @@ collector.UnregisterCollectors()
 */
 
 func main() {
-	logger.InitLogger() // 初始化全局日志记录器
-	defer logger.Sync() // 确保程序退出前同步日志
 
 	var (
-		configFile      = kingpin.Flag("configFile", "Path to configuration file").Default(config.DefaultConfig.ConfigFile).String()
-		listenAddr      = kingpin.Flag("listenAddress", "Address to listen on").Default(config.DefaultConfig.ListenAddress).String()
-		metricPath      = kingpin.Flag("metricPath", "Path for metrics").Default(config.DefaultConfig.MetricPath).String()
-		dbHost          = kingpin.Flag("dbHost", "Database Host").Default(config.DefaultConfig.DbHost).String()
-		dbUser          = kingpin.Flag("dbUser", "Database user").Default(config.DefaultConfig.DbUser).String()
-		dbPwd           = kingpin.Flag("dbPwd", "Database password").Default(config.DefaultConfig.DbPwd).String()
-		queryTimeout    = kingpin.Flag("queryTimeout", "Timeout for queries").Default(config.DefaultConfig.QueryTimeout.String()).Duration()
-		maxIdleConns    = kingpin.Flag("maxIdleConns", "Maximum idle connections").Default(fmt.Sprint(config.DefaultConfig.MaxIdleConns)).Int()
-		maxOpenConns    = kingpin.Flag("maxOpenConns", "Maximum open connections").Default(fmt.Sprint(config.DefaultConfig.MaxOpenConns)).Int()
-		connMaxLife     = kingpin.Flag("connMaxLifetime", "Connection maximum lifetime").Default(config.DefaultConfig.ConnMaxLifetime.String()).Duration()
-		logMaxSize      = kingpin.Flag("logMaxSize", "Maximum log file size").Default(fmt.Sprint(config.DefaultConfig.LogMaxSize)).Int()
-		logMaxBackups   = kingpin.Flag("logMaxBackups", "Maximum log file backups").Default(fmt.Sprint(config.DefaultConfig.LogMaxBackups)).Int()
-		logMaxAge       = kingpin.Flag("logMaxAge", "Maximum log file age").Default(fmt.Sprint(config.DefaultConfig.LogMaxAge)).Int()
+		configFile = kingpin.Flag("configFile", "Path to configuration file").Default(config.DefaultConfig.ConfigFile).String()
+		listenAddr = kingpin.Flag("listenAddress", "Address to listen on").Default(config.DefaultConfig.ListenAddress).String()
+		metricPath = kingpin.Flag("metricPath", "Path for metrics").Default(config.DefaultConfig.MetricPath).String()
+		dbHost     = kingpin.Flag("dbHost", "Database Host").Default(config.DefaultConfig.DbHost).String()
+		dbUser     = kingpin.Flag("dbUser", "Database user").Default(config.DefaultConfig.DbUser).String()
+		dbPwd      = kingpin.Flag("dbPwd", "Database password").Default(config.DefaultConfig.DbPwd).String()
+		//queryTimeout = kingpin.Flag("queryTimeout", "Timeout for queries").Default(config.DefaultConfig.QueryTimeout.String()).Duration()
+		queryTimeout = kingpin.Flag("queryTimeout", "Timeout for queries").Default(fmt.Sprint(config.DefaultConfig.QueryTimeout)).Int()
+		maxOpenConns = kingpin.Flag("maxOpenConns", "Maximum open connections (number)").Default(fmt.Sprint(config.DefaultConfig.MaxOpenConns)).Int()
+		maxIdleConns = kingpin.Flag("maxIdleConns", "Maximum idle connections (number)").Default(fmt.Sprint(config.DefaultConfig.MaxIdleConns)).Int()
+		connMaxLife  = kingpin.Flag("connMaxLifetime", "Connection maximum lifetime (Minute)").Default(fmt.Sprint(config.DefaultConfig.ConnMaxLifetime)).Int()
+
+		logMaxSize    = kingpin.Flag("logMaxSize", "Maximum log file size(MB)").Default(fmt.Sprint(config.DefaultConfig.LogMaxSize)).Int()
+		logMaxBackups = kingpin.Flag("logMaxBackups", "Maximum log file backups (number)").Default(fmt.Sprint(config.DefaultConfig.LogMaxBackups)).Int()
+		logMaxAge     = kingpin.Flag("logMaxAge", "Maximum log file age (Day)").Default(fmt.Sprint(config.DefaultConfig.LogMaxAge)).Int()
+
 		encryptPwd      = kingpin.Flag("encryptPwd", "Password to encrypt and exit").Default("").String()
 		encodeConfigPwd = kingpin.Flag("encodeConfigPwd", "Encode the password in the config file").Default("true").Bool()
 		Version         = "0.0.1"
@@ -59,37 +58,21 @@ func main() {
 	if execEncryptPwdCmd(encryptPwd) {
 		return
 	}
+	//合并配置文件属性
+	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost)
 
-	//读取预先设定的配置文件
-	glocal_config, err := config.LoadConfig(*configFile)
-	if err != nil {
-		log.Printf("Error loading config file: %v", err)
-	}
+	logger.InitLogger() // 初始化全局日志记录器
+	defer logger.Sync() // 确保程序退出前同步日志
 
-	// 对默认值以及配置文件的参数进行合并覆盖
-	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost)
-	//获取全路径
-	configFilePath, err := filepath.Abs(*configFile)
-	if err != nil {
-		logger.Logger.Fatalf("Error determining absolute path for config file: %v", err)
-	}
-	// 修改密码以及配置文件
-	if *encodeConfigPwd && glocal_config.DbPwd != "" && fileExists(configFilePath) {
-		glocal_config.DbPwd = config.EncryptPassword(glocal_config.DbPwd)
-		err = config.UpdateConfigPassword(configFilePath, glocal_config.DbPwd)
-		if err != nil {
-			logger.Logger.Fatalf("Error saving encoded password to config file: %v", err)
-		}
-		logger.Logger.Infof("Password in config file has been encoded")
-		//return
-	}
+	//对配置文件密码进行加密
+	EncryptPasswordConfig(configFile, encodeConfigPwd)
 
 	// 创建一个新的注册器
 	reg := prometheus.NewRegistry()
 
 	//新建数据库连接
 	// DSN (Data Source Name) format: user/password@host:port/service_name
-	dsn := buildDSN(glocal_config.DbUser, glocal_config.DbPwd, glocal_config.DbHost)
+	dsn := buildDSN(config.GlobalConfig.DbUser, config.GlobalConfig.DbPwd, config.GlobalConfig.DbHost)
 	// 获取主机名
 	hostname, host_err := os.Hostname()
 	if host_err != nil {
@@ -98,7 +81,7 @@ func main() {
 	config.SetHostName(hostname)
 
 	// 初始化数据库连接池
-	err = db.InitDBPool(dsn)
+	err := db.InitDBPool(dsn)
 	if err != nil {
 		logger.Logger.Fatalf("Failed to initialize database pool: %v", zap.Error(err))
 	}
@@ -108,19 +91,52 @@ func main() {
 	collector.RegisterCollectors(reg, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics)
 	logger.Logger.Info("Starting dmdb_exporter " + Version)
 	//设置metric路径
-	http.Handle(glocal_config.MetricPath, promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+	http.Handle(config.GlobalConfig.MetricPath, promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 	//设置端口号
-	if err := http.ListenAndServe(glocal_config.ListenAddress, nil); err != nil {
+	if err := http.ListenAndServe(config.GlobalConfig.ListenAddress, nil); err != nil {
 		logger.Logger.Errorf("Error occur when start server %v", zap.Error(err))
 	}
 
+}
+
+func EncryptPasswordConfig(configFile *string, encodeConfigPwd *bool) /*error*/ {
+	//获取全路径
+	configFilePath, err := filepath.Abs(*configFile)
+	if err != nil {
+		logger.Logger.Fatalf("Error determining absolute path for config file: %v", err)
+	}
+	// 修改密码以及配置文件
+	if *encodeConfigPwd && config.GlobalConfig.DbPwd != "" && fileExists(configFilePath) {
+		config.GlobalConfig.DbPwd = config.EncryptPassword(config.GlobalConfig.DbPwd)
+		err = config.UpdateConfigPassword(configFilePath, config.GlobalConfig.DbPwd)
+		if err != nil {
+			logger.Logger.Fatalf("Error saving encoded password to config file: %v", err)
+		}
+		logger.Logger.Infof("Password in config file has been encoded")
+		//return
+	}
+	//return err
+}
+
+// 把 默认参数以及配置文件进行合并
+func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, dbUser *string, dbPwd *string, dbHost *string) /*(config.Config, error)*/ {
+	//读取预先设定的配置文件
+	glocal_config, err := config.LoadConfig(*configFile)
+	if err != nil {
+		fmt.Printf("Error loading config file: %v", err)
+	}
+	// 对默认值以及配置文件的参数进行合并覆盖
+	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost)
+
+	config.GlobalConfig = &glocal_config
+	//return glocal_config, err
 }
 
 func execEncryptPwdCmd(encryptPwd *string) bool {
 	//命令行参数，对密码加密并返回结果
 	if *encryptPwd != "" {
 		encryptedPwd := config.EncryptPassword(*encryptPwd)
-		logger.Logger.Info("Encrypted Password: %s\n", encryptedPwd)
+		fmt.Printf("Encrypted Password: %s\n", encryptedPwd)
 		return true
 	}
 	return false
@@ -140,7 +156,7 @@ func fileExists(filename string) bool {
 	return true /*, err*/
 }
 
-func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout *time.Duration, maxIdleConns, maxOpenConns *int, connMaxLife *time.Duration, logMaxSize, logMaxBackups, logMaxAge *int, dbUser, dbPwd, dbHost *string) {
+func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, dbUser, dbPwd, dbHost *string) {
 	if listenAddr != nil && *listenAddr != config.DefaultConfig.ListenAddress {
 		glocal_config.ListenAddress = *listenAddr
 	}

@@ -9,13 +9,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"sync"
-	"time"
 )
 
 var (
 	collectors  []prometheus.Collector
 	registerMux sync.Mutex
-	timeout     = 5 * time.Second
+	//timeout     = 5 * time.Second
 )
 
 const (
