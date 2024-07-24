@@ -40,11 +40,13 @@ const (
 
 	dmdbms_joblog_error_num string = "dmdbms_joblog_error_num"
 
-	dmdbms_slow_sql_info            string = "dmdbms_slow_sql_info"
-	dmdbms_monitor_info             string = "dmdbms_monitor_info"
-	dmdbms_statement_type_info      string = "dmdbms_statement_type_info"
-	dmdbms_parameter_info           string = "dmdbms_parameter_info"
-	dmdbms_user_list_info           string = "dmdbms_user_list_info"
+	dmdbms_slow_sql_info       string = "dmdbms_slow_sql_info"
+	dmdbms_monitor_info        string = "dmdbms_monitor_info"
+	dmdbms_statement_type_info string = "dmdbms_statement_type_info"
+	dmdbms_parameter_info      string = "dmdbms_parameter_info"
+	dmdbms_user_list_info      string = "dmdbms_user_list_info"
+	dmdbms_license_date        string = "dmdbms_license_date"
+
 	dmdbms_start_day                string = "dmdbms_start_day"
 	dmdbms_waiting_session          string = "dmdbms_waiting_session"
 	dmdbms_connect_session          string = "dmdbms_connect_session"
@@ -91,6 +93,7 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDbSqlExecTypeCollector(db.DBPool))
 		collectors = append(collectors, NewIniParameterCollector(db.DBPool))
 		collectors = append(collectors, NewDbUserCollector(db.DBPool))
+		collectors = append(collectors, NewDbLicenseCollector(db.DBPool))
 
 	}
 	if config.GlobalConfig.RegisterDmhsMetrics {

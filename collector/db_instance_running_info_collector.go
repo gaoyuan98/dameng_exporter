@@ -171,7 +171,7 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	//注册指标
 	c.collectMetrics(ch, data)
-	logger.Logger.Debugf("Collector DBInstanceRunningInfoCollector success,status: %v", status)
+	//	logger.Logger.Debugf("Collector DBInstanceRunningInfoCollector success,status: %v", status)
 
 }
 

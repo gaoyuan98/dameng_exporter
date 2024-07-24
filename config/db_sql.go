@@ -100,4 +100,6 @@ GROUP BY
                   FROM DBA_USERS A, 
                        SYSUSERS B 
                  WHERE A.USER_ID=B.ID and A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR')`
+	//查询数据库授权信息
+	QueryDbGrantInfoSql = `SELECT /*+DM_EXPORTER*/ CASE WHEN expired_date IS NULL THEN '' ELSE TO_CHAR(expired_date, 'yyyyMMdd')  END AS expired_date FROM V$LICENSE`
 )
