@@ -78,4 +78,6 @@ GROUP BY
                  --and STATE='ACTIVE'
                    ORDER BY 1 DESC) 
              where EXEC_TIME >= ? LIMIT ?`
+	//查询监视器信息
+	QueryMonitorInfoSqlStr = `select /*+DM_EXPORTER*/ * from v$dmmonitor`
 )

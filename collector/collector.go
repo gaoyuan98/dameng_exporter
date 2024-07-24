@@ -40,8 +40,8 @@ const (
 
 	dmdbms_joblog_error_num string = "dmdbms_joblog_error_num"
 
-	dmdbms_slow_sql_info string = "dmdbms_slow_sql_info"
-
+	dmdbms_slow_sql_info            string = "dmdbms_slow_sql_info"
+	dmdbms_monitor_info             string = "dmdbms_monitor_info"
 	dmdbms_start_day                string = "dmdbms_start_day"
 	dmdbms_waiting_session          string = "dmdbms_waiting_session"
 	dmdbms_connect_session          string = "dmdbms_connect_session"
@@ -84,6 +84,7 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDbJobRunningInfoCollector(db.DBPool))
 
 		collectors = append(collectors, NewSessionInfoCollector(db.DBPool))
+		collectors = append(collectors, NewMonitorInfoCollector(db.DBPool))
 
 	}
 	if config.GlobalConfig.RegisterDmhsMetrics {

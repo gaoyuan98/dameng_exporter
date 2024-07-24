@@ -28,7 +28,7 @@ func NullInt64ToFloat64(n sql.NullInt64) float64 {
 // 辅助函数，将 sql.NullTime 转换为 string
 func NullTimeToString(n sql.NullTime) string {
 	if n.Valid {
-		return n.Time.Format(time.RFC3339)
+		return n.Time.Format(time.DateTime)
 	}
 	return ""
 }
