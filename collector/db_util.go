@@ -2,6 +2,7 @@ package collector
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -31,4 +32,12 @@ func NullTimeToString(n sql.NullTime) string {
 		return n.Time.Format(time.DateTime)
 	}
 	return ""
+}
+
+// 辅助函数，将 sql.NullFloat64 转换为 string
+func NullFloat64ToString(n sql.NullFloat64) string {
+	if n.Valid {
+		return fmt.Sprintf("%f", n.Float64)
+	}
+	return "0"
 }
