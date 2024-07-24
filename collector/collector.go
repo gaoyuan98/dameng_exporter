@@ -65,7 +65,7 @@ func RegisterCollectors(reg *prometheus.Registry) {
 	}
 	if config.GlobalConfig.RegisterDatabaseMetrics {
 		collectors = append(collectors, NewDBSessionsCollector(db.DBPool))
-		collectors = append(collectors, NewTablespaceFileInfoCollector(db.DBPool))
+		collectors = append(collectors, NewTableSpaceDateFileInfoCollector(db.DBPool))
 		collectors = append(collectors, NewDBInstanceRunningInfoCollector(db.DBPool))
 
 	}

@@ -11,13 +11,13 @@ import (
 	"time"
 )
 
-type TablespaceFileInfoCollector struct {
+type TableSpaceDateFileInfoCollector struct {
 	db        *sql.DB
 	totalDesc *prometheus.Desc
 	freeDesc  *prometheus.Desc
 }
 
-type TablespaceInfo struct {
+type TableSpaceDateFileInfo struct {
 	Path       string
 	TotalSize  float64
 	FreeSize   float64
@@ -26,8 +26,8 @@ type TablespaceInfo struct {
 	MaxSize    string
 }
 
-func NewTablespaceFileInfoCollector(db *sql.DB) MetricCollector {
-	return &TablespaceFileInfoCollector{
+func NewTableSpaceDateFileInfoCollector(db *sql.DB) MetricCollector {
+	return &TableSpaceDateFileInfoCollector{
 		db: db,
 		totalDesc: prometheus.NewDesc(
 			dmdbms_tablespace_file_total_info,
@@ -44,14 +44,17 @@ func NewTablespaceFileInfoCollector(db *sql.DB) MetricCollector {
 	}
 }
 
-func (c *TablespaceFileInfoCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c *TableSpaceDateFileInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.totalDesc
 	ch <- c.freeDesc
 }
 
-func (c *TablespaceFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
+func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
+	funcStart := time.Now()
+	defer logger.Logger.Debugf("func exec time：%vms", time.Since(funcStart).Milliseconds())
+
 	//保存全局结果对象，可以用来做缓存以及序列化
-	var tablespaceInfos []TablespaceInfo
+	var tablespaceInfos []TableSpaceDateFileInfo
 
 	// 从缓存中获取数据
 	if cachedJSON, found := config.GetFromCache(dmdbms_tablespace_file_total_info); found {
@@ -88,7 +91,7 @@ func (c *TablespaceFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var info TablespaceInfo
+		var info TableSpaceDateFileInfo
 		if err := rows.Scan(&info.Path, &info.TotalSize, &info.FreeSize, &info.AutoExtend, &info.NextSize, &info.MaxSize); err != nil {
 			logger.Logger.Error("Error scanning row", zap.Error(err))
 			continue
@@ -114,4 +117,5 @@ func (c *TablespaceFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	// 将查询结果存入缓存
 	config.SetCache(dmdbms_tablespace_file_total_info, string(valueJSON), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime)) // 设置缓存有效时间为5分钟
 	logger.Logger.Infof("TablespaceFileInfoCollector exec finish")
+
 }

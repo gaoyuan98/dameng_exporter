@@ -98,6 +98,8 @@ func (c *DBInstanceRunningInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
+	funcStart := time.Now()
+	defer logger.Logger.Debugf("func exec time：%vms", time.Since(funcStart).Milliseconds())
 
 	if err := checkDBConnection(c.db); err != nil {
 		return
