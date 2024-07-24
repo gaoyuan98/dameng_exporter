@@ -26,7 +26,7 @@ type SessionInfo struct {
 	ConnIP       sql.NullString
 }
 
-func NewSessionInfoCollector(db *sql.DB) MetricCollector {
+func NewSlowSessionInfoCollector(db *sql.DB) MetricCollector {
 	return &SessionInfoCollector{
 		db: db,
 		slowSQLInfoDesc: prometheus.NewDesc(

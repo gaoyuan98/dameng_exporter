@@ -75,9 +75,13 @@ GROUP BY
                             SUBSTR(CLNT_IP,8,13) CONN_IP
                        FROM V$SESSIONS
                       WHERE  1=1 
-                 --and STATE='ACTIVE'
+                   and STATE='ACTIVE'
                    ORDER BY 1 DESC) 
              where EXEC_TIME >= ? LIMIT ?`
 	//查询监视器信息
 	QueryMonitorInfoSqlStr = `select /*+DM_EXPORTER*/ * from v$dmmonitor`
+	//查询数据库的语句执行次数
+	QuerySqlExecuteCountSqlStr = `select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql')`
+	//查询数据库参数
+	QueryParameterInfoSqlStr = `select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE')`
 )

@@ -42,6 +42,8 @@ const (
 
 	dmdbms_slow_sql_info            string = "dmdbms_slow_sql_info"
 	dmdbms_monitor_info             string = "dmdbms_monitor_info"
+	dmdbms_statement_type_info      string = "dmdbms_statement_type_info"
+	dmdbms_parameter_info           string = "dmdbms_parameter_info"
 	dmdbms_start_day                string = "dmdbms_start_day"
 	dmdbms_waiting_session          string = "dmdbms_waiting_session"
 	dmdbms_connect_session          string = "dmdbms_connect_session"
@@ -83,8 +85,10 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDBSessionsStatusCollector(db.DBPool))
 		collectors = append(collectors, NewDbJobRunningInfoCollector(db.DBPool))
 
-		collectors = append(collectors, NewSessionInfoCollector(db.DBPool))
+		collectors = append(collectors, NewSlowSessionInfoCollector(db.DBPool))
 		collectors = append(collectors, NewMonitorInfoCollector(db.DBPool))
+		collectors = append(collectors, NewDbSqlExecTypeCollector(db.DBPool))
+		collectors = append(collectors, NewIniParameterCollector(db.DBPool))
 
 	}
 	if config.GlobalConfig.RegisterDmhsMetrics {
