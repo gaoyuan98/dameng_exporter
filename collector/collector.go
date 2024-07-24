@@ -35,6 +35,9 @@ const (
 	dmdbms_memory_curr_pool_info  string = "dmdbms_memory_curr_pool_info"
 	dmdbms_memory_total_pool_info string = "dmdbms_memory_total_pool_info"
 
+	dmdbms_session_percentage string = "dmdbms_session_percentage"
+	dmdbms_session_type_Info  string = "dmdbms_session_type_Info"
+
 	dmdbms_joblog_error_num         string = "dmdbms_joblog_error_num"
 	dmdbms_joblog_error_alarm       string = "dmdbms_joblog_error_alarm"
 	dmdbms_start_day                string = "dmdbms_start_day"
@@ -74,6 +77,7 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewTableSpaceDateFileInfoCollector(db.DBPool))
 		collectors = append(collectors, NewDBInstanceRunningInfoCollector(db.DBPool))
 		collectors = append(collectors, NewDbMemoryPoolInfoCollector(db.DBPool))
+		collectors = append(collectors, NewDBSessionsStatusCollector(db.DBPool))
 
 	}
 	if config.GlobalConfig.RegisterDmhsMetrics {

@@ -73,9 +73,6 @@ func main() {
 	logger.InitLogger()
 	defer logger.Sync()
 
-	//对配置文件密码进行加密
-	EncryptPasswordConfig(configFile, encodeConfigPwd)
-
 	// 创建一个新的注册器，如果使用系统自带的,会多余出很多指标
 	reg := prometheus.NewRegistry()
 
@@ -95,6 +92,9 @@ func main() {
 		logger.Logger.Fatalf("Failed to initialize database pool: %v", zap.Error(err))
 	}
 	defer db.CloseDBPool() // 关闭数据库连接池
+
+	//对配置文件密码进行加密,确认密码无误后在进行加密
+	EncryptPasswordConfig(configFile, encodeConfigPwd)
 
 	//注册指标
 	collector.RegisterCollectors(reg)

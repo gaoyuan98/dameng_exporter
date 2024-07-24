@@ -29,13 +29,13 @@ func NewDbMemoryPoolInfoCollector(db *sql.DB) MetricCollector {
 		totalPoolDesc: prometheus.NewDesc(
 			dmdbms_memory_total_pool_info,
 			"mem total pool info information",
-			[]string{"host_name", "zone_type"}, // 添加标签
+			[]string{"host_name", "pool_type"}, // 添加标签
 			nil,
 		),
 		currPoolDesc: prometheus.NewDesc(
 			dmdbms_memory_curr_pool_info,
 			"mem curr pool info information",
-			[]string{"host_name", "zone_type"}, // 添加标签
+			[]string{"host_name", "pool_type"}, // 添加标签
 			nil,
 		),
 	}
