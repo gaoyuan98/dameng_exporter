@@ -47,12 +47,10 @@ const (
 	dmdbms_user_list_info           string = "dmdbms_user_list_info"
 	dmdbms_license_date             string = "dmdbms_license_date"
 	dmdbms_version                  string = "dmdbms_version"
+	dmdbms_arch_status              string = "dmdbms_arch_status"
 	dmdbms_start_day                string = "dmdbms_start_day"
-	dmdbms_waiting_session          string = "dmdbms_waiting_session"
-	dmdbms_connect_session          string = "dmdbms_connect_session"
-	dmdbms_tps_count                string = "dmdbms_tps_count"
-	dmdbms_rapply_sys_task_num      string = "dmdbms_rapply_sys_task_num"
 	dmdbms_rapply_sys_task_mem_used string = "dmdbms_rapply_sys_task_mem_used"
+	dmdbms_rapply_sys_task_num      string = "dmdbms_rapply_sys_task_num"
 	dmdbms_instance_log_error_info  string = "dmdbms_instance_log_error_info"
 )
 
@@ -87,7 +85,6 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDbMemoryPoolInfoCollector(db.DBPool))
 		collectors = append(collectors, NewDBSessionsStatusCollector(db.DBPool))
 		collectors = append(collectors, NewDbJobRunningInfoCollector(db.DBPool))
-
 		collectors = append(collectors, NewSlowSessionInfoCollector(db.DBPool))
 		collectors = append(collectors, NewMonitorInfoCollector(db.DBPool))
 		collectors = append(collectors, NewDbSqlExecTypeCollector(db.DBPool))
@@ -95,6 +92,9 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDbUserCollector(db.DBPool))
 		collectors = append(collectors, NewDbLicenseCollector(db.DBPool))
 		collectors = append(collectors, NewDbVersionCollector(db.DBPool))
+		collectors = append(collectors, NewDbArchStatusCollector(db.DBPool))
+		collectors = append(collectors, NewDbRapplySysCollector(db.DBPool))
+		collectors = append(collectors, NewInstanceLogErrorCollector(db.DBPool))
 
 	}
 	if config.GlobalConfig.RegisterDmhsMetrics {

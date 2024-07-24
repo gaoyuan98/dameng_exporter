@@ -62,15 +62,15 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 	dbVersion, err := getDbVersion(ctx, c.db)
 	if err != nil {
 		logger.Logger.Error("exec getDbVersion func error", zap.Error(err))
-		setMetric(ch, c.versionInfoDesc, 1, "获取失败")
+		setVersionMetric(ch, c.versionInfoDesc, 1, "获取失败")
 		return
 	}
 
-	setMetric(ch, c.versionInfoDesc, 0, dbVersion)
+	setVersionMetric(ch, c.versionInfoDesc, 0, dbVersion)
 }
 
 // 辅助函数：设置指标
-func setMetric(ch chan<- prometheus.Metric, desc *prometheus.Desc, value float64, dbVersion string) {
+func setVersionMetric(ch chan<- prometheus.Metric, desc *prometheus.Desc, value float64, dbVersion string) {
 	hostname := config.GetHostName()
 	ch <- prometheus.MustNewConstMetric(
 		desc,

@@ -21,6 +21,7 @@ type DBInstanceRunningInfoCollector struct {
 	threadNumDesc       *prometheus.Desc
 	statusOccursDesc    *prometheus.Desc
 	switchingOccursDesc *prometheus.Desc
+	dbStartDayDesc      *prometheus.Desc
 }
 
 const (
@@ -83,6 +84,12 @@ func NewDBInstanceRunningInfoCollector(db *sql.DB) MetricCollector {
 			[]string{"host_name"}, // 添加标签
 			nil,
 		),
+		dbStartDayDesc: prometheus.NewDesc( //这个是集群切换的标识
+			dmdbms_start_day,
+			"Database instance start_day ",
+			[]string{"host_name"}, // 添加标签
+			nil,
+		),
 	}
 }
 
@@ -95,6 +102,7 @@ func (c *DBInstanceRunningInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.threadNumDesc
 	ch <- c.statusOccursDesc
 	ch <- c.switchingOccursDesc
+	ch <- c.dbStartDayDesc
 }
 
 func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
@@ -120,10 +128,10 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	defer rows.Close()
 
 	var status, mode, trxNum, deadlockNum, threadNum float64
-	var startTimeUnix int64
+	var startTimeUnix, dbStartDay int64
 	if rows.Next() {
 		var startTimeStr, statusStr, modeStr, trxNumStr, deadlockNumStr, threadNumStr string
-		if err := rows.Scan(&startTimeStr, &statusStr, &modeStr, &trxNumStr, &deadlockNumStr, &threadNumStr); err != nil {
+		if err := rows.Scan(&startTimeStr, &statusStr, &modeStr, &trxNumStr, &deadlockNumStr, &threadNumStr, &dbStartDay); err != nil {
 			logger.Logger.Error("Error scanning row", zap.Error(err))
 			return
 		}
@@ -165,6 +173,7 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		"deadlockNum":  deadlockNum,
 		"threadNum":    threadNum,
 		"statusOccurs": float64(statusOccurs),
+		"dbStartDay":   float64(dbStartDay),
 	}
 	// 处理数据库模式切换的逻辑（主备集群）
 	c.handleDatabaseModeSwitch(ch, mode)
@@ -183,6 +192,7 @@ func (c *DBInstanceRunningInfoCollector) collectMetrics(ch chan<- prometheus.Met
 	ch <- prometheus.MustNewConstMetric(c.deadlockDesc, prometheus.GaugeValue, data["deadlockNum"], config.GetHostName())
 	ch <- prometheus.MustNewConstMetric(c.threadNumDesc, prometheus.GaugeValue, data["threadNum"], config.GetHostName())
 	ch <- prometheus.MustNewConstMetric(c.statusOccursDesc, prometheus.GaugeValue, data["status"], config.GetHostName())
+	ch <- prometheus.MustNewConstMetric(c.dbStartDayDesc, prometheus.GaugeValue, data["dbStartDay"], config.GetHostName())
 }
 
 /*

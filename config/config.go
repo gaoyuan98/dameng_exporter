@@ -55,7 +55,7 @@ var DefaultConfig = Config{
 	//QueryTimeout:    30 * time.Second,
 	QueryTimeout:            30, //秒
 	MaxIdleConns:            1,  //个数
-	MaxOpenConns:            5,  //个数
+	MaxOpenConns:            10, //个数
 	ConnMaxLifetime:         30, //分钟
 	LogMaxSize:              10, //MB
 	LogMaxBackups:           3,  //个数

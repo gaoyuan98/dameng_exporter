@@ -8,7 +8,9 @@ const (
                CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,
                (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,
                (SELECT COUNT(*) FROM V$LOCK WHERE BLOCKED=1) DEADLOCKNUM,
-               (SELECT COUNT(*) FROM V$THREADS) THREADSNUM
+               (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,
+               DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY
+        
         FROM V$INSTANCE`
 
 	//表空间的使用率
@@ -102,4 +104,6 @@ GROUP BY
                  WHERE A.USER_ID=B.ID and A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR')`
 	//查询数据库授权信息
 	QueryDbGrantInfoSql = `SELECT /*+DM_EXPORTER*/ CASE WHEN expired_date IS NULL THEN '' ELSE TO_CHAR(expired_date, 'yyyyMMdd')  END AS expired_date FROM V$LICENSE`
+	//查询主备库的同步堆积信息
+	QueryStandbyInfoSql = `SELECT /*+DM_EXPORTER*/ task_mem_used, task_num FROM v$rapply_sys`
 )
