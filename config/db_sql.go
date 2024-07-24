@@ -65,4 +65,17 @@ GROUP BY
   ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       
   WHERE STEPS."TYPE" = 6 AND SCHE.VALID = 'Y' 
   GROUP BY SYSJOBS.NAME))`
+	//查询数据库的慢SQL
+	QueryDbSlowSqlInfoSqlStr = `select /*+DM_EXPORTER*/ *  from ( SELECT DATEDIFF(MS,LAST_RECV_TIME,SYSDATE) EXEC_TIME,
+                            DBMS_LOB.SUBSTR(SF_GET_SESSION_SQL(SESS_ID)) SLOW_SQL,
+                            SESS_ID,
+                            CURR_SCH,
+                            THRD_ID,
+                            LAST_RECV_TIME,
+                            SUBSTR(CLNT_IP,8,13) CONN_IP
+                       FROM V$SESSIONS
+                      WHERE  1=1 
+                 --and STATE='ACTIVE'
+                   ORDER BY 1 DESC) 
+             where EXEC_TIME >= ? LIMIT ?`
 )

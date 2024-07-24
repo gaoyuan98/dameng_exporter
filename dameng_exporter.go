@@ -46,6 +46,10 @@ func main() {
 		maxIdleConns = kingpin.Flag("maxIdleConns", "Maximum idle connections (number)").Default(fmt.Sprint(config.DefaultConfig.MaxIdleConns)).Int()
 		connMaxLife  = kingpin.Flag("connMaxLifetime", "Connection maximum lifetime (Minute)").Default(fmt.Sprint(config.DefaultConfig.ConnMaxLifetime)).Int()
 
+		//是否检查慢SQL
+		//SQL检查的毫秒数
+		//回显的条数
+
 		registerHostMetrics     = kingpin.Flag("registerHostMetrics", "Register host metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Bool()
 		registerDatabaseMetrics = kingpin.Flag("registerDatabaseMetrics", "Register database metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Bool()
 		registerDmhsMetrics     = kingpin.Flag("registerDmhsMetrics", "Register dmhs metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Bool()

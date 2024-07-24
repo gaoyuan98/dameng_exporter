@@ -85,8 +85,8 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range memoryPoolInfos {
-		ch <- prometheus.MustNewConstMetric(c.totalPoolDesc, prometheus.GaugeValue, NullFloat64ToFloat(info.TotalVal), config.GetHostName(), NullStringToString(info.ZoneType))
-		ch <- prometheus.MustNewConstMetric(c.currPoolDesc, prometheus.GaugeValue, NullFloat64ToFloat(info.CurrVal), config.GetHostName(), NullStringToString(info.ZoneType))
+		ch <- prometheus.MustNewConstMetric(c.totalPoolDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.TotalVal), config.GetHostName(), NullStringToString(info.ZoneType))
+		ch <- prometheus.MustNewConstMetric(c.currPoolDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.CurrVal), config.GetHostName(), NullStringToString(info.ZoneType))
 	}
 
 	logger.Logger.Infof("MemoryPoolInfo exec finish")

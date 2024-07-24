@@ -91,11 +91,11 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	// 发送数据到 Prometheus
 	for _, info := range sessionsStatusInfos {
 		if info.stateType.Valid && info.stateType.String == "MAX_SESSION" {
-			maxSession = NullFloat64ToFloat(info.countVal)
+			maxSession = NullFloat64ToFloat64(info.countVal)
 		} else if info.stateType.Valid && info.stateType.String == "TOTAL" {
-			totalSession = NullFloat64ToFloat(info.countVal)
+			totalSession = NullFloat64ToFloat64(info.countVal)
 		}
-		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, NullFloat64ToFloat(info.countVal), config.GetHostName(), NullStringToString(info.stateType))
+		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.countVal), config.GetHostName(), NullStringToString(info.stateType))
 	}
 
 	div := float64(0)
