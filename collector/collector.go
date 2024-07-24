@@ -21,6 +21,8 @@ var (
 const (
 	dmdbms_tablespace_file_total_info string = "dmdbms_tablespace_file_total_info"
 	dmdbms_tablespace_file_free_info  string = "dmdbms_tablespace_file_free_info"
+	dmdbms_tablespace_size_total_info string = "dmdbms_tablespace_size_total_info"
+	dmdbms_tablespace_size_free_info  string = "dmdbms_tablespace_size_free_info"
 	dmdbms_start_time_info            string = "dmdbms_start_time_info"
 	dmdbms_status_info                string = "dmdbms_status_info"
 	dmdbms_mode_info                  string = "dmdbms_mode_info"
@@ -29,15 +31,19 @@ const (
 	dmdbms_thread_num_info            string = "dmdbms_thread_num_info"
 	dmdbms_switching_occurs           string = "dmdbms_switching_occurs"
 	dmdbms_db_status_occurs           string = "dmdbms_db_status_occurs"
-	dmdbms_joblog_error_num           string = "dmdbms_joblog_error_num"
-	dmdbms_joblog_error_alarm         string = "dmdbms_joblog_error_alarm"
-	dmdbms_start_day                  string = "dmdbms_start_day"
-	dmdbms_waiting_session            string = "dmdbms_waiting_session"
-	dmdbms_connect_session            string = "dmdbms_connect_session"
-	dmdbms_tps_count                  string = "dmdbms_tps_count"
-	dmdbms_rapply_sys_task_num        string = "dmdbms_rapply_sys_task_num"
-	dmdbms_rapply_sys_task_mem_used   string = "dmdbms_rapply_sys_task_mem_used"
-	dmdbms_instance_log_error_info    string = "dmdbms_instance_log_error_info"
+
+	dmdbms_memory_curr_pool_info  string = "dmdbms_memory_curr_pool_info"
+	dmdbms_memory_total_pool_info string = "dmdbms_memory_total_pool_info"
+
+	dmdbms_joblog_error_num         string = "dmdbms_joblog_error_num"
+	dmdbms_joblog_error_alarm       string = "dmdbms_joblog_error_alarm"
+	dmdbms_start_day                string = "dmdbms_start_day"
+	dmdbms_waiting_session          string = "dmdbms_waiting_session"
+	dmdbms_connect_session          string = "dmdbms_connect_session"
+	dmdbms_tps_count                string = "dmdbms_tps_count"
+	dmdbms_rapply_sys_task_num      string = "dmdbms_rapply_sys_task_num"
+	dmdbms_rapply_sys_task_mem_used string = "dmdbms_rapply_sys_task_mem_used"
+	dmdbms_instance_log_error_info  string = "dmdbms_instance_log_error_info"
 )
 
 /*func init() {
@@ -67,6 +73,7 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDBSessionsCollector(db.DBPool))
 		collectors = append(collectors, NewTableSpaceDateFileInfoCollector(db.DBPool))
 		collectors = append(collectors, NewDBInstanceRunningInfoCollector(db.DBPool))
+		collectors = append(collectors, NewDbMemoryPoolInfoCollector(db.DBPool))
 
 	}
 	if config.GlobalConfig.RegisterDmhsMetrics {

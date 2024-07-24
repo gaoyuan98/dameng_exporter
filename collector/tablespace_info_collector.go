@@ -11,45 +11,42 @@ import (
 	"time"
 )
 
-type TableSpaceDateFileInfoCollector struct {
+type TableSpaceInfoCollector struct {
 	db        *sql.DB
 	totalDesc *prometheus.Desc
 	freeDesc  *prometheus.Desc
 }
 
-type TableSpaceDateFileInfo struct {
-	Path       string
-	TotalSize  float64
-	FreeSize   float64
-	AutoExtend string
-	NextSize   string
-	MaxSize    string
+type TableSpaceInfo struct {
+	TablespaceName string
+	TotalSize      float64
+	FreeSize       float64
 }
 
-func NewTableSpaceDateFileInfoCollector(db *sql.DB) MetricCollector {
-	return &TableSpaceDateFileInfoCollector{
+func NewTableSpaceInfoCollector(db *sql.DB) MetricCollector {
+	return &TableSpaceInfoCollector{
 		db: db,
 		totalDesc: prometheus.NewDesc(
-			dmdbms_tablespace_file_total_info,
-			"Tablespace file information",
-			[]string{"host_name", "tablespace_name", "auto_extend", "next_size", "max_size"}, // 添加标签
+			dmdbms_tablespace_size_total_info,
+			"Tablespace info information",
+			[]string{"host_name", "tablespace_name"}, // 添加标签
 			nil,
 		),
 		freeDesc: prometheus.NewDesc(
-			dmdbms_tablespace_file_free_info,
-			"Tablespace file information",
-			[]string{"host_name", "tablespace_name", "auto_extend", "next_size", "max_size"}, // 添加标签
+			dmdbms_tablespace_size_free_info,
+			"Tablespace info information",
+			[]string{"host_name", "tablespace_name"}, // 添加标签
 			nil,
 		),
 	}
 }
 
-func (c *TableSpaceDateFileInfoCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c *TableSpaceInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.totalDesc
 	ch <- c.freeDesc
 }
 
-func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
+func (c *TableSpaceInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	funcStart := time.Now()
 	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
 	defer func() {
@@ -58,10 +55,10 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}()
 
 	//保存全局结果对象，可以用来做缓存以及序列化
-	var tablespaceInfos []TableSpaceDateFileInfo
+	var tablespaceInfos []TableSpaceInfo
 
 	// 从缓存中获取数据
-	if cachedJSON, found := config.GetFromCache(dmdbms_tablespace_file_total_info); found {
+	if cachedJSON, found := config.GetFromCache(dmdbms_tablespace_size_total_info); found {
 		// 将缓存中的 JSON 字符串转换为 TablespaceInfo 切片
 		if err := json.Unmarshal([]byte(cachedJSON), &tablespaceInfos); err != nil {
 			// 处理反序列化错误
@@ -69,11 +66,11 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			// 反序列化失败，忽略缓存中的数据，继续查询数据库
 			cachedJSON = "" // 清空缓存数据，确保后续不使用过期或损坏的数据
 		} else {
-			logger.Logger.Infof("Use cache TablespaceDateFile data")
+			logger.Logger.Infof("Use cache TablespaceInfo data")
 			// 使用缓存的数据
 			for _, info := range tablespaceInfos {
-				ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, config.GetHostName(), info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
-				ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, config.GetHostName(), info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
+				ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, config.GetHostName(), info.TablespaceName)
+				ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, config.GetHostName(), info.TablespaceName)
 			}
 			return
 		}
@@ -87,7 +84,7 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryTablespaceFileSqlStr)
+	rows, err := c.db.QueryContext(ctx, config.QueryTablespaceInfoSqlStr)
 	if err != nil {
 		handleDbQueryError(err)
 		return
@@ -95,8 +92,8 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var info TableSpaceDateFileInfo
-		if err := rows.Scan(&info.Path, &info.TotalSize, &info.FreeSize, &info.AutoExtend, &info.NextSize, &info.MaxSize); err != nil {
+		var info TableSpaceInfo
+		if err := rows.Scan(&info.TablespaceName, &info.TotalSize, &info.FreeSize); err != nil {
 			logger.Logger.Error("Error scanning row", zap.Error(err))
 			continue
 		}
@@ -107,8 +104,8 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range tablespaceInfos {
-		ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, config.GetHostName(), info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
-		ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, config.GetHostName(), info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
+		ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, config.GetHostName(), info.TablespaceName)
+		ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, config.GetHostName(), info.TablespaceName)
 	}
 
 	// 将 TablespaceInfo 切片序列化为 JSON 字符串
@@ -119,7 +116,7 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 	// 将查询结果存入缓存
-	config.SetCache(dmdbms_tablespace_file_total_info, string(valueJSON), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime)) // 设置缓存有效时间为5分钟
-	logger.Logger.Infof("TablespaceFileInfoCollector exec finish")
+	config.SetCache(dmdbms_tablespace_size_total_info, string(valueJSON), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime)) // 设置缓存有效时间为5分钟
+	logger.Logger.Infof("TablespaceFileInfo exec finish")
 
 }
