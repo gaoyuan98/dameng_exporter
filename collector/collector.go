@@ -9,6 +9,7 @@ import (
 	"errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+	"strings"
 	"sync"
 )
 
@@ -19,6 +20,7 @@ var (
 )
 
 const (
+	dmdbms_node_uname_info            string = "dmdbms_node_uname_info"
 	dmdbms_tablespace_file_total_info string = "dmdbms_tablespace_file_total_info"
 	dmdbms_tablespace_file_free_info  string = "dmdbms_tablespace_file_free_info"
 	dmdbms_tablespace_size_total_info string = "dmdbms_tablespace_size_total_info"
@@ -73,8 +75,12 @@ type MetricCollector interface {
 func RegisterCollectors(reg *prometheus.Registry) {
 	registerMux.Lock()
 	defer registerMux.Unlock()
+	logger.Logger.Debugf("exporter running system is %v", GetOS())
 
-	if config.GlobalConfig.RegisterHostMetrics {
+	collectors = append(collectors, NewSystemInfoCollector())
+
+	if config.GlobalConfig.RegisterHostMetrics && strings.Compare(GetOS(), OS_LINUX) == 0 {
+
 		//collectors = append(collectors, NewExampleCounterCollector())
 	}
 	if config.GlobalConfig.RegisterDatabaseMetrics {
