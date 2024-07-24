@@ -85,5 +85,19 @@ GROUP BY
 	//查询数据库参数
 	QueryParameterInfoSql = `select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE')`
 	//查询检查点信息
-	QueryCheckPointInfoSqlStr = `select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT`
+	QueryCheckPointInfoSql = `select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT`
+	//查询用户信息
+	QueryUserInfoSqlStr = `SELECT 
+                       /*+DM_EXPORTER*/ 
+                       A.USERNAME ,
+                       CASE B.RN_FLAG WHEN '0' THEN 'N' WHEN '1' THEN 'Y' END AS READ_ONLY,
+                       CASE A.ACCOUNT_STATUS WHEN 'LOCKED' THEN '锁定' WHEN 'OPEN' THEN '正常' ELSE '异常' END AS ACCOUNT_STATUS,
+                       TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE,
+                       to_char(round(datediff(DAY,TO_CHAR(sysdate,'YYYY-MM-DD HH24:MI:SS'),TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS')),2)) AS EXPIRY_DATE_DAY,
+                       A.DEFAULT_TABLESPACE,
+                       A.PROFILE,
+                       TO_CHAR(A.CREATED,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME
+                  FROM DBA_USERS A, 
+                       SYSUSERS B 
+                 WHERE A.USER_ID=B.ID and A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR')`
 )
