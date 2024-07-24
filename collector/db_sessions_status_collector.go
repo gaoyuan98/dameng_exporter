@@ -10,35 +10,39 @@ import (
 	"time"
 )
 
+// DBSessionsStatusCollector 结构体
 type DBSessionsStatusCollector struct {
 	db                    *sql.DB
 	sessionTypeDesc       *prometheus.Desc
 	sessionPercentageDesc *prometheus.Desc
 }
 
+// DBSessionsStatusInfo 结构体
 type DBSessionsStatusInfo struct {
 	stateType sql.NullString
 	countVal  sql.NullFloat64
 }
 
+// NewDBSessionsStatusCollector 函数
 func NewDBSessionsStatusCollector(db *sql.DB) MetricCollector {
 	return &DBSessionsStatusCollector{
 		db: db,
 		sessionTypeDesc: prometheus.NewDesc(
 			dmdbms_session_type_Info,
 			"Number of database sessions type status",
-			[]string{"host_name", "session_type"}, // 添加标签
+			[]string{"host_name", "session_type"},
 			nil,
 		),
 		sessionPercentageDesc: prometheus.NewDesc(
 			dmdbms_session_percentage,
 			"Number of database sessions type percentage",
-			[]string{"host_name"}, // 添加标签
+			[]string{"host_name"},
 			nil,
 		),
 	}
 }
 
+// Describe 方法
 func (c *DBSessionsStatusCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.sessionTypeDesc
 	ch <- c.sessionPercentageDesc
@@ -102,6 +106,6 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		div = 0
 	}
 	//eg：计算百分比，此处没有计算百分比
-	ch <- prometheus.MustNewConstMetric(c.sessionPercentageDesc, prometheus.GaugeValue, div, config.GetHostName())
+	ch <- prometheus.MustNewConstMetric(c.sessionPercentageDesc, prometheus.GaugeValue, div, "")
 
 }
