@@ -142,7 +142,8 @@ func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string
 	//读取预先设定的配置文件
 	glocal_config, err := config.LoadConfig(*configFile)
 	if err != nil {
-		fmt.Printf("Error loading config file: %v", err)
+		//fmt.Printf("Error loading config file: %v\n", err)
+		fmt.Printf("no loading config file: %v\n")
 	}
 	// 对默认值以及配置文件的参数进行合并覆盖
 	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd)
