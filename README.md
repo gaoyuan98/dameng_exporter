@@ -54,6 +54,7 @@
 # 搭建步骤
 
 ## 1. 下载编译的exporter包
+https://github.com/gy297879328/dameng_exporter/releases/tag/v1.0.0
 ## 2. 新建用户权限
 ```sql
 ## 最小化权限
