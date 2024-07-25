@@ -55,6 +55,12 @@
 
 ## 1. 下载编译的exporter包
 https://github.com/gy297879328/dameng_exporter/releases/tag/v1.0.0
+```
+dameng_exporter_v1.0.0_linux_amd64.tar.gz（linux_arm平台）
+dameng_exporter_v1.0.0_linux_arm64.tar.gz（linux_x86平台）
+dameng_exporter_v1.0.0_windows_amd64.tar.gz（window_x64平台）
+```
+
 ## 2. 新建用户权限
 ```sql
 ## 最小化权限
