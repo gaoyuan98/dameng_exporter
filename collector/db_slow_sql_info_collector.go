@@ -43,6 +43,10 @@ func (c *SessionInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
+	if !config.GlobalConfig.CheckSlowSQL {
+		logger.Logger.Debug("CheckSlowSQL is false, skip collecting slow SQL info")
+		return
+	}
 	funcStart := time.Now()
 	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
 	defer func() {
@@ -58,7 +62,7 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, 0, 10)
+	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, config.GlobalConfig.SlowSqlTime, config.GlobalConfig.SlowSqlMaxRows)
 	if err != nil {
 		handleDbQueryError(err)
 		return

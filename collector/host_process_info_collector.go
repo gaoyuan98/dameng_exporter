@@ -40,31 +40,31 @@ func NewDmapProcessCollector(db *sql.DB) *DmapProcessCollector {
 	return &DmapProcessCollector{
 		db: db,
 		dmapProcessDesc: prometheus.NewDesc(
-			"dmdbms_dmap_process_is_exit",
+			dmdbms_dmap_process_is_exit,
 			"Information about DM database dmap process existence",
 			[]string{"hostname"},
 			nil,
 		),
 		dmserverProcessDesc: prometheus.NewDesc(
-			"dmdbms_dmserver_process_is_exit",
+			dmdbms_dmserver_process_is_exit,
 			"Information about DM database dmserver process existence",
 			[]string{"hostname"},
 			nil,
 		),
 		dmwatcherProcessDesc: prometheus.NewDesc(
-			"dmdbms_dmwatcher_process_is_exit",
+			dmdbms_dmwatcher_process_is_exit,
 			"Information about DM database dmwatcher process existence",
 			[]string{"hostname"},
 			nil,
 		),
 		dmmonitorProcessDesc: prometheus.NewDesc(
-			"dmdbms_dmmonitor_process_is_exit",
+			dmdbms_dmmonitor_process_is_exit,
 			"Information about DM database dmmonitor process existence",
 			[]string{"hostname"},
 			nil,
 		),
 		dmagentProcessDesc: prometheus.NewDesc(
-			"dmdbms_dmagent_process_is_exit",
+			dmdbms_dmagent_process_is_exit,
 			"Information about DM database dmagent process existence",
 			[]string{"hostname"},
 			nil,
@@ -107,8 +107,9 @@ func (c *DmapProcessCollector) Collect(ch chan<- prometheus.Metric) {
 	if c.lastPID != dbInstanceInfo.PID {
 		c.localInstallBinPath, err = getLocalInstallBinPath(dbInstanceInfo.PID)
 		if err != nil {
-			logger.Logger.Errorf("Error getting db install bin path: %v\n", err)
+			logger.Logger.Errorf("Error getting db install bin path: %v", err)
 			c.localInstallBinPath = ""
+			return
 		}
 		c.lastPID = dbInstanceInfo.PID
 	}
@@ -178,7 +179,7 @@ func checkProcess(installBinPath, pid, processName string) float64 {
 	processCount := strings.TrimSpace(string(output))
 	count, err := strconv.ParseFloat(processCount, 64)
 	if err != nil {
-		fmt.Printf("Error parsing %s process count: %v\n", processName, err)
+		logger.Logger.Errorf("Error parsing %s process count: %v\n", processName, err)
 		return 0
 	}
 
@@ -229,11 +230,9 @@ func getLocalInstallBinPath(pid string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	serverCount := strings.TrimSpace(string(output))
 	if serverCount == "1" {
 		return lastElement, nil
 	}
-
 	return "", fmt.Errorf("failed to get localInstallBinPath")
 }

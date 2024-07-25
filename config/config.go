@@ -46,6 +46,9 @@ type Config struct {
 	RegisterDatabaseMetrics bool
 	RegisterDmhsMetrics     bool
 	EncodeConfigPwd         bool
+	CheckSlowSQL            bool
+	SlowSqlTime             int
+	SlowSqlMaxRows          int
 }
 
 var DefaultConfig = Config{
@@ -69,6 +72,9 @@ var DefaultConfig = Config{
 	DbUser:                  "SYSDBA",
 	DbPwd:                   "SYSDBA",
 	DbHost:                  "127.0.0.1:5236",
+	CheckSlowSQL:            false,
+	SlowSqlTime:             10000,
+	SlowSqlMaxRows:          10,
 }
 
 func LoadConfig(filePath string) (Config, error) {
@@ -168,8 +174,20 @@ func LoadConfig(filePath string) (Config, error) {
 			if val, err := strconv.ParseBool(value); err == nil {
 				config.EncodeConfigPwd = val
 			}
-		}
 
+		case "checkSlowSQL":
+			if val, err := strconv.ParseBool(value); err == nil {
+				config.CheckSlowSQL = val
+			}
+		case "slowSQLTime":
+			if val, err := strconv.Atoi(value); err == nil {
+				config.SlowSqlTime = val
+			}
+		case "slowSQLMaxRows":
+			if val, err := strconv.Atoi(value); err == nil {
+				config.SlowSqlMaxRows = val
+			}
+		}
 	}
 
 	return config, scanner.Err()

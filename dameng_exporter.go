@@ -47,8 +47,11 @@ func main() {
 		connMaxLife  = kingpin.Flag("connMaxLifetime", "Connection maximum lifetime (Minute)").Default(fmt.Sprint(config.DefaultConfig.ConnMaxLifetime)).Int()
 
 		//是否检查慢SQL
+		checkSlowSQL = kingpin.Flag("checkSlowSQL", "Check slow SQL,default:"+strconv.FormatBool(config.DefaultConfig.CheckSlowSQL)).Default(strconv.FormatBool(config.DefaultConfig.CheckSlowSQL)).Bool()
 		//SQL检查的毫秒数
+		slowSqlTime = kingpin.Flag("slowSQLTime", "Slow SQL time (Millisecond)").Default(fmt.Sprint(config.DefaultConfig.SlowSqlTime)).Int()
 		//回显的条数
+		slowSqlMaxRows = kingpin.Flag("maxRows", "Maximum rows to return").Default(fmt.Sprint(config.DefaultConfig.SlowSqlMaxRows)).Int()
 
 		registerHostMetrics     = kingpin.Flag("registerHostMetrics", "Register host metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Bool()
 		registerDatabaseMetrics = kingpin.Flag("registerDatabaseMetrics", "Register database metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Bool()
@@ -72,7 +75,7 @@ func main() {
 		return
 	}
 	//合并配置文件属性
-	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd)
+	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows)
 	// eg:初始化全局日志记录器，必须合并完配置在初始化 不然日志控制参数会失效
 	logger.InitLogger()
 	defer logger.Sync()
@@ -139,8 +142,8 @@ func EncryptPasswordConfig(configFile *string, encodeConfigPwd *bool) /*error*/ 
 	//return err
 }
 
-// 把 默认参数以及配置文件进行合并
-func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool) /*(config.Config, error)*/ {
+// 把 默认参数以及配置文件进行合并,
+func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int) /*(config.Config, error)*/ {
 	//读取预先设定的配置文件
 	glocal_config, err := config.LoadConfig(*configFile)
 	if err != nil {
@@ -148,7 +151,7 @@ func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string
 		fmt.Printf("no loading default config file\n")
 	}
 	// 对默认值以及配置文件的参数进行合并覆盖
-	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd)
+	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows)
 
 	config.GlobalConfig = &glocal_config
 	//return glocal_config, err
@@ -178,7 +181,7 @@ func fileExists(filename string) bool {
 	return true /*, err*/
 }
 
-func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool) {
+func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int) {
 	if listenAddr != nil && *listenAddr != config.DefaultConfig.ListenAddress {
 		glocal_config.ListenAddress = *listenAddr
 	}
@@ -232,6 +235,15 @@ func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *
 	}
 	if encodeConfigPwd != nil && *encodeConfigPwd != config.DefaultConfig.EncodeConfigPwd {
 		glocal_config.EncodeConfigPwd = *encodeConfigPwd
+	}
+	if checkSlowSQL != nil && *checkSlowSQL != config.DefaultConfig.CheckSlowSQL {
+		glocal_config.CheckSlowSQL = *checkSlowSQL
+	}
+	if slowSqlTime != nil && *slowSqlTime != config.DefaultConfig.SlowSqlTime {
+		glocal_config.SlowSqlTime = *slowSqlTime
+	}
+	if slowSqlMaxRows != nil && *slowSqlMaxRows != config.DefaultConfig.SlowSqlMaxRows {
+		glocal_config.SlowSqlMaxRows = *slowSqlMaxRows
 	}
 
 }
