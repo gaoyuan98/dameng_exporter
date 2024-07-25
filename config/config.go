@@ -53,7 +53,7 @@ type Config struct {
 
 var DefaultConfig = Config{
 	ConfigFile:    "./dameng_exporter.config",
-	ListenAddress: ":9100",
+	ListenAddress: ":9200",
 	MetricPath:    "/metrics",
 	//QueryTimeout:    30 * time.Second,
 	QueryTimeout:            30, //秒

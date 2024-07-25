@@ -1,105 +1,106 @@
-# DmService DB Exporter 达梦数据库Exporter
+<h1 align="center">DAMENG_EXPORTER的介绍以及使用说明</h1>
 
-
-##### Table of Contents  
-
-[Description](#Description)  
-[Installation](#Installation)  
-[Running](#Running)  
-[Build](#Build)     
-[Troubleshooting](#Troubleshooting)  
-
-
-# Description
-
-A [Prometheus](https://prometheus.io/) exporter for DmService copy after the Oracle exporter. 
-
-The following metrics are exposed currently.
-
-- dmdb_exporter_last_scrape_duration_seconds
-- dmdb_exporter_last_scrape_error
-- dmdb_exporter_scrapes_total
-- dmdb_session_active
-- dmdb_session_max
-- dmdb_session_used
-- dmdb_tablespace_free_percent
-- dmdb_tablespace_free_space
-- dmdb_tablespace_total_space
-- dmdb_up
-
-# Installation
-
-## Docker
-
-You can run via Docker using an existing image. 
-
-```bash
-docker run -d --name dmdb_exporter  -p 9161:9161 -e DATA_SOURCE_NAME=dm://SYSDBA:SYSDBA@localhost:5236?autoCommit=true ${image_name}
+# 介绍
+1. DM数据库适配prometheus监控的采集器，目前已支持DM8数据库同时提供grafana 8.5.X 以上版本的监控面板（其他的grafana版本需要自己绘制表盘）。
+2. 已支持的指标如下
 ```
-
-
-
-## Binary Release
-
-Pre-compiled versions for Linux 64 bit  can be found under [releases].
-
-
-# Running
-
-Ensure that the environment variable DATA_SOURCE_NAME is set correctly before starting. For Example:
-
-```bash
-# using a complete url:
-export DATA_SOURCE_NAME=dm://SYSDBA:SYSDBA@localhost:5236?autoCommit=true
-# Then run the exporter
-/path/to/binary/dmdb_exporter --log.level error  --default.metrics  /path/of/the/default-metrics.toml --web.listen-address 0.0.0.0:9161
+   数据库线程数	dmdbms_thread_num_info
+   数据库事务等待数	dmdbms_trx_info
+   数据库死锁数	dmdbms_dead_lock_num_info
+   数据库的状态	dmdbms_status_info
+   数据库启动时间	dmdbms_start_time_info
+   数据库QPS数量	dmdbms_qps_count
+   数据库TPS数量	dmdbms_tps_count
+   主备集群同步延迟	dmdbms_rapply_stat
+   表空间总大小	dmdbms_tablespace_size_total_info
+   表空间空闲大小	dmdbms_tablespace_size_free_info
+   表空间数据文件总大小	dmdbms_tablespace_file_total_info
+   表空间数据文件空闲大小	dmdbms_tablespace_file_free_info
+   数据库会话数状态	dmdbms_session_type_info
+   数据库实例的错误事件	dmdbms_instance_log_error_info
+   查询内存池的当前使用状态	dmdbms_memory_curr_pool_info
+   查询内存池的配置上限	dmdbms_memory_total_pool_info
+   数据库活动会话执行延迟监控	dmdbms_waiting_session
+   数据库的最大连接数	dmdbms_connect_session
+   数据库授权查询	dmdbms_license_date
+   数据库定时任务错误	dmdbms_joblog_error_num
+   监控监视器进程	dmdbms_monitor_info
+   监控慢SQL语句	dmdbms_slow_sql_info
+   备库重演运行线程数	dmdbms_rapply_sys_task_num
+   备库重演内存堆积信息	dmdbms_rapply_sys_task_mem_used
+   数据库语句类型数量展示逻辑	dmdbms_statement_type_info
+   检查点更新	dmdbms_ckpttime_info
+   检查用户信息	dmdbms_user_list_info
+   数据库版本	dmdbms_version
+   数据库启动天数	dmdbms_start_day
+   数据库归档状态	dmdbms_arch_status
+   dmap进程探活	dmdbms_dmap_process_is_exit
+   dmserver进程探活	dmdbms_dmserver_process_is_exit
+   dmwatcher进程探活	dmdbms_dmwatcher_process_is_exit
+   dmmonitor进程探活	dmdbms_dmmonitor_process_is_exit
+   dmagent进程探活	dmdbms_dmagent_process_is_exit
 ```
+# 目录
+- doc目录存放的是相关的配置文件（告警模板、配置模板、表盘）
+- collector存放的是各个指标的采集逻辑
+- build_all_versions.bat为window的一键编译脚本
 
-# Integration with System D
+# 搭建效果图
+<img src="./img/tubiao_01.png" width="1000" height="500" />
+<br />
+<img src="./img/tubiao_02.png" width="1000" height="500" />
+<br />
 
-Create file **/etc/systemd/system/dmdb_exporter.service** with the following content:
+# 搭建步骤
 
-    [Unit]
-    Description=Service for dm telemetry client
-    After=network.target
-    [Service]
-    Environment=DATA_SOURCE_NAME=dm://SYSDBA:SYSDBA@localhost:5236?autoCommit=true
-    ExecStart=/path/of/the/dmdb_exporter  --default.metrics  /path/of/the/default-metrics.toml --web.listen-address 0.0.0.0:9161
-    [Install]
-    WantedBy=multi-user.target
-
-Then tell System D to read files:
-
-    systemctl daemon-reload
-
-Start this new service:
-
-    systemctl start dmdb_exporter
-
-Check service status:
-
-    systemctl status dmdb_exporter
-
-## Usage
-
-```bash
-usage: dmdb_exporter [<flags>]
-
-Flags:
-  -h, --help                     Show context-sensitive help (also try --help-long and --help-man).
-      --web.listen-address=":9161"
-                                 Address to listen on for web interface and telemetry. (env: LISTEN_ADDRESS)
-      --web.telemetry-path="/metrics"
-                                 Path under which to expose metrics. (env: TELEMETRY_PATH)
-      --default.metrics="default-metrics.toml"
-                                 File with default metrics in a TOML file. (env: DEFAULT_METRICS)
-      --custom.metrics=""        File that may contain various custom metrics in a TOML file. (env: CUSTOM_METRICS)
-      --query.timeout="5"        Query timeout (in seconds). (env: QUERY_TIMEOUT)
-      --database.maxIdleConns=0  Number of maximum idle connections in the connection pool. (env: DATABASE_MAXIDLECONNS)
-      --database.maxOpenConns=10
-                                 Number of maximum open connections in the connection pool. (env: DATABASE_MAXOPENCONNS)
-      --log.level="info"         Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal]
-      --log.format="logger:stderr"
-                                 Set the log target and format. Example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true"
-      --version                  Show application version.
+## 1. 下载编译的exporter包
+## 2. 新建用户权限
+```sql
+## 最小化权限
+## 条件允许的话 最好赋予DBA权限
+create tablespace "PROMETHEUS.DBF" datafile 'PROMETHEUS.DBF' size 512 CACHE = NORMAL;
+create user "PROMETHEUS" identified by "PROMETHEUS";
+alter user "PROMETHEUS" default tablespace "PROMETHEUS.DBF" default index tablespace "PROMETHEUS.DBF";
+grant "PUBLIC","RESOURCE","SOI","SVI","VTI" to "PROMETHEUS";
+grant select on DBA_FREE_SPACE to PROMETHEUS;
+grant select on DBA_DATA_FILES to PROMETHEUS;
+grant select on DBA_USERS to PROMETHEUS;
+grant select on V$SESSIONS to PROMETHEUS;
 ```
+## 3. 在数据库上运行
+1. 解压压缩包
+2. 修改dameng_exporter.config配置文件的数据库账号及密码
+注意：程序运行后会自动对数据库密码部分进行密文处理，不用担心密码泄露问题
+3. 启动exporter程序
+```
+## 启动服务
+[root@VM-24-17-centos dm_prometheus]#  nohup  > dameng_exporter.XXX /dev/null 2>&1 &
+## 2. 访问接口
+##  通过浏览器访问http://被监控端IP:9200/metrics
+[root@server ~]# lsof -i:9200
+```
+## 4. 在prometheus上进行配置
+修改prometheus的prometheus.yml配置文件
+```
+# 添加的是数据库监控的接口9200接口，如果是一套集群，则在targets标签后进行逗号拼接，如下图所示
+# 注意 cluster_name标签不能改，提供的模板用该标签做分类
+- job_name: "dm_db_single"
+  static_configs:
+   - targets: ["192.168.112.135:9200"]
+     labels:
+     cluster_name: '单机测试'
+```
+<br />
+
+
+## 5. 在grafana上导入提供的表盘
+1. 登录grafana登录，导入模板
+   <br />
+   <img src="./img/grafana_01.png" width="1000" height="500" />
+2. 所使用的模板在表盘中
+   <br />
+   <img src="./img/grafana_02.png" width="1000" height="500" />
+
+3. 效果图
+   <br />
+   <img src="./img/grafana_03.png" width="1000" height="500" />
