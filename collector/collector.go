@@ -80,7 +80,7 @@ func RegisterCollectors(reg *prometheus.Registry) {
 	collectors = append(collectors, NewSystemInfoCollector())
 
 	if config.GlobalConfig.RegisterHostMetrics && strings.Compare(GetOS(), OS_LINUX) == 0 {
-
+		collectors = append(collectors, NewDmapProcessCollector(db.DBPool))
 		//collectors = append(collectors, NewExampleCounterCollector())
 	}
 	if config.GlobalConfig.RegisterDatabaseMetrics {

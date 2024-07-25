@@ -73,9 +73,11 @@ func main() {
 	}
 	//合并配置文件属性
 	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd)
-	// 初始化全局日志记录器，必须合并完配置在初始化 不然日志控制参数会失效
+	// eg:初始化全局日志记录器，必须合并完配置在初始化 不然日志控制参数会失效
 	logger.InitLogger()
 	defer logger.Sync()
+
+	logger.Logger.Debugf("mergeConfigParam: %v", config.GlobalConfig)
 
 	// 创建一个新的注册器，如果使用系统自带的,会多余出很多指标
 	reg := prometheus.NewRegistry()
@@ -143,7 +145,7 @@ func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string
 	glocal_config, err := config.LoadConfig(*configFile)
 	if err != nil {
 		//fmt.Printf("Error loading config file: %v\n", err)
-		fmt.Printf("no loading config file: %v\n")
+		fmt.Printf("no loading default config file\n")
 	}
 	// 对默认值以及配置文件的参数进行合并覆盖
 	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd)

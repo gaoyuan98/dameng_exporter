@@ -10,7 +10,7 @@ set CONFIG_FILE=dameng_exporter.config
 REM 编译Windows 64位版本
 set GOOS=windows
 set GOARCH=amd64
-go build -o %PROGRAM_NAME%_%VERSION%_windows_amd64.exe
+go build -ldflags "-s -w" -o %PROGRAM_NAME%_%VERSION%_windows_amd64.exe
 if %errorlevel% neq 0 (
     echo Error compiling Windows 64-bit version
     timeout /t 3 /nobreak >nul  REM 等待3秒钟
@@ -31,7 +31,7 @@ del %PROGRAM_NAME%_%VERSION%_windows_amd64.exe
 REM 编译Linux 64位版本
 set GOOS=linux
 set GOARCH=amd64
-go build -o %PROGRAM_NAME%_%VERSION%_linux_amd64
+go build -ldflags "-s -w" -o %PROGRAM_NAME%_%VERSION%_linux_amd64
 if %errorlevel% neq 0 (
     echo Error compiling Linux 64-bit version
     timeout /t 3 /nobreak >nul  REM 等待3秒钟
@@ -55,7 +55,7 @@ REM 编译Linux ARM版本
 SET GOOS=linux
 SET GOARCH=arm64
 SET GOHOSTARCH=arm64
-go build -o %PROGRAM_NAME%_%VERSION%_linux_arm64
+go build -ldflags "-s -w" -o %PROGRAM_NAME%_%VERSION%_linux_arm64
 if %errorlevel% neq 0 (
     echo Error compiling Linux ARM version
     timeout /t 3 /nobreak >nul  REM 等待3秒钟

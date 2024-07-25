@@ -30,7 +30,7 @@ type SystemInfoCollector struct {
 func NewSystemInfoCollector() *SystemInfoCollector {
 	return &SystemInfoCollector{
 		systemInfoDesc: prometheus.NewDesc(
-			"dmdbms_node_uname_info",
+			dmdbms_node_uname_info,
 			"System information",
 			[]string{"host_name", "osName", "osVersion", "coreNum", "memSize", "architecture"},
 			nil,
