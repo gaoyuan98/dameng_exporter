@@ -40,6 +40,7 @@
    dmmonitor进程探活	dmdbms_dmmonitor_process_is_exit
    dmagent进程探活	dmdbms_dmagent_process_is_exit
 ```
+3. 源码解析地址：https://blog.csdn.net/qq_35349982/article/details/140698149
 # 目录
 - doc目录存放的是相关的配置文件（告警模板、配置模板、表盘）
 - collector存放的是各个指标的采集逻辑
@@ -52,7 +53,7 @@
 <br />
 
 # 搭建步骤
-
+可查看这个：https://blog.csdn.net/qq_35349982/article/details/140700625
 ## 1. 下载编译的exporter包
 https://github.com/gy297879328/dameng_exporter/releases/tag/v1.0.0
 ```
