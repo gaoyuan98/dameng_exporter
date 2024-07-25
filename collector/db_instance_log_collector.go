@@ -56,7 +56,7 @@ func (c *DbInstanceLogErrorCollector) Collect(ch chan<- prometheus.Metric) {
 	errorCount, err := getDbInstanceLogErrorInfo(ctx, c.db)
 	if err != nil {
 		logger.Logger.Error("exec getDbInstanceLogErrorInfo func error", zap.Error(err))
-		setMetric(ch, c.instanceLogErrorDesc, 0)
+		//setMetric(ch, c.instanceLogErrorDesc, 0)
 		return
 	}
 

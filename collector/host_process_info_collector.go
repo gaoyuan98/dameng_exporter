@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -32,7 +31,7 @@ type DmapProcessCollector struct {
 	dmagentProcessDesc   *prometheus.Desc
 	localInstallBinPath  string
 	lastPID              string
-	mutex                sync.Mutex
+	//mutex                sync.Mutex
 }
 
 // 初始化收集器
@@ -103,7 +102,7 @@ func (c *DmapProcessCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// 如果 PID 发生变化，则更新 localInstallBinPath
-	c.mutex.Lock()
+	//c.mutex.Lock()
 	if c.lastPID != dbInstanceInfo.PID {
 		c.localInstallBinPath, err = getLocalInstallBinPath(dbInstanceInfo.PID)
 		if err != nil {
@@ -113,7 +112,7 @@ func (c *DmapProcessCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 		c.lastPID = dbInstanceInfo.PID
 	}
-	c.mutex.Unlock()
+	//c.mutex.Unlock()
 
 	// 检查各个进程
 	hostname, _ := os.Hostname()

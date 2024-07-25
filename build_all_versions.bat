@@ -3,7 +3,7 @@
 
 REM 设置变量
 set PROGRAM_NAME=dameng_exporter
-set VERSION=v1.0.0
+set VERSION=v1.0.1
 set CONFIG_FILE=dameng_exporter.config
 
 
