@@ -7,7 +7,7 @@ import (
 
 const salt = "dameng_exporter"
 const xorKey = 0xAA
-const encryptedPrefix = "ENC:"
+const encryptedPrefix = "ENC("
 const encryptedSuffix = ")"
 
 // EncryptPassword encrypts the password with a simple XOR and Base64 encoding
