@@ -57,13 +57,6 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDbGrantInfoSql)
-	if err != nil {
-		handleDbQueryError(err)
-		return
-	}
-	defer rows.Close()
-
 	// 获取数据库归档状态信息
 	dbArchStatus, err := getDbArchStatus(ctx, c.db)
 	if err != nil {

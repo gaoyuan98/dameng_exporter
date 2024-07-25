@@ -51,18 +51,11 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDbGrantInfoSql)
-	if err != nil {
-		handleDbQueryError(err)
-		return
-	}
-	defer rows.Close()
-
 	// 获取数据库版本信息
 	dbVersion, err := getDbVersion(ctx, c.db)
 	if err != nil {
 		logger.Logger.Error("exec getDbVersion func error", zap.Error(err))
-		setVersionMetric(ch, c.versionInfoDesc, 1, "获取失败")
+		setVersionMetric(ch, c.versionInfoDesc, 1, "error")
 		return
 	}
 
