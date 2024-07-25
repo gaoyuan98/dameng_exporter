@@ -24,7 +24,7 @@ func NewInstanceLogErrorCollector(db *sql.DB) MetricCollector {
 		instanceLogErrorDesc: prometheus.NewDesc(
 			dmdbms_instance_log_error_info,
 			"Information about DM database instance log errors",
-			[]string{"hostname"},
+			[]string{"host_name"},
 			nil,
 		),
 	}

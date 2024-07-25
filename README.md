@@ -81,7 +81,7 @@ grant select on V$SESSIONS to PROMETHEUS;
 3. 启动exporter程序
 ```
 ## 启动服务
-[root@VM-24-17-centos dm_prometheus]#  nohup  > dameng_exporter.XXX /dev/null 2>&1 &
+[root@VM-24-17-centos dm_prometheus]#  nohup  ./dameng_exporter_v1.0.0_linux_amd64 > /dev/null 2>&1 &
 ## 2. 访问接口
 ##  通过浏览器访问http://被监控端IP:9200/metrics
 [root@server ~]# lsof -i:9200

@@ -34,7 +34,7 @@ func NewDbUserCollector(db *sql.DB) MetricCollector {
 		userListInfoDesc: prometheus.NewDesc(
 			dmdbms_user_list_info,
 			"Information about DM database users",
-			[]string{"hostname", "username", "read_only", "expiry_date", "expiry_date_day", "default_tablespace", "profile", "create_time"},
+			[]string{"host_name", "username", "read_only", "expiry_date", "expiry_date_day", "default_tablespace", "profile", "create_time"},
 			nil,
 		),
 	}

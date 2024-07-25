@@ -42,31 +42,31 @@ func NewDmapProcessCollector(db *sql.DB) *DmapProcessCollector {
 		dmapProcessDesc: prometheus.NewDesc(
 			dmdbms_dmap_process_is_exit,
 			"Information about DM database dmap process existence",
-			[]string{"hostname"},
+			[]string{"host_name"},
 			nil,
 		),
 		dmserverProcessDesc: prometheus.NewDesc(
 			dmdbms_dmserver_process_is_exit,
 			"Information about DM database dmserver process existence",
-			[]string{"hostname"},
+			[]string{"host_name"},
 			nil,
 		),
 		dmwatcherProcessDesc: prometheus.NewDesc(
 			dmdbms_dmwatcher_process_is_exit,
 			"Information about DM database dmwatcher process existence",
-			[]string{"hostname"},
+			[]string{"host_name"},
 			nil,
 		),
 		dmmonitorProcessDesc: prometheus.NewDesc(
 			dmdbms_dmmonitor_process_is_exit,
 			"Information about DM database dmmonitor process existence",
-			[]string{"hostname"},
+			[]string{"host_name"},
 			nil,
 		),
 		dmagentProcessDesc: prometheus.NewDesc(
 			dmdbms_dmagent_process_is_exit,
 			"Information about DM database dmagent process existence",
-			[]string{"hostname"},
+			[]string{"host_name"},
 			nil,
 		),
 	}

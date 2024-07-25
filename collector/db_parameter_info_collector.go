@@ -28,7 +28,7 @@ func NewIniParameterCollector(db *sql.DB) MetricCollector {
 		parameterInfoDesc: prometheus.NewDesc(
 			dmdbms_parameter_info,
 			"Information about DM database parameters",
-			[]string{"hostname", "param_name"},
+			[]string{"host_name", "param_name"},
 			nil,
 		),
 	}

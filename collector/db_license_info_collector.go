@@ -29,7 +29,7 @@ func NewDbLicenseCollector(db *sql.DB) MetricCollector {
 		licenseDateDesc: prometheus.NewDesc(
 			dmdbms_license_date,
 			"Information about DM database license expiration date",
-			[]string{"hostname", "date_day_str"},
+			[]string{"host_name", "date_day_str"},
 			nil,
 		),
 	}

@@ -31,7 +31,7 @@ func NewDbArchStatusCollector(db *sql.DB) MetricCollector {
 		archStatusDesc: prometheus.NewDesc(
 			dmdbms_arch_status,
 			"Information about DM database archive status",
-			[]string{"hostname"},
+			[]string{"host_name"},
 			nil,
 		),
 	}

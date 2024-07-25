@@ -29,13 +29,13 @@ func NewDbRapplySysCollector(db *sql.DB) MetricCollector {
 		taskMemUsedDesc: prometheus.NewDesc(
 			dmdbms_rapply_sys_task_mem_used,
 			"Information about DM database apply system task memory used",
-			[]string{"hostname"},
+			[]string{"host_name"},
 			nil,
 		),
 		taskNumDesc: prometheus.NewDesc(
 			dmdbms_rapply_sys_task_num,
 			"Information about DM database apply system task number",
-			[]string{"hostname"},
+			[]string{"host_name"},
 			nil,
 		),
 	}

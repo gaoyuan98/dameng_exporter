@@ -25,7 +25,7 @@ func NewDbVersionCollector(db *sql.DB) MetricCollector {
 		versionInfoDesc: prometheus.NewDesc(
 			dmdbms_version,
 			"Information about DM database version",
-			[]string{"hostname", "db_version_str"},
+			[]string{"host_name", "db_version_str"},
 			nil,
 		),
 	}
