@@ -26,17 +26,21 @@ func NewCustomMetrics(db *sql.DB, sqlConfig config.CustomConfig) *CustomMetrics 
 	// 预定义所有指标
 	metrics := make(map[string]prometheus.Collector)
 	for _, metric := range sqlConfig.Metrics {
+		// 在标签列表前添加固定的 host_name
+		labels := append([]string{"host_name"}, metric.Labels...)
+
 		for field, desc := range metric.MetricsDesc {
 			// 根据 MetricsType 创建 CounterVec 或 GaugeVec
+			initField := metric.MetricsType[field]
 			field = "dmdbms_" + field
-			switch metric.MetricsType[field] {
+			switch initField {
 			case "counter":
 				counter := prometheus.NewCounterVec(
 					prometheus.CounterOpts{
 						Name: field,
 						Help: desc,
 					},
-					metric.Labels,
+					labels,
 				)
 				metrics[field] = counter
 			default:
@@ -45,7 +49,7 @@ func NewCustomMetrics(db *sql.DB, sqlConfig config.CustomConfig) *CustomMetrics 
 						Name: field,
 						Help: desc,
 					},
-					metric.Labels,
+					labels,
 				)
 				metrics[field] = gauge
 			}
@@ -85,10 +89,13 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 		}
 
 		for _, result := range results {
-			labelValues := make([]string, len(metric.Labels))
+			// 创建带有固定 host_name 的标签值列表
+			labelValues := make([]string, len(metric.Labels)+1)
+			labelValues[0] = config.GetHostName() // 固定的 host_name 标签值
+
 			for i, label := range metric.Labels {
 				if val, ok := result[label]; ok {
-					labelValues[i] = fmt.Sprintf("%v", val)
+					labelValues[i+1] = fmt.Sprintf("%v", val)
 				}
 			}
 
@@ -102,7 +109,7 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 					if err != nil {
 						conver_float = 0.0
 					}
-					switch metric.MetricsType["dmdbms_"+field] {
+					switch metric.MetricsType[field] {
 					case "counter":
 						collector.(*prometheus.CounterVec).WithLabelValues(labelValues...).Add(conver_float)
 					default:
@@ -114,16 +121,6 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 		}
 
 	}
-}
-
-// contains 函数检查切片中是否包含指定字符串
-func contains(slice []string, item string) bool {
-	for _, a := range slice {
-		if a == item {
-			return true
-		}
-	}
-	return false
 }
 
 // queryDynamicDatabase 函数返回 SQL 查询结果，包括所有字段及数据

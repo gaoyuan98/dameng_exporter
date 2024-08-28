@@ -116,22 +116,43 @@ grant select on V$SESSIONS to PROMETHEUS;
 
 # 6. 自定义指标
 在exporter的同级目录下创建一个custom_metrics.toml文件，注意文件权限,编写SQL即可。写法与(oracledb_exporter)类似
-
 这是一个简单的例子：
 ```
 [[metric]]
 context = "context_with_labels"
 request = "SELECT 1 as value_1, 2 as value_2, 'First label' as label_1, 'Second label' as label_2 FROM DUAL"
 metricsdesc = { value_1 = "Simple example returning always 1 as counter.", value_2 = "Same but returning always 2 as gauge." }
-
 ```
 该文件在导出器中生成以下条目：
 ```
-# HELP oracledb_test_value_1 Simple example returning always 1.
-# TYPE oracledb_test_value_1 gauge
-oracledb_test_value_1 1
-# HELP oracledb_test_value_2 Same but returning always 2.
-# TYPE oracledb_test_value_2 gauge
-oracledb_test_value_2 2
+# HELP dmdbms_value_1 Simple example returning always 1 as counter.
+# TYPE dmdbms_value_1 gauge
+dmdbms_value_1{host_name="gy"} 1
+# HELP dmdbms_value_2 Same but returning always 2 as gauge.
+# TYPE dmdbms_value_2 gauge
+dmdbms_value_2{host_name="gy"} 2
 ```
 
+自定义标签的例子:
+```
+[[metric]]
+context = "context_with_labels"
+labels = [ "label_1", "label_2" ]
+request = "SELECT 1 as value_1, 2 as value_2, 'First label' as label_1, 'Second label' as label_2 FROM DUAL"
+metricsdesc = { value_1 = "Simple example returning always 1 as counter.", value_2 = "Same but returning always 2 as gauge." }
+# Can be counter or gauge (default)
+metricstype = { value_1 = "counter" }
+```
+该文件在导出器中生成以下条目：
+```
+# HELP dmdbms_value_1 Simple example returning always 1 as counter.
+# TYPE dmdbms_value_1 counter
+dmdbms_value_1{host_name="gy",label_1="First label",label_2="Second label"} 1
+# HELP dmdbms_value_2 Same but returning always 2 as gauge.
+# TYPE dmdbms_value_2 gauge
+dmdbms_value_2{host_name="gy",label_1="First label",label_2="Second label"} 2
+```
+
+# 更新记录
+## v1.0.2
+1. 新增自定义SQL指标的功能（在exporter的同级目录下创建一个custom_metrics.toml文件即可，写法与（oracledb_exporter相同）

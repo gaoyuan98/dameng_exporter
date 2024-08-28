@@ -7,6 +7,7 @@ import (
 	"dameng_exporter/logger"
 	"fmt"
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/duke-git/lancet/v2/fileutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
@@ -98,7 +99,8 @@ func main() {
 	config.SetHostName(hostname)
 
 	//如果自定义参数开启，则读取配置文件
-	if config.GlobalConfig.RegisterCustomMetrics {
+	if config.GlobalConfig.RegisterCustomMetrics && fileutil.IsExist(config.GlobalConfig.CustomMetricsFile) {
+
 		// 解析配置文件
 		custom_config, err := config.ParseCustomConfig(config.GlobalConfig.CustomMetricsFile)
 		if err != nil {
