@@ -1,4 +1,4 @@
-<h1 align="center">DAMENG_EXPORTER的介绍以及使用说明</h1>
+<h1 align="center">DAMENG_EXPORTER的介绍说明</h1>
 
 # 介绍
 1. DM数据库适配prometheus监控的采集器，目前已支持DM8数据库同时提供grafana 8.5.X 以上版本的监控面板（其他的grafana版本需要自己绘制表盘）。
@@ -55,7 +55,7 @@
 # 搭建步骤
 可查看这个：https://blog.csdn.net/qq_35349982/article/details/140700625
 ## 1. 下载编译的exporter包
-https://github.com/gy297879328/dameng_exporter/releases/tag/v1.0.0
+https://github.com/gaoyuan98/dameng_exporter/releases
 ```
 dameng_exporter_v1.0.0_linux_amd64.tar.gz（linux_x86平台）
 dameng_exporter_v1.0.0_linux_arm64.tar.gz（linux_arm平台）
@@ -112,3 +112,26 @@ grant select on V$SESSIONS to PROMETHEUS;
 3. 效果图
    <br />
    <img src="./img/grafana_03.png" width="1000" height="500" />
+
+
+# 6. 自定义指标
+在exporter的同级目录下创建一个custom_metrics.toml文件，注意文件权限,编写SQL即可。写法与(oracledb_exporter)类似
+
+这是一个简单的例子：
+```
+[[metric]]
+context = "context_with_labels"
+request = "SELECT 1 as value_1, 2 as value_2, 'First label' as label_1, 'Second label' as label_2 FROM DUAL"
+metricsdesc = { value_1 = "Simple example returning always 1 as counter.", value_2 = "Same but returning always 2 as gauge." }
+
+```
+该文件在导出器中生成以下条目：
+```
+# HELP oracledb_test_value_1 Simple example returning always 1.
+# TYPE oracledb_test_value_1 gauge
+oracledb_test_value_1 1
+# HELP oracledb_test_value_2 Same but returning always 2.
+# TYPE oracledb_test_value_2 gauge
+oracledb_test_value_2 2
+```
+

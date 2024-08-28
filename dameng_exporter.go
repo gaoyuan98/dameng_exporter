@@ -56,6 +56,8 @@ func main() {
 		registerHostMetrics     = kingpin.Flag("registerHostMetrics", "Register host metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Bool()
 		registerDatabaseMetrics = kingpin.Flag("registerDatabaseMetrics", "Register database metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Bool()
 		registerDmhsMetrics     = kingpin.Flag("registerDmhsMetrics", "Register dmhs metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Bool()
+		//注册自定义指标
+		registerCustomMetrics = kingpin.Flag("registerCustomMetrics", "Register custom metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterCustomMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterCustomMetrics)).Bool()
 
 		bigKeyDataCacheTime = kingpin.Flag("bigKeyDataCacheTime", "Big key data cache time (Minute)").Default(fmt.Sprint(config.DefaultConfig.BigKeyDataCacheTime)).Int()
 		AlarmKeyCacheTime   = kingpin.Flag("alarmKeyCacheTime", "Alarm key cache time (Minute)").Default(fmt.Sprint(config.DefaultConfig.AlarmKeyCacheTime)).Int()
@@ -66,7 +68,7 @@ func main() {
 
 		encryptPwd      = kingpin.Flag("encryptPwd", "Password to encrypt and exit").Default("").String()
 		encodeConfigPwd = kingpin.Flag("encodeConfigPwd", "Encode the password in the config file,default:"+strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Default(strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Bool()
-		Version         = "0.0.1"
+		Version         = "1.0.2"
 		landingPage     = []byte("<html><head><title>DAMENG DB Exporter " + Version + "</title></head><body><h1>DAMENG DB Exporter " + Version + "</h1><p><a href='/metrics'>Metrics</a></p></body></html>")
 	)
 	kingpin.Parse()
@@ -75,7 +77,7 @@ func main() {
 		return
 	}
 	//合并配置文件属性
-	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows)
+	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows)
 	// eg:初始化全局日志记录器，必须合并完配置在初始化 不然日志控制参数会失效
 	logger.InitLogger()
 	defer logger.Sync()
@@ -94,6 +96,17 @@ func main() {
 		logger.Logger.Fatalf("Failed to get hostname", zap.Error(host_err))
 	}
 	config.SetHostName(hostname)
+
+	//如果自定义参数开启，则读取配置文件
+	if config.GlobalConfig.RegisterCustomMetrics {
+		// 解析配置文件
+		custom_config, err := config.ParseCustomConfig(config.GlobalConfig.CustomMetricsFile)
+		if err != nil {
+			logger.Logger.Fatal(err)
+		} else {
+			logger.Logger.Infof("Parse custom config file size %v", len(custom_config.Metrics))
+		}
+	}
 
 	// 初始化数据库连接池
 	err := db.InitDBPool(dsn)
@@ -143,7 +156,7 @@ func EncryptPasswordConfig(configFile *string, encodeConfigPwd *bool) /*error*/ 
 }
 
 // 把 默认参数以及配置文件进行合并,
-func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int) /*(config.Config, error)*/ {
+func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int) /*(config.Config, error)*/ {
 	//读取预先设定的配置文件
 	glocal_config, err := config.LoadConfig(*configFile)
 	if err != nil {
@@ -151,7 +164,7 @@ func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string
 		fmt.Printf("no loading default config file\n")
 	}
 	// 对默认值以及配置文件的参数进行合并覆盖
-	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows)
+	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows)
 
 	config.GlobalConfig = &glocal_config
 	//return glocal_config, err
@@ -181,7 +194,7 @@ func fileExists(filename string) bool {
 	return true /*, err*/
 }
 
-func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int) {
+func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int) {
 	if listenAddr != nil && *listenAddr != config.DefaultConfig.ListenAddress {
 		glocal_config.ListenAddress = *listenAddr
 	}
@@ -226,6 +239,9 @@ func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *
 	}
 	if registerDmhsMetrics != nil && *registerDmhsMetrics != config.DefaultConfig.RegisterDmhsMetrics {
 		glocal_config.RegisterDmhsMetrics = *registerDmhsMetrics
+	}
+	if registerCustomMetrics != nil && *registerCustomMetrics != config.DefaultConfig.RegisterCustomMetrics {
+		glocal_config.RegisterCustomMetrics = *registerCustomMetrics
 	}
 	if bigKeyDataCacheTime != nil && *bigKeyDataCacheTime != config.DefaultConfig.BigKeyDataCacheTime {
 		glocal_config.BigKeyDataCacheTime = *bigKeyDataCacheTime

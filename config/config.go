@@ -21,9 +21,11 @@ func GetHostName() string {
 var GlobalConfig *Config
 
 type Config struct {
-	ConfigFile    string
-	ListenAddress string
-	MetricPath    string
+	ConfigFile        string
+	CustomMetricsFile string
+	ListenAddress     string
+	MetricPath        string
+
 	//QueryTimeout  time.Duration
 	QueryTimeout int
 	MaxIdleConns int
@@ -45,6 +47,7 @@ type Config struct {
 	RegisterHostMetrics     bool
 	RegisterDatabaseMetrics bool
 	RegisterDmhsMetrics     bool
+	RegisterCustomMetrics   bool
 	EncodeConfigPwd         bool
 	CheckSlowSQL            bool
 	SlowSqlTime             int
@@ -52,9 +55,10 @@ type Config struct {
 }
 
 var DefaultConfig = Config{
-	ConfigFile:    "./dameng_exporter.config",
-	ListenAddress: ":9200",
-	MetricPath:    "/metrics",
+	ConfigFile:        "./dameng_exporter.config",
+	CustomMetricsFile: "./custom_metrics.toml",
+	ListenAddress:     ":9200",
+	MetricPath:        "/metrics",
 	//QueryTimeout:    30 * time.Second,
 	QueryTimeout:            30, //秒
 	MaxIdleConns:            1,  //个数
@@ -68,6 +72,7 @@ var DefaultConfig = Config{
 	RegisterHostMetrics:     true,
 	RegisterDatabaseMetrics: true,
 	RegisterDmhsMetrics:     false,
+	RegisterCustomMetrics:   true,
 	EncodeConfigPwd:         true,
 	DbUser:                  "SYSDBA",
 	DbPwd:                   "SYSDBA",
@@ -100,6 +105,8 @@ func LoadConfig(filePath string) (Config, error) {
 		switch key {
 		case "configFile":
 			config.ConfigFile = value
+		case "customMetricsFile":
+			config.CustomMetricsFile = value
 		case "listenAddress":
 			config.ListenAddress = value
 		case "metricPath":
@@ -169,6 +176,10 @@ func LoadConfig(filePath string) (Config, error) {
 		case "registerDmhsMetrics":
 			if val, err := strconv.ParseBool(value); err == nil {
 				config.RegisterDmhsMetrics = val
+			}
+		case "registerCustomMetrics":
+			if val, err := strconv.ParseBool(value); err == nil {
+				config.RegisterCustomMetrics = val
 			}
 		case "encodeConfigPwd":
 			if val, err := strconv.ParseBool(value); err == nil {
