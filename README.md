@@ -41,6 +41,7 @@
    dmagent进程探活	dmdbms_dmagent_process_is_exit
 ```
 3. 源码解析地址：https://blog.csdn.net/qq_35349982/article/details/140698149
+4. 如果有问题，欢迎提issue。如该项目对您有用请点亮右上角的starred
 # 目录
 - doc目录存放的是相关的配置文件（告警模板、配置模板、表盘）
 - collector存放的是各个指标的采集逻辑
