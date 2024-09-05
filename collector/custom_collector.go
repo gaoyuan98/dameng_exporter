@@ -32,7 +32,7 @@ func NewCustomMetrics(db *sql.DB, sqlConfig config.CustomConfig) *CustomMetrics 
 		for field, desc := range metric.MetricsDesc {
 			// 根据 MetricsType 创建 CounterVec 或 GaugeVec
 			initField := metric.MetricsType[field]
-			field = "dmdbms_" + field
+			field = "dmdbms_" + metric.Context + "_" + field
 			switch initField {
 			case "counter":
 				counter := prometheus.NewCounterVec(
@@ -104,7 +104,7 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 				if strings.EqualFold(field, strings.Join(metric.Labels, "")) {
 					continue
 				}
-				if collector, ok := cm.metrics["dmdbms_"+field]; ok {
+				if collector, ok := cm.metrics["dmdbms_"+metric.Context+"_"+field]; ok {
 					conver_float, err := convertor.ToFloat(value)
 					if err != nil {
 						conver_float = 0.0

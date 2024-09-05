@@ -126,12 +126,12 @@ metricsdesc = { value_1 = "Simple example returning always 1 as counter.", value
 ```
 该文件在导出器中生成以下条目：
 ```
-# HELP dmdbms_value_1 Simple example returning always 1 as counter.
-# TYPE dmdbms_value_1 gauge
-dmdbms_value_1{host_name="gy"} 1
-# HELP dmdbms_value_2 Same but returning always 2 as gauge.
-# TYPE dmdbms_value_2 gauge
-dmdbms_value_2{host_name="gy"} 2
+# HELP dmdbms_context_no_label_value_1 Simple example returning always 1.
+# TYPE dmdbms_context_no_label_value_1 gauge
+dmdbms_context_no_label_value_1{host_name="gy"} 1
+# HELP dmdbms_context_no_label_value_2 Same but returning always 2.
+# TYPE dmdbms_context_no_label_value_2 gauge
+dmdbms_context_no_label_value_2{host_name="gy"} 2
 ```
 
 自定义标签的例子:
@@ -146,14 +146,17 @@ metricstype = { value_1 = "counter" }
 ```
 该文件在导出器中生成以下条目：
 ```
-# HELP dmdbms_value_1 Simple example returning always 1 as counter.
-# TYPE dmdbms_value_1 counter
-dmdbms_value_1{host_name="gy",label_1="First label",label_2="Second label"} 1
-# HELP dmdbms_value_2 Same but returning always 2 as gauge.
-# TYPE dmdbms_value_2 gauge
-dmdbms_value_2{host_name="gy",label_1="First label",label_2="Second label"} 2
+# HELP dmdbms_context_with_labels_value_1 Simple example returning always 1 as counter.
+# TYPE dmdbms_context_with_labels_value_1 counter
+dmdbms_context_with_labels_value_1{host_name="gy",label_1="First label",label_2="Second label"} 1
+# HELP dmdbms_context_with_labels_value_2 Same but returning always 2 as gauge.
+# TYPE dmdbms_context_with_labels_value_2 gauge
+dmdbms_context_with_labels_value_2{host_name="gy",label_1="First label",label_2="Second label"} 2
 ```
 
 # 更新记录
+## v1.0.3
+1. 修复自定义SQL指标时指标名称不包含context的问题
+2. 优化logger的日志展示,日志级别带颜色输出
 ## v1.0.2
 1. 新增自定义SQL指标的功能（在exporter的同级目录下创建一个custom_metrics.toml文件即可，写法与（oracledb_exporter相同）
