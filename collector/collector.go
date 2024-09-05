@@ -10,6 +10,7 @@ import (
 	"github.com/duke-git/lancet/v2/fileutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+	"strings"
 	"sync"
 )
 
@@ -77,31 +78,29 @@ func RegisterCollectors(reg *prometheus.Registry) {
 
 	collectors = append(collectors, NewSystemInfoCollector())
 	//
-	//if config.GlobalConfig.RegisterHostMetrics && strings.Compare(GetOS(), OS_LINUX) == 0 {
-	//	collectors = append(collectors, NewDmapProcessCollector(db.DBPool))
-	//	//collectors = append(collectors, NewExampleCounterCollector())
-	//}
-	//if config.GlobalConfig.RegisterDatabaseMetrics {
-	//	//collectors = append(collectors, NewDBSessionsCollector(db.DBPool))
-	//	collectors = append(collectors, NewTableSpaceDateFileInfoCollector(db.DBPool))
-	//	collectors = append(collectors, NewTableSpaceInfoCollector(db.DBPool))
-	//	collectors = append(collectors, NewDBInstanceRunningInfoCollector(db.DBPool))
-	//	collectors = append(collectors, NewDbMemoryPoolInfoCollector(db.DBPool))
-	//	collectors = append(collectors, NewDBSessionsStatusCollector(db.DBPool))
-	//	collectors = append(collectors, NewDbJobRunningInfoCollector(db.DBPool))
-	//	collectors = append(collectors, NewSlowSessionInfoCollector(db.DBPool))
-	//	collectors = append(collectors, NewMonitorInfoCollector(db.DBPool))
-	//	collectors = append(collectors, NewDbSqlExecTypeCollector(db.DBPool))
-	//	collectors = append(collectors, NewIniParameterCollector(db.DBPool))
-	//	collectors = append(collectors, NewDbUserCollector(db.DBPool))
-	//	collectors = append(collectors, NewDbLicenseCollector(db.DBPool))
-	//	collectors = append(collectors, NewDbVersionCollector(db.DBPool))
-	//	collectors = append(collectors, NewDbArchStatusCollector(db.DBPool))
-	//	collectors = append(collectors, NewDbRapplySysCollector(db.DBPool))
-	//	collectors = append(collectors, NewInstanceLogErrorCollector(db.DBPool))
-	//	collectors = append(collectors, NewCkptCollector(db.DBPool))
-	//
-	//}
+	if config.GlobalConfig.RegisterHostMetrics && strings.Compare(GetOS(), OS_LINUX) == 0 {
+		collectors = append(collectors, NewDmapProcessCollector(db.DBPool))
+		//collectors = append(collectors, NewExampleCounterCollector())
+	}
+	if config.GlobalConfig.RegisterDatabaseMetrics {
+		collectors = append(collectors, NewTableSpaceDateFileInfoCollector(db.DBPool))
+		collectors = append(collectors, NewTableSpaceInfoCollector(db.DBPool))
+		collectors = append(collectors, NewDBInstanceRunningInfoCollector(db.DBPool))
+		collectors = append(collectors, NewDbMemoryPoolInfoCollector(db.DBPool))
+		collectors = append(collectors, NewDBSessionsStatusCollector(db.DBPool))
+		collectors = append(collectors, NewDbJobRunningInfoCollector(db.DBPool))
+		collectors = append(collectors, NewSlowSessionInfoCollector(db.DBPool))
+		collectors = append(collectors, NewMonitorInfoCollector(db.DBPool))
+		collectors = append(collectors, NewDbSqlExecTypeCollector(db.DBPool))
+		collectors = append(collectors, NewIniParameterCollector(db.DBPool))
+		collectors = append(collectors, NewDbUserCollector(db.DBPool))
+		collectors = append(collectors, NewDbLicenseCollector(db.DBPool))
+		collectors = append(collectors, NewDbVersionCollector(db.DBPool))
+		collectors = append(collectors, NewDbArchStatusCollector(db.DBPool))
+		collectors = append(collectors, NewDbRapplySysCollector(db.DBPool))
+		collectors = append(collectors, NewInstanceLogErrorCollector(db.DBPool))
+		collectors = append(collectors, NewCkptCollector(db.DBPool))
+	}
 	if config.GlobalConfig.RegisterDmhsMetrics {
 		// 添加中间件指标收集器
 		// collectors = append(collectors, NewMiddlewareCollector())
