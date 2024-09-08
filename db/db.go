@@ -10,7 +10,7 @@ import (
 	"log"
 	"time"
 
-	_ "gitee.com/chunanyong/dm"
+	_ "github.com/gaoyuan98/dm"
 )
 
 var (
