@@ -117,7 +117,8 @@ grant select on V$SESSIONS to PROMETHEUS;
 
 # 6. 自定义指标
 在exporter的同级目录下创建一个custom_metrics.toml文件，注意文件权限,编写SQL即可。写法与(oracledb_exporter)类似
-这是一个简单的例子：
+
+## 1. 简单语句
 ```
 [[metric]]
 context = "context_with_labels"
@@ -133,7 +134,7 @@ dmdbms_context_no_label_value_1{host_name="gy"} 1
 # TYPE dmdbms_context_no_label_value_2 gauge
 dmdbms_context_no_label_value_2{host_name="gy"} 2
 ```
-
+## 2. 自定义指标的lable
 自定义标签的例子:
 ```
 [[metric]]
@@ -153,7 +154,7 @@ dmdbms_context_with_labels_value_1{host_name="gy",label_1="First label",label_2=
 # TYPE dmdbms_context_with_labels_value_2 gauge
 dmdbms_context_with_labels_value_2{host_name="gy",label_1="First label",label_2="Second label"} 2
 ```
-查询表空间多条测试用例
+## 3.查询表空间数据文件的大小
 ```
 [[metric]]
 context = "test_table_metrics"
