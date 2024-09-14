@@ -106,7 +106,7 @@ groups:
       description: "主机：{{ $labels.instance }} 备库重做日志线程数过高"
       summary: "主机：{{ $labels.instance }}:备库重做日志线程数过高，请确认是否正常"
   - alert: 表空间使用率超过95%
-    expr: ((dmdbms_tablespace_size_total_info{instance="10.63.97.108:9200",  tablespace_name!~"SYSTEM|TEMP|ROLL"} - dmdbms_tablespace_size_free_info{instance="10.63.97.108:9200",  tablespace_name!~"SYSTEM|TEMP|ROLL"}) / dmdbms_tablespace_size_total_info{instance="10.63.97.108:9200",  tablespace_name!~"SYSTEM|TEMP|ROLL"}) * 100 > 95
+    expr: ((dmdbms_tablespace_size_total_info{tablespace_name!~"SYSTEM|TEMP|ROLL"} - dmdbms_tablespace_size_free_info{tablespace_name!~"SYSTEM|TEMP|ROLL"}) / dmdbms_tablespace_size_total_info{tablespace_name!~"SYSTEM|TEMP|ROLL"}) * 100 > 95
     for: 15s
     labels:
       severity: 警告
