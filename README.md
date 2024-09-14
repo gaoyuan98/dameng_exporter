@@ -153,8 +153,31 @@ dmdbms_context_with_labels_value_1{host_name="gy",label_1="First label",label_2=
 # TYPE dmdbms_context_with_labels_value_2 gauge
 dmdbms_context_with_labels_value_2{host_name="gy",label_1="First label",label_2="Second label"} 2
 ```
+查询表空间多条测试用例
+```
+[[metric]]
+context = "test_table_metrics"
+labels = [ "name"]
+request = "SELECT name,TO_CHAR(TOTAL_SIZE*PAGE/1024/1024) AS total_size_mb FROM SYS.V$TABLESPACE"
+metricsdesc = { total_size_mb = "Simple example"}
+```
+该文件在导出器中生成以下条目：
+```
+# HELP dmdbms_test_table_metrics_total_size_mb Simple example
+# TYPE dmdbms_test_table_metrics_total_size_mb gauge
+dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="DMEAGLE"} 1024
+dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="DMEAGLE_DEV"} 1024
+dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="MAIN"} 2176
+dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="ROLL"} 128
+dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="SYSTEM"} 138
+dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
+```
 
 # 更新记录
+## v1.0.4
+1. 修复自定义SQL指标时，多条数据报lable重复的问题
+2. 将依赖的go驱动调整为v1.3.162版本
+3. 修复告警的rules中表空间告警规则不生效的问题
 ## v1.0.3
 1. 修复自定义SQL指标时指标名称不包含context的问题
 2. 优化logger的日志展示,日志级别带颜色输出
