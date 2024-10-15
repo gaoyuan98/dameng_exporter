@@ -177,7 +177,7 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 # 更新记录
 ## v1.0.5
 1. 修复表空间指标dmdbms_tablespace_size   total与free指标 赋值错误的问题
-2. 
+2. 优化查询指定版本时 因没有指定视图而提示的告警信息
 ## v1.0.4
 1. 修复自定义SQL指标时，多条数据报lable重复的问题
 2. 将依赖的go驱动调整为v1.3.162版本
