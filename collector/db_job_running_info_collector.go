@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -54,6 +55,11 @@ func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDbJobRunningInfoSqlStr)
 	if err != nil {
+		// 检查报错信息中是否包含 "v$dmmonitor" 字符串
+		if strings.Contains(err.Error(), "SYSJOB") {
+			logger.Logger.Warn("数据库未开启定时任务功能，无法检查错误任务异常数量。请执行sql语句call SP_INIT_JOB_SYS(1); 开启定时作业的功能。（该报错不影响其他指标采集数据,也可忽略）")
+			return
+		}
 		handleDbQueryError(err)
 		return
 	}

@@ -69,7 +69,7 @@ func main() {
 
 		encryptPwd      = kingpin.Flag("encryptPwd", "Password to encrypt and exit").Default("").String()
 		encodeConfigPwd = kingpin.Flag("encodeConfigPwd", "Encode the password in the config file,default:"+strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Default(strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Bool()
-		Version         = "1.0.2"
+		Version         = "1.0.5"
 		landingPage     = []byte("<html><head><title>DAMENG DB Exporter " + Version + "</title></head><body><h1>DAMENG DB Exporter " + Version + "</h1><p><a href='/metrics'>Metrics</a></p></body></html>")
 	)
 	kingpin.Parse()

@@ -67,7 +67,9 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryMonitorInfoSqlStr)
 	if err != nil {
-		if strings.EqualFold(err.Error(), "v$dmmonitor") { // 检查视图不存在的特定错误
+		//if strings.EqualFold(err.Error(), "v$dmmonitor") { // 检查视图不存在的特定错误
+		// 检查报错信息中是否包含 "v$dmmonitor" 字符串
+		if strings.Contains(err.Error(), "v$dmmonitor") {
 			logger.Logger.Warn("v$dmmonitor view does not exist, skipping future queries", zap.Error(err))
 			c.viewExists = false
 			return

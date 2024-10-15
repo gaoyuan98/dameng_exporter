@@ -65,7 +65,8 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryCheckPointInfoSql)
 	if err != nil {
-		if strings.EqualFold(err.Error(), "CKPT") { // 检查视图不存在的特定错误
+		//if strings.EqualFold(err.Error(), "CKPT") { // 检查视图不存在的特定错误
+		if strings.Contains(err.Error(), "v$CKPT") {
 			logger.Logger.Warn("v$CKPT view does not exist, skipping future queries", zap.Error(err))
 			c.viewExists = false
 			return
