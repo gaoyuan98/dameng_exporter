@@ -141,14 +141,26 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		deadlockNum, _ = strconv.ParseFloat(deadlockNumStr, 64)
 		threadNum, _ = strconv.ParseFloat(threadNumStr, 64)
 
-		// 解析时间戳字符串为 time.Time 类型
-		startTime, err := time.Parse("2006-01-02 15:04:05", startTimeStr)
+		// 加载东八区（北京时间）时区
+		loc, err := time.LoadLocation("Asia/Shanghai")
+		if err != nil {
+			logger.Logger.Error("Error loading time location", zap.Error(err))
+		}
+		// 解析时间字符串为 time.Time 类型，并指定东八区时区
+		startTime, err := time.ParseInLocation("2006-01-02 15:04:05", startTimeStr, loc)
 		if err != nil {
 			logger.Logger.Error("Error parsing start time", zap.Error(err))
-			// 如果转换失败则赋予默认时间值
-			var defaultTime = time.Date(2006, time.January, 1, 0, 0, 0, 0, time.UTC)
-			startTime = defaultTime
+			// 如果转换失败则赋予默认时间值（此处使用东八区）
+			startTime = time.Date(2006, time.January, 1, 0, 0, 0, 0, loc)
 		}
+		/*		// 解析时间戳字符串为 time.Time 类型
+				startTime, err := time.Parse("2006-01-02 15:04:05", startTimeStr)
+				if err != nil {
+					logger.Logger.Error("Error parsing start time", zap.Error(err))
+					// 如果转换失败则赋予默认时间值
+					var defaultTime = time.Date(2006, time.January, 1, 0, 0, 0, 0, loc)
+					startTime = defaultTime
+				}*/
 		// 获取秒级 Unix 时间戳
 		startTimeUnix = startTime.Unix()
 
