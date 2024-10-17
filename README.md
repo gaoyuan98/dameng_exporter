@@ -190,7 +190,6 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 # 更新记录
 ## 1.0.6
 1. 修复指标dmdbms_start_time_info时间戳与实际时间相差14个小时问题
-
 ## v1.0.5
 1. 修复表空间指标dmdbms_tablespace_size   total与free指标 赋值错误的问题
 2. 优化查询指定版本时 因没有指定视图而提示的告警信息
