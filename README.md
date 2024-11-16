@@ -40,8 +40,7 @@
    dmmonitor进程探活	dmdbms_dmmonitor_process_is_exit
    dmagent进程探活	dmdbms_dmagent_process_is_exit
 ```
-3. 源码解析地址：https://blog.csdn.net/qq_35349982/article/details/140698149
-4. 如果有问题，欢迎提issue。如该项目对您有用请点亮右上角的starred
+3如果有问题，欢迎提issue。如该项目对您有用请点亮右上角的starred
 # 目录
 - doc目录存放的是相关的配置文件（告警模板、配置模板、表盘）
 - collector存放的是各个指标的采集逻辑
@@ -52,6 +51,19 @@
 <br />
 <img src="./img/tubiao_02.png" width="1000" height="500" />
 <br />
+
+# docker镜像拉取
+```shell
+## 拉取镜像
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6
+## 指定参数并启动
+docker run -d --name dameng_exporter -p 9200:9200 \
+registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6 \
+./dameng_exporter --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+
+```
+
+
 
 # 搭建步骤
 可查看这个：https://blog.csdn.net/qq_35349982/article/details/140700625
@@ -188,7 +200,11 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ```
 
 # 更新记录
-## 1.0.6
+## 20241117
+1. 新增docker镜像(阿里云+docker Hub)
+   https://hub.docker.com/r/gaoyuan98/dameng_exporter
+   
+## v1.0.6
 1. 修复指标dmdbms_start_time_info时间戳与实际时间相差14个小时问题
 ## v1.0.5
 1. 修复表空间指标dmdbms_tablespace_size   total与free指标 赋值错误的问题
