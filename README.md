@@ -9,8 +9,6 @@
    数据库死锁数	dmdbms_dead_lock_num_info
    数据库的状态	dmdbms_status_info
    数据库启动时间	dmdbms_start_time_info
-   数据库QPS数量	dmdbms_qps_count
-   数据库TPS数量	dmdbms_tps_count
    主备集群同步延迟	dmdbms_rapply_stat
    表空间总大小	dmdbms_tablespace_size_total_info
    表空间空闲大小	dmdbms_tablespace_size_free_info
@@ -28,7 +26,7 @@
    监控慢SQL语句	dmdbms_slow_sql_info
    备库重演运行线程数	dmdbms_rapply_sys_task_num
    备库重演内存堆积信息	dmdbms_rapply_sys_task_mem_used
-   数据库语句类型数量展示逻辑	dmdbms_statement_type_info
+   数据库语句类型数量展示逻辑(tps qps的指标)	dmdbms_statement_type_info
    检查点更新	dmdbms_ckpttime_info
    检查用户信息	dmdbms_user_list_info
    数据库版本	dmdbms_version
@@ -55,13 +53,22 @@
 
 # docker镜像拉取
 ```shell
+## linux amd64版本
 ## 拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6
-## 指定参数并启动
-docker run -d --name dameng_exporter -p 9200:9200 \
-registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6 \
-./dameng_exporter --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6_amd64
+## 更换别名
+docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6_amd64 dameng_exporter:v1.0.6_amd64
+## 启动
+docker run -d --name dameng_exporter_amd64 -p 9200:9200 dameng_exporter:v1.0.6_amd64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 
+
+## linux arm64版本
+## 拉取镜像
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6_arm64
+## 更换别名
+docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6_arm64 dameng_exporter:v1.0.6_arm64
+## 启动
+docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.6_arm64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 ```
 
 
@@ -201,6 +208,9 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ```
 
 # 更新记录
+## 20241119
+1. docker介质新增amd64以及arm64的版本
+2. 修正文档中的tpa qps指标，实际使用的是dmdbms_statement_type_info
 ## 20241117
 1. 新增docker镜像(阿里云+docker Hub)
    https://hub.docker.com/r/gaoyuan98/dameng_exporter

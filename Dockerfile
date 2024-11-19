@@ -12,8 +12,8 @@ COPY . .
 # 设置 Go 模块代理为 https://goproxy.cn（在中国加速模块下载），并下载项目的依赖
 RUN go env -w GOPROXY=https://goproxy.cn,direct && go mod download
 
-# 编译 Go 项目，生成可执行文件 simple-web-app
-RUN go build  -ldflags "-s -w" -o dameng_exporter
+# 编译 Go 项目，生成可执行文件 simple-web-app arm64 amd64
+RUN GOOS=linux GOARCH=amd64 go build  -ldflags "-s -w" -o dameng_exporter
 
 # 使用一个更小的基础镜像（Alpine）来运行应用程序
 # Alpine 是一个极简的 Linux 发行版，适合部署阶段
@@ -33,6 +33,6 @@ EXPOSE 9200
 
 # 设置容器启动时运行的命令
 # 这里是运行编译好的可执行文件 simple-web-app
-CMD ["/app/dameng_exporter"]
+#CMD ["/app/dameng_exporter"]
 
-ENTRYPOINT ["./dameng_exporter"]
+ENTRYPOINT ["/app/dameng_exporter"]
