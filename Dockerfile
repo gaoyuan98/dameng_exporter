@@ -9,6 +9,7 @@ WORKDIR /app
 # 将当前项目目录的所有文件拷贝到容器的 /app 目录中
 COPY . .
 
+
 # 设置 Go 模块代理为 https://goproxy.cn（在中国加速模块下载），并下载项目的依赖
 RUN go env -w GOPROXY=https://goproxy.cn,direct && go mod download
 
