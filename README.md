@@ -75,9 +75,10 @@ docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.6_a
 
 # 搭建步骤
 可查看这个：https://blog.csdn.net/qq_35349982/article/details/140700625
-## 1. 下载编译的exporter包
+## 1. 下载已经编译好的exporter包
 https://github.com/gaoyuan98/dameng_exporter/releases
 ```
+// 根据实际的平台下载已经编译好的包
 dameng_exporter_v1.0.0_linux_amd64.tar.gz（linux_x86平台）
 dameng_exporter_v1.0.0_linux_arm64.tar.gz（linux_arm平台）
 dameng_exporter_v1.0.0_windows_amd64.tar.gz（window_x64平台）
