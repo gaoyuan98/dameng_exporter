@@ -38,12 +38,48 @@
    dmmonitor进程探活	dmdbms_dmmonitor_process_is_exit
    dmagent进程探活	dmdbms_dmagent_process_is_exit
 ```
-3如果有问题，欢迎提issue。如该项目对您有用请点亮右上角的starred
+3. 如果有问题，欢迎提issue。如该项目对您有用请点亮右上角的starred
 # 目录
 - doc目录存放的是相关的配置文件（告警模板、配置模板、表盘）
 - collector存放的是各个指标的采集逻辑
 - build_all_versions.bat为window的一键编译脚本
 
+# 参数
+```
+[root@VM-24-16-centos opt]# ./dameng_exporter_v1.0.6_linux_amd64 --help
+usage: dameng_exporter_v1.0.6_linux_amd64 [<flags>]
+
+
+Flags:
+  --[no-]help                   Show context-sensitive help (also try --help-long and --help-man).
+  --configFile="./dameng_exporter.config"  
+                                Path to configuration file
+  --listenAddress=":9200"       Address to listen on
+  --metricPath="/metrics"       Path for metrics
+  --dbHost="127.0.0.1:5236"     Database Host
+  --dbUser="SYSDBA"             Database user
+  --dbPwd="SYSDBA"              Database password
+  --queryTimeout=30             Timeout for queries (Second)
+  --maxOpenConns=10             Maximum open connections (number)
+  --maxIdleConns=1              Maximum idle connections (number)
+  --connMaxLifetime=30          Connection maximum lifetime (Minute)
+  --[no-]checkSlowSQL           Check slow SQL,default:false
+  --slowSQLTime=10000           Slow SQL time (Millisecond)
+  --maxRows=10                  Maximum rows to return
+  --[no-]registerHostMetrics    Register host metrics,default:true
+  --[no-]registerDatabaseMetrics  
+                                Register database metrics,default:true
+  --[no-]registerDmhsMetrics    Register dmhs metrics,default:false
+  --[no-]registerCustomMetrics  Register custom metrics,default:true
+  --bigKeyDataCacheTime=60      Big key data cache time (Minute)
+  --alarmKeyCacheTime=60        Alarm key cache time (Minute)
+  --logMaxSize=10               Maximum log file size(MB)
+  --logMaxBackups=3             Maximum log file backups (number)
+  --logMaxAge=30                Maximum log file age (Day)
+  --encryptPwd=""               Password to encrypt and exit
+  --[no-]encodeConfigPwd        Encode the password in the config file,default:true
+
+```
 # 搭建效果图
 <img src="./img/tubiao_01.png" width="1000" height="500" />
 <br />
@@ -90,7 +126,7 @@ dameng_exporter_v1.0.0_windows_amd64.tar.gz（window_x64平台）
 create tablespace "PROMETHEUS.DBF" datafile 'PROMETHEUS.DBF' size 512 CACHE = NORMAL;
 create user "PROMETHEUS" identified by "PROMETHEUS";
 alter user "PROMETHEUS" default tablespace "PROMETHEUS.DBF" default index tablespace "PROMETHEUS.DBF";
-## 条件允许的话 最好赋予DBA权限
+## 条件允许的话 最好赋予DBA权限(避免后期因升级exporter版本而导致查询权限不足)
 grant "PUBLIC","RESOURCE","SOI","SVI","VTI" to "PROMETHEUS";
 ## 最小化权限
 GRANT SELECT ON V$SYSSTAT TO PROMETHEUS;
@@ -116,10 +152,16 @@ GRANT SELECT ON V$THREADS TO PROMETHEUS;
 注意：程序运行后会自动对数据库密码部分进行密文处理，不用担心密码泄露问题
 3. 启动exporter程序
 ```
-## 启动服务
-[root@VM-24-17-centos dm_prometheus]#  nohup  ./dameng_exporter_v1.0.0_linux_amd64 > /dev/null 2>&1 &
-## 2. 访问接口
-##  通过浏览器访问http://被监控端IP:9200/metrics
+# 启动程序
+
+## 1） 第一种方式：直接启动
+## 直接启动exporter程序后缀不跟参数,此时会自动使用同级目录下dameng_exporter.config配置文件的数据库账号及密码
+[root@VM-24-17-centos dm_prometheus]#  nohup ./dameng_exporter_v1.0.0_linux_amd64 > /dev/null 2>&1 &
+
+## 2) 第二种方式：添加参数形式启动  ./dameng_exporter_arm64 --help可以查看参数
+[root@VM-24-17-centos dm_prometheus]#  nohup ./dameng_exporter_arm64 --listenAddress=":9200" --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+
+# 通过浏览器访问http://被监控端IP:9200/metrics
 [root@server ~]# lsof -i:9200
 ```
 ## 4. 在prometheus上进行配置
