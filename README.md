@@ -179,7 +179,8 @@ GRANT SELECT ON V$THREADS TO PROMETHEUS;
 
 
 ## 5. 在grafana上导入提供的表盘
-1. 登录grafana登录，导入模板
+> 表盘模板在doc目录下
+1. 登录grafana登录，导入模板 
    <br />
    <img src="./img/grafana_01.png" width="1000" height="500" />
 2. 所使用的模板在表盘中
