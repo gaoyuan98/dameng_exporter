@@ -252,9 +252,12 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ```
 
 # 更新记录
+## v1.0.7
+1. 修复custom_metrics.toml不支持多个自定义指标的问题
+
 ## 20241119
 1. docker介质新增amd64以及arm64的版本
-2. 修正文档中的tpa qps指标，实际使用的是dmdbms_statement_type_info
+2. 修正文档中的tps qps指标，实际使用的是dmdbms_statement_type_info指标
 ## 20241117
 1. 新增docker镜像(阿里云+docker Hub)
    https://hub.docker.com/r/gaoyuan98/dameng_exporter

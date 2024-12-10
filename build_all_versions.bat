@@ -3,7 +3,7 @@
 
 REM 设置变量
 set PROGRAM_NAME=dameng_exporter
-set VERSION=v1.0.6
+set VERSION=v1.0.7
 set CONFIG_FILE=dameng_exporter.config custom_metrics.toml
 
 
@@ -72,6 +72,26 @@ if %errorlevel% neq 0 (
 
 REM 清理编译生成的可执行文件
 del %PROGRAM_NAME%_%VERSION%_linux_arm64
+
+REM 编译darwin amd64版本
+@REM SET GOOS=darwin
+@REM SET GOARCH=amd64
+@REM go build -ldflags "-s -w" -o %PROGRAM_NAME%_%VERSION%_darwin_amd64
+@REM if %errorlevel% neq 0 (
+@REM     echo Error compiling Darwin amd64 version
+@REM     timeout /t 3 /nobreak >nul  REM 等待3秒钟
+@REM     exit /b 1
+@REM )
+@REM echo Compiled Darwin amd64 version successfully
+@REM REM 打包Darwin amd64版本为tar.gz，包括配置文件
+@REM tar -czvf %PROGRAM_NAME%_%VERSION%_darwin_amd64.tar.gz %PROGRAM_NAME%_%VERSION%_darwin_amd64 %CONFIG_FILE%
+@REM if %errorlevel% neq 0 (
+@REM     echo Error packaging Darwin amd64 version
+@REM     timeout /t 3 /nobreak >nul
+@REM     exit /b 1
+@REM )
+@REM REM 清理编译生成的可执行文件
+@REM del %PROGRAM_NAME%_%VERSION%_darwin_amd64
 
 
 echo All versions compiled successfully
