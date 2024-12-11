@@ -91,7 +91,7 @@ Flags:
 ```shell
 ## linux amd64版本
 ## 拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6_amd64
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.7_amd64
 ## 更换别名
 docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6_amd64 dameng_exporter:v1.0.6_amd64
 ## 启动
@@ -168,12 +168,22 @@ GRANT SELECT ON V$THREADS TO PROMETHEUS;
 修改prometheus的prometheus.yml配置文件
 ```
 # 添加的是数据库监控的接口9200接口，如果是一套集群，则在targets标签后进行逗号拼接，如下图所示
-# 注意 cluster_name标签不能改，提供的模板用该标签做分类
+# 注意 cluster_name标签名不能改，标签的值可以改，提供的模板用该标签做分类
+# 每套集群的job_name和cluster_name的值需要保证全局唯一
+
+# 单机示例
 - job_name: "dm_db_single"
   static_configs:
    - targets: ["192.168.112.135:9200"]
      labels:
      cluster_name: '单机测试'
+     
+# 集群示例
+- job_name: "dmdbms_bgoak_dw"
+ static_configs:
+   - targets: ["192.168.112.135:9200","192.168.112.136:9200"]
+     labels:
+       cluster_name: 'OA集群DW'     
 ```
 <br />
 
