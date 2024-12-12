@@ -83,7 +83,8 @@ Flags:
 <br />
 <img src="./img/tubiao_02.png" width="1000" height="500" />
 <br />
-
+<img src="./img/grafana_04.png" width="1000" height="500" />
+<br />
 
 # docker镜像拉取
 ```shell
@@ -108,7 +109,12 @@ docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.6_a
 
 
 # 搭建步骤
-可查看这个：https://blog.csdn.net/qq_35349982/article/details/140700625
+可以参考如下连接
+
+1）https://blog.csdn.net/qq_35349982/article/details/140700625
+
+2）https://blog.csdn.net/qq_35349982/article/details/144426840
+
 ## 1. 下载已经编译好的exporter包
 https://github.com/gaoyuan98/dameng_exporter/releases
 ```
@@ -199,7 +205,6 @@ GRANT SELECT ON V$THREADS TO PROMETHEUS;
    <br />
    <img src="./img/grafana_03.png" width="1000" height="500" />
 
-
 # 6. 自定义指标
 在exporter的同级目录下创建一个custom_metrics.toml文件，注意文件权限,编写SQL即可。写法与(oracledb_exporter)类似
 
@@ -264,14 +269,12 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 1. 新增全局报警的表盘以及对应的rules
 ## v1.0.7
 1. 修复custom_metrics.toml不支持多个自定义指标的问题
-
 ## 20241119
 1. docker介质新增amd64以及arm64的版本
 2. 修正文档中的tps qps指标，实际使用的是dmdbms_statement_type_info指标
 ## 20241117
 1. 新增docker镜像(阿里云+docker Hub)
    https://hub.docker.com/r/gaoyuan98/dameng_exporter
-   
 ## v1.0.6
 1. 修复指标dmdbms_start_time_info时间戳与实际时间相差14个小时问题
 ## v1.0.5
