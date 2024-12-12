@@ -20,7 +20,6 @@ rule_files:
 # Here it's Prometheus itself.
 scrape_configs:
   # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-  - job_name: "prometheus"
   - job_name: "dm_node_oak"
     static_configs:
       - targets: ["100.63.97.93:9100","100.63.97.94:9100"]

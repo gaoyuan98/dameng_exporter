@@ -18,8 +18,6 @@
    数据库实例的错误事件	dmdbms_instance_log_error_info
    查询内存池的当前使用状态	dmdbms_memory_curr_pool_info
    查询内存池的配置上限	dmdbms_memory_total_pool_info
-   数据库活动会话执行延迟监控	dmdbms_waiting_session
-   数据库的最大连接数	dmdbms_connect_session
    数据库授权查询	dmdbms_license_date
    数据库定时任务错误	dmdbms_joblog_error_num
    监控监视器进程	dmdbms_monitor_info
@@ -262,6 +260,8 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ```
 
 # 更新记录
+## 20241212
+1. 新增全局报警的表盘以及对应的rules
 ## v1.0.7
 1. 修复custom_metrics.toml不支持多个自定义指标的问题
 

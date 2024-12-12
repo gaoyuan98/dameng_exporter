@@ -1,5 +1,5 @@
 groups:
-- name: 主机状态-监控告警
+- name: 数据库状态-监控告警
   rules:
   - alert: 主机失联
     expr: up == 0
@@ -73,24 +73,8 @@ groups:
     annotations:
       description: "主机：{{ $labels.instance }} 磁盘分区使用率超过90%"
       summary: "主机：{{ $labels.instance }}: 磁盘分区使用率超过90%，请核实"
-  - alert: 会话超时数
-    expr: dmdbms_waiting_session >= 20
-    for: 15s
-    labels:
-      severity: 警告        
-    annotations:
-      description: "主机：{{ $labels.instance }} 数据库会话超时数"
-      summary: "主机：{{ $labels.instance }}:数据库会话超时数，请确认是否正常"   
-  - alert: HS延时时间异常
-    expr: dmdbms_dmhs_delay >= 600000 
-    for: 15s
-    labels:
-      severity: 警告
-    annotations:
-      description: "主机：{{ $labels.instance }} HS延时时间异常"
-      summary: "主机：{{ $labels.instance }}:HS延时时间异常，请确认是否正常"
   - alert: 备库重做日志内存堆积过高
-    expr: dmdbms_rapply_sys_task_mem_used >= 1536000000
+    expr: dmdbms_rapply_sys_task_mem_used >= 860000000
     for: 15s
     labels:
       severity: 警告
@@ -98,7 +82,7 @@ groups:
       description: "主机：{{ $labels.instance }} 备库重做日志内存堆积过高"
       summary: "主机：{{ $labels.instance }}:备库重做日志内存堆积过高，请确认是否正常"
   - alert: 备库重做日志线程数
-    expr: dmdbms_rapply_sys_task_num >= 4200
+    expr: dmdbms_rapply_sys_task_num >= 4096
     for: 15s
     labels:
       severity: 警告
