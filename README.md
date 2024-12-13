@@ -92,18 +92,18 @@ Flags:
 ## 拉取镜像
 docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.7_amd64
 ## 更换别名
-docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6_amd64 dameng_exporter:v1.0.6_amd64
+docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.7_amd64 dameng_exporter:v1.0.7_amd64
 ## 启动
-docker run -d --name dameng_exporter_amd64 -p 9200:9200 dameng_exporter:v1.0.6_amd64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+docker run -d --name dameng_exporter_amd64 -p 9200:9200 dameng_exporter:v1.0.7_amd64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 
 
 ## linux arm64版本
 ## 拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6_arm64
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.7_arm64
 ## 更换别名
-docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.6_arm64 dameng_exporter:v1.0.6_arm64
+docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.7_arm64 dameng_exporter:v1.0.7_arm64
 ## 启动
-docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.6_arm64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.7_arm64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 ```
 
 
@@ -118,10 +118,10 @@ docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.6_a
 ## 1. 下载已经编译好的exporter包
 https://github.com/gaoyuan98/dameng_exporter/releases
 ```
-// 根据实际的平台下载已经编译好的包
-dameng_exporter_v1.0.0_linux_amd64.tar.gz（linux_x86平台）
-dameng_exporter_v1.0.0_linux_arm64.tar.gz（linux_arm平台）
-dameng_exporter_v1.0.0_windows_amd64.tar.gz（window_x64平台）
+// 根据需要安装的平台下载已经编译好的包
+dameng_exporter_v1.X_linux_amd64.tar.gz（linux_x86平台）
+dameng_exporter_v1.X_linux_arm64.tar.gz（linux_arm平台）
+dameng_exporter_v1.X_windows_amd64.tar.gz（window_x64平台）
 ```
 
 ## 2. 新建用户权限
