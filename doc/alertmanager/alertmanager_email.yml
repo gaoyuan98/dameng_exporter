@@ -1,0 +1,27 @@
+global:  #smtp与163邮箱一致。此处自行修改为其他邮箱
+  smtp_smarthost: 'smtp.163.com:25'
+  smtp_from: '1393592xxxx@163.com'
+  smtp_auth_username: '1393592xxxx@163.com'
+  smtp_auth_password: 'YONUZCAGJHIUYXXX'
+  smtp_require_tls: false
+templates:
+  - './template/alertmanager-*.tmpl'    # 读取自定义通知模板定义的文件。
+route:
+  group_by: ['alertname']
+  group_wait: 1m     # 一个新分组等待发送报警的时间
+  group_interval: 15m  #已经发送成功了报警的组,有新增alert加入组时下一次发送报警的时间
+  repeat_interval: 1h # 报警无变化情况下,重复发送告警时间。默认1h
+  #resolve_timeout: 5m # 该时间内未收到报警则视为问题解决
+  receiver: 'email'
+receivers:
+  - name: 'email'
+    email_configs:
+      - to: 'xxx@163.com' #配置邮件发送给谁，多人的话逗号分隔
+        html: '{{ template "email.to.html" . }}' # HTML模板文件正文
+        send_resolved: true
+inhibit_rules:  #告警抑制
+  - source_match:
+      severity: '严重' #如果使用英文的模板dm_alter_rules_en.yml，需要修改为ERROR
+    target_match:
+      severity: '警告'  #如果使用英文的模板dm_alter_rules_en.yml，需要修改为WARNING
+    equal: ['alertname', 'job', 'instance']

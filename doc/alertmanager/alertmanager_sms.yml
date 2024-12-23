@@ -1,0 +1,18 @@
+global:
+  resolve_timeout: 5m
+route:
+  group_by: ['alertname']
+  group_wait: 1m     # 一个新分组等待发送报警的时间
+  group_interval: 15m  #已经发送成功了报警的组,有新增alert加入组时下一次发送报警的时间
+  repeat_interval: 1h # 报警无变化情况下,重复发送告警时间。默认1h
+  receiver: 'webhook'
+receivers:
+  - name: 'webhook'
+    webhook_configs:
+      - url: 'http://127.0.0.1:9400/alertMessage/receive2' #自己编写收集接口
+inhibit_rules:
+  - source_match:
+      severity: '严重' #如果使用英文的模板dm_alter_rules_en.yml，需要修改为ERROR
+    target_match:
+      severity: '警告' #如果使用英文的模板dm_alter_rules_en.yml，需要修改为WARNING
+    equal: ['alertname', 'job', 'instance']
