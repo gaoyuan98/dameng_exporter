@@ -44,6 +44,7 @@
 
 # 参数
 ```
+# 每个版本存在差异,以每个版本实际结果为准
 [root@VM-24-16-centos opt]# ./dameng_exporter_v1.0.6_linux_amd64 --help
 usage: dameng_exporter_v1.0.6_linux_amd64 [<flags>]
 
@@ -263,7 +264,11 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="ROLL"} 128
 dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="SYSTEM"} 138
 dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ```
-
+# 微信公众号
+分享DM数据库的相关知识
+<br />
+<img src="./img/gzh.png" width="1000" height="500" />
+<br />
 # 更新记录
 ## 20241212
 1. 新增全局报警的表盘以及对应的rules
