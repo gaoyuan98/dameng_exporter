@@ -265,7 +265,7 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="SYSTEM"} 138
 dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ```
 # 微信公众号
-分享DM数据库的相关知识
+扫码或微信公众号搜索“小高的影子”分享DM数据库一线遇到的各类问题
 <br />
 <img src="./img/gzh.png" width="1000" height="500" />
 <br />
