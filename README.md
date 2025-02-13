@@ -45,8 +45,8 @@
 # 参数
 ```
 # 每个版本存在差异,以每个版本实际结果为准
-[root@VM-24-16-centos opt]# ./dameng_exporter_v1.0.6_linux_amd64 --help
-usage: dameng_exporter_v1.0.6_linux_amd64 [<flags>]
+[root@VM-24-16-centos opt]# ./dameng_exporter_v1.0.8_linux_amd64 --help
+usage: dameng_exporter_v1.0.8_linux_amd64 [<flags>]
 
 
 Flags:
@@ -62,12 +62,11 @@ Flags:
   --maxOpenConns=10             Maximum open connections (number)
   --maxIdleConns=1              Maximum idle connections (number)
   --connMaxLifetime=30          Connection maximum lifetime (Minute)
-  --[no-]checkSlowSQL           Check slow SQL,default:false
-  --slowSQLTime=10000           Slow SQL time (Millisecond)
-  --maxRows=10                  Maximum rows to return
+  --[no-]checkSlowSqL           Check slow SQL,default:false
+  --slowSqLTime=10000           Slow SQL time (Millisecond)
+  --SlowSqlLimitRows=10         Slow SQL return limit row
   --[no-]registerHostMetrics    Register host metrics,default:true
-  --[no-]registerDatabaseMetrics  
-                                Register database metrics,default:true
+  --[no-]registerDatabaseMetrics Register database metrics,default:true
   --[no-]registerDmhsMetrics    Register dmhs metrics,default:false
   --[no-]registerCustomMetrics  Register custom metrics,default:true
   --bigKeyDataCacheTime=60      Big key data cache time (Minute)
@@ -77,7 +76,6 @@ Flags:
   --logMaxAge=30                Maximum log file age (Day)
   --encryptPwd=""               Password to encrypt and exit
   --[no-]encodeConfigPwd        Encode the password in the config file,default:true
-
 ```
 # 搭建效果图
 <img src="./img/tubiao_01.png" width="1000" height="500" />
@@ -270,6 +268,9 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 <img src="./img/gzh.png" width="1000" height="500" />
 <br />
 # 更新记录
+## v1.0.8
+1. 修复在window环境下运行时报unknown time zone “Asia/Shanghai”的问题
+2. 调整程序启动时的参数驼峰法命名，--help可查看
 ## 20241212
 1. 新增全局报警的表盘以及对应的rules
 ## v1.0.7

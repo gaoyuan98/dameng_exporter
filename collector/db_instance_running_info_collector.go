@@ -6,9 +6,11 @@ import (
 	"dameng_exporter/logger"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
+
 	"go.uber.org/zap"
 	"strconv"
 	"time"
+	_ "time/tzdata"
 )
 
 type DBInstanceRunningInfoCollector struct {
