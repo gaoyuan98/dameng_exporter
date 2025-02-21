@@ -69,6 +69,8 @@ func main() {
 	defer logger.Sync()
 
 	logger.Logger.Debugf("mergeConfigParam: %v", config.GlobalConfig)
+	//项目开源地址
+	logger.Logger.Infof("The open source address of the project: https://github.com/gaoyuan98/dameng_exporter")
 
 	// 创建一个新的注册器，如果使用系统自带的,会多余出很多指标
 	reg := prometheus.NewRegistry()

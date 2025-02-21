@@ -108,11 +108,11 @@ docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.7_a
 
 
 # 搭建步骤
-可以参考如下连接
+可以参考如下连接,对您有用的话公众号点个关注
 
-1）https://blog.csdn.net/qq_35349982/article/details/140700625
+1) dameng_exporter部署对接prometheus: https://mp.weixin.qq.com/s/l8LB0nZeevtyrtD_oa9oiQ
 
-2）https://blog.csdn.net/qq_35349982/article/details/144426840
+2) prometheus配置DM的全局的告警面板: https://blog.csdn.net/qq_35349982/article/details/144426840
 
 ## 1. 下载已经编译好的exporter包
 https://github.com/gaoyuan98/dameng_exporter/releases
