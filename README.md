@@ -105,6 +105,11 @@ docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.
 docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.7_arm64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 ```
 
+# 微信公众号
+扫码或微信公众号搜索“达梦课代表”分享DM数据库一线遇到的各类问题
+<br />
+<img src="./img/gzh.png" />
+<br />
 
 
 # 搭建步骤
@@ -262,11 +267,8 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="ROLL"} 128
 dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="SYSTEM"} 138
 dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ```
-# 微信公众号
-扫码或微信公众号搜索“达梦课代表”分享DM数据库一线遇到的各类问题
-<br />
-<img src="./img/gzh.png" />
-<br />
+
+
 # 更新记录
 ## v1.0.9
 1. 将依赖的数据库由v1.3.162版本调整为v1.4.48版本，解决ipv6连接异常的问题
