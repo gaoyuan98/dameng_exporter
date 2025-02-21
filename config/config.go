@@ -186,15 +186,15 @@ func LoadConfig(filePath string) (Config, error) {
 				config.EncodeConfigPwd = val
 			}
 
-		case "checkSlowSQL":
+		case "checkSlowSql":
 			if val, err := strconv.ParseBool(value); err == nil {
 				config.CheckSlowSQL = val
 			}
-		case "slowSQLTime":
+		case "slowSqlTime":
 			if val, err := strconv.Atoi(value); err == nil {
 				config.SlowSqlTime = val
 			}
-		case "slowSQLMaxRows":
+		case "slowSqlLimitRows":
 			if val, err := strconv.Atoi(value); err == nil {
 				config.SlowSqlMaxRows = val
 			}

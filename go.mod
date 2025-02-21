@@ -6,7 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/duke-git/lancet/v2 v2.3.2
-	github.com/gaoyuan98/dm v1.3.162
+	github.com/gaoyuan98/dm v1.4.48
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.19.1
 	go.uber.org/zap v1.27.0

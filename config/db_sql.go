@@ -77,7 +77,7 @@ GROUP BY
                       WHERE  1=1 
                    and STATE='ACTIVE'
                    ORDER BY 1 DESC) 
-             where EXEC_TIME >= ? LIMIT ?`
+             where EXEC_TIME >= ? and LAST_RECV_TIME > TO_TIMESTAMP('2000-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') LIMIT ?`
 	//查询监视器信息
 	QueryMonitorInfoSqlStr = `select /*+DM_EXPORTER*/ * from v$dmmonitor`
 	//查询数据库的语句执行次数

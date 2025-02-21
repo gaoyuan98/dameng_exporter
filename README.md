@@ -45,8 +45,8 @@
 # 参数
 ```
 # 每个版本存在差异,以每个版本实际结果为准
-[root@VM-24-16-centos opt]# ./dameng_exporter_v1.0.8_linux_amd64 --help
-usage: dameng_exporter_v1.0.8_linux_amd64 [<flags>]
+[root@VM-24-16-centos opt]# ./dameng_exporter_v1.0.9_linux_amd64 --help
+usage: dameng_exporter_v1.0.9_linux_amd64 [<flags>]
 
 
 Flags:
@@ -263,11 +263,14 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="SYSTEM"} 138
 dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ```
 # 微信公众号
-扫码或微信公众号搜索“小高的影子”分享DM数据库一线遇到的各类问题
+扫码或微信公众号搜索“达梦课代表”分享DM数据库一线遇到的各类问题
 <br />
-<img src="./img/gzh.png" width="1000" height="500" />
+<img src="./img/gzh.png" />
 <br />
 # 更新记录
+## v1.0.9
+1. 将依赖的数据库由v1.3.162版本调整为v1.4.48版本，解决ipv6连接异常的问题
+2. 修复开启慢SQL功能时，某些特殊场景下报错的问题，同时完善慢SQL的开启文档
 ## v1.0.8
 1. 修复在window环境下运行时报unknown time zone “Asia/Shanghai”的问题
 2. 调整程序启动时的参数驼峰法命名，--help可查看

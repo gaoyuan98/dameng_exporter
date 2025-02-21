@@ -3,7 +3,7 @@
 
 REM 设置变量
 set PROGRAM_NAME=dameng_exporter
-set VERSION=v1.0.8
+set VERSION=v1.0.9
 set CONFIG_FILE=dameng_exporter.config custom_metrics.toml
 
 

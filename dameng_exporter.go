@@ -17,21 +17,6 @@ import (
 	"strconv"
 )
 
-/*var (
-	registerHostMetrics     bool = true //主机类的数据库指标 例如进程是否存活
-	registerDatabaseMetrics bool = true
-	registerDmhsMetrics     bool = true //DMHS的相关指标
-)
-*/
-/*if registerHostMetrics || registerDatabaseMetrics || registerMiddlewareMetrics {
-// 注册自定义指标
-collector.RegisterCollectors(registerHostMetrics, registerDatabaseMetrics, registerMiddlewareMetrics)
-} else {
-// 卸载所有注册器
-collector.UnregisterCollectors()
-}
-*/
-
 func main() {
 
 	var (
@@ -48,11 +33,11 @@ func main() {
 		connMaxLife  = kingpin.Flag("connMaxLifetime", "Connection maximum lifetime (Minute)").Default(fmt.Sprint(config.DefaultConfig.ConnMaxLifetime)).Int()
 
 		//是否检查慢SQL
-		checkSlowSQL = kingpin.Flag("checkSlowSqL", "Check slow SQL,default:"+strconv.FormatBool(config.DefaultConfig.CheckSlowSQL)).Default(strconv.FormatBool(config.DefaultConfig.CheckSlowSQL)).Bool()
+		checkSlowSQL = kingpin.Flag("checkSlowSql", "Check slow SQL,default:"+strconv.FormatBool(config.DefaultConfig.CheckSlowSQL)).Default(strconv.FormatBool(config.DefaultConfig.CheckSlowSQL)).Bool()
 		//SQL检查的毫秒数
-		slowSqlTime = kingpin.Flag("slowSqLTime", "Slow SQL time (Millisecond)").Default(fmt.Sprint(config.DefaultConfig.SlowSqlTime)).Int()
+		slowSqlTime = kingpin.Flag("slowSqlTime", "Slow SQL time (Millisecond)").Default(fmt.Sprint(config.DefaultConfig.SlowSqlTime)).Int()
 		//回显的条数
-		slowSqlMaxRows = kingpin.Flag("SlowSqlLimitRows", "Slow SQL return limit row").Default(fmt.Sprint(config.DefaultConfig.SlowSqlMaxRows)).Int()
+		slowSqlMaxRows = kingpin.Flag("slowSqlLimitRows", "Slow SQL return limit row").Default(fmt.Sprint(config.DefaultConfig.SlowSqlMaxRows)).Int()
 
 		registerHostMetrics     = kingpin.Flag("registerHostMetrics", "Register host metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Bool()
 		registerDatabaseMetrics = kingpin.Flag("registerDatabaseMetrics", "Register database metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Bool()
@@ -69,7 +54,7 @@ func main() {
 
 		encryptPwd      = kingpin.Flag("encryptPwd", "Password to encrypt and exit").Default("").String()
 		encodeConfigPwd = kingpin.Flag("encodeConfigPwd", "Encode the password in the config file,default:"+strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Default(strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Bool()
-		Version         = "1.0.8"
+		Version         = "1.0.9"
 		landingPage     = []byte("<html><head><title>DAMENG DB Exporter " + Version + "</title></head><body><h1>DAMENG DB Exporter " + Version + "</h1><p><a href='/metrics'>Metrics</a></p></body></html>")
 	)
 	kingpin.Parse()
