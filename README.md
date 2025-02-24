@@ -272,7 +272,7 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ## v1.0.9
 1. 将依赖的数据库由v1.3.162版本调整为v1.4.48版本，解决ipv6连接异常的问题
 2. 修复开启慢SQL功能时，某些特殊场景下报错的问题，同时完善慢SQL的开启文档(https://mp.weixin.qq.com/s/FMzbrVjwC-6UdAIopg65wA)
-3. 更新v1.0.9的docker镜像地址
+3. 更新v1.0.9的docker镜像介质及地址
 ## v1.0.8
 1. 修复在window环境下运行时报unknown time zone “Asia/Shanghai”的问题
 2. 调整程序启动时的参数驼峰法命名，--help可查看
