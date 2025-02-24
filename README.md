@@ -64,7 +64,7 @@ Flags:
   --connMaxLifetime=30          Connection maximum lifetime (Minute)
   --[no-]checkSlowSqL           Check slow SQL,default:false
   --slowSqLTime=10000           Slow SQL time (Millisecond)
-  --SlowSqlLimitRows=10         Slow SQL return limit row
+  --slowSqlLimitRows=10         Slow SQL return limit row
   --[no-]registerHostMetrics    Register host metrics,default:true
   --[no-]registerDatabaseMetrics Register database metrics,default:true
   --[no-]registerDmhsMetrics    Register dmhs metrics,default:false
@@ -89,35 +89,34 @@ Flags:
 ```shell
 ## linux amd64版本
 ## 拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.7_amd64
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.9_amd64
 ## 更换别名
-docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.7_amd64 dameng_exporter:v1.0.7_amd64
+docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.9_amd64 dameng_exporter:v1.0.9_amd64
 ## 启动
-docker run -d --name dameng_exporter_amd64 -p 9200:9200 dameng_exporter:v1.0.7_amd64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+docker run -d --name dameng_exporter_amd64 -p 9200:9200 dameng_exporter:v1.0.9_amd64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 
 
 ## linux arm64版本
 ## 拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.7_arm64
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.9_arm64
 ## 更换别名
-docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.7_arm64 dameng_exporter:v1.0.7_arm64
+docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.9_arm64 dameng_exporter:v1.0.9_arm64
 ## 启动
-docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.7_arm64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.9_arm64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 ```
 
 # 微信公众号
 扫码或微信公众号搜索“达梦课代表”分享DM数据库一线遇到的各类问题
 <br />
-<img src="./img/gzh.png" />
+<img src="./img/gzh01.png" />
 <br />
 
 
 # 搭建步骤
-可以参考如下连接,对您有用的话公众号点个关注
-
+相关文章如下，如有问题提issue
 1) dameng_exporter部署对接prometheus: https://mp.weixin.qq.com/s/l8LB0nZeevtyrtD_oa9oiQ
-
 2) prometheus配置DM的全局的告警面板: https://blog.csdn.net/qq_35349982/article/details/144426840
+3) dameng_exporter中如何开启监控慢sql功能: https://mp.weixin.qq.com/s/FMzbrVjwC-6UdAIopg65wA
 
 ## 1. 下载已经编译好的exporter包
 https://github.com/gaoyuan98/dameng_exporter/releases
@@ -272,7 +271,8 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 # 更新记录
 ## v1.0.9
 1. 将依赖的数据库由v1.3.162版本调整为v1.4.48版本，解决ipv6连接异常的问题
-2. 修复开启慢SQL功能时，某些特殊场景下报错的问题，同时完善慢SQL的开启文档
+2. 修复开启慢SQL功能时，某些特殊场景下报错的问题，同时完善慢SQL的开启文档(https://mp.weixin.qq.com/s/FMzbrVjwC-6UdAIopg65wA)
+3. 更新v1.0.9的docker镜像地址
 ## v1.0.8
 1. 修复在window环境下运行时报unknown time zone “Asia/Shanghai”的问题
 2. 调整程序启动时的参数驼峰法命名，--help可查看
