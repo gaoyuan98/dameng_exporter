@@ -68,8 +68,8 @@ var DefaultConfig = Config{
 	LogMaxBackups:           3,  //个数
 	LogMaxAge:               30, //天
 	BigKeyDataCacheTime:     60, //分
-	AlarmKeyCacheTime:       60,
-	RegisterHostMetrics:     true,
+	AlarmKeyCacheTime:       5,  //分
+	RegisterHostMetrics:     false,
 	RegisterDatabaseMetrics: true,
 	RegisterDmhsMetrics:     false,
 	RegisterCustomMetrics:   true,

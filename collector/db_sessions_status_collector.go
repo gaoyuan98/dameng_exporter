@@ -35,7 +35,7 @@ func NewDBSessionsStatusCollector(db *sql.DB) MetricCollector {
 		),
 		sessionPercentageDesc: prometheus.NewDesc(
 			dmdbms_session_percentage,
-			"Number of database sessions type percentage",
+			"Number of database sessions type percentage,method: total/max_session * 100%",
 			[]string{"host_name"},
 			nil,
 		),

@@ -1,0 +1,101 @@
+package collector
+
+import (
+	"context"
+	"dameng_exporter/config"
+	"dameng_exporter/logger"
+	"database/sql"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
+	"time"
+)
+
+// 定义数据结构
+type InstanceLogInfo struct {
+	Txt     sql.NullString
+	Level   sql.NullString
+	Pid     sql.NullString
+	LogTime sql.NullString
+}
+
+// 定义收集器结构体
+type DbInstanceLogInfoCollector struct {
+	db                  *sql.DB
+	instanceLogInfoDesc *prometheus.Desc
+}
+
+func NewDbInstanceLogErrorCollector(db *sql.DB) MetricCollector {
+	return &DbInstanceLogInfoCollector{
+		db: db,
+		instanceLogInfoDesc: prometheus.NewDesc(
+			dmdbms_instance_log_error_info,
+			"Information about DM database Instance error log info",
+			[]string{"host_name", "pid", "level", "log_time", "txt"},
+			nil,
+		),
+	}
+}
+
+func (c *DbInstanceLogInfoCollector) Describe(ch chan<- *prometheus.Desc) {
+	ch <- c.instanceLogInfoDesc
+}
+
+func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
+	funcStart := time.Now()
+	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
+	defer func() {
+		duration := time.Since(funcStart)
+		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
+	}()
+
+	if err := c.db.Ping(); err != nil {
+		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	defer cancel()
+
+	rows, err := c.db.QueryContext(ctx, config.QueryInstanceErrorLogSql)
+	if err != nil {
+		handleDbQueryError(err)
+		return
+	}
+	defer rows.Close()
+
+	var instanceLogInfos []InstanceLogInfo
+	for rows.Next() {
+		var info InstanceLogInfo
+		//LOG_TIME,PID,LEVEL$,TXT
+		if err := rows.Scan(&info.LogTime, &info.Pid, &info.Level, &info.Txt); err != nil {
+			logger.Logger.Error("Error scanning row", zap.Error(err))
+			continue
+		}
+		instanceLogInfos = append(instanceLogInfos, info)
+	}
+
+	if err := rows.Err(); err != nil {
+		logger.Logger.Error("Error with rows", zap.Error(err))
+	}
+
+	hostname := config.GetHostName()
+	// 发送数据到 Prometheus
+	for _, info := range instanceLogInfos {
+		//[]string{"host_name", "pid", "level", "log_time", "txt"}
+
+		pid := NullStringToString(info.Pid)
+		level := NullStringToString(info.Level)
+		logTime := NullStringToString(info.LogTime)
+		txt := NullStringToString(info.Txt)
+
+		//ps: log日志本身就是异常的,所以统一设置为1
+		logStatusValue := 1
+
+		ch <- prometheus.MustNewConstMetric(
+			c.instanceLogInfoDesc,
+			prometheus.GaugeValue,
+			float64(logStatusValue),
+			hostname, pid, level, logTime, txt,
+		)
+	}
+}

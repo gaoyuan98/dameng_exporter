@@ -52,16 +52,20 @@ const (
 	dmdbms_license_date             string = "dmdbms_license_date"
 	dmdbms_version                  string = "dmdbms_version"
 	dmdbms_arch_status              string = "dmdbms_arch_status"
+	dmdbms_arch_switch_rate         string = "dmdbms_arch_switch_rate"
 	dmdbms_start_day                string = "dmdbms_start_day"
 	dmdbms_rapply_sys_task_mem_used string = "dmdbms_rapply_sys_task_mem_used"
 	dmdbms_rapply_sys_task_num      string = "dmdbms_rapply_sys_task_num"
-	dmdbms_instance_log_error_info  string = "dmdbms_instance_log_error_info"
-
+	//dmdbms_instance_log_error_info  string = "dmdbms_instance_log_error_info"
 	dmdbms_dmap_process_is_exit      string = "dmdbms_dmap_process_is_exit"
 	dmdbms_dmserver_process_is_exit  string = "dmdbms_dmserver_process_is_exit"
 	dmdbms_dmwatcher_process_is_exit string = "dmdbms_dmwatcher_process_is_exit"
 	dmdbms_dmmonitor_process_is_exit string = "dmdbms_dmmonitor_process_is_exit"
 	dmdbms_dmagent_process_is_exit   string = "dmdbms_dmagent_process_is_exit"
+
+	dmdbms_instance_log_error_info string = "dmdbms_instance_log_error_info"
+	//DW守护进程的状态
+	dmdbms_dw_watcher_info string = "dmdbms_dw_watcher_info"
 )
 
 // MetricCollector 接口
@@ -98,8 +102,13 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDbVersionCollector(db.DBPool))
 		collectors = append(collectors, NewDbArchStatusCollector(db.DBPool))
 		collectors = append(collectors, NewDbRapplySysCollector(db.DBPool))
-		collectors = append(collectors, NewInstanceLogErrorCollector(db.DBPool))
+		//与DM数据库的归档状态
+		//collectors = append(collectors, NewInstanceLogErrorCollector(db.DBPool))
 		collectors = append(collectors, NewCkptCollector(db.DBPool))
+		//查询实例的异常日志(近5分钟内)
+		collectors = append(collectors, NewDbInstanceLogErrorCollector(db.DBPool))
+		//Dw集群进程信息
+		collectors = append(collectors, NewDbDwWatcherInfoCollector(db.DBPool))
 	}
 	if config.GlobalConfig.RegisterDmhsMetrics {
 		// 添加中间件指标收集器

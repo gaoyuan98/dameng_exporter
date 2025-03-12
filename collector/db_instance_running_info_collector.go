@@ -46,13 +46,13 @@ func NewDBInstanceRunningInfoCollector(db *sql.DB) MetricCollector {
 		),
 		statusDesc: prometheus.NewDesc(
 			dmdbms_status_info,
-			"Database status",
+			"Database status, value info: open = 1,mount = 2,suspend = 3 ,other = 4",
 			[]string{"host_name"}, // 添加标签
 			nil,
 		),
 		modeDesc: prometheus.NewDesc(
 			dmdbms_mode_info,
-			"Database mode",
+			"Database mode, value info: primary = 1,normal = 2,standby = 3 ,other = 4",
 			[]string{"host_name"}, // 添加标签
 			nil,
 		),
@@ -76,17 +76,17 @@ func NewDBInstanceRunningInfoCollector(db *sql.DB) MetricCollector {
 		),
 		statusOccursDesc: prometheus.NewDesc( //这个是数据库状态切换的标识  OPEN
 			dmdbms_db_status_occurs,
-			"status changes status, error is 0 , true is 1",
+			"status changes status, value info: false is 0 , true is 1",
 			[]string{"host_name"}, // 添加标签
 			nil,
 		),
-		switchingOccursDesc: prometheus.NewDesc( //这个是集群切换的标识
+		switchingOccursDesc: prometheus.NewDesc(
 			dmdbms_switching_occurs,
-			"Database instance switching occurs， error is 0 , true is 1  ",
-			[]string{"host_name"}, // 添加标签
+			"Database instance switching occurs， value info:  error is 0 , true is 1  ",
+			[]string{"host_name"},
 			nil,
 		),
-		dbStartDayDesc: prometheus.NewDesc( //这个是集群切换的标识
+		dbStartDayDesc: prometheus.NewDesc(
 			dmdbms_start_day,
 			"Database instance start_day ",
 			[]string{"host_name"}, // 添加标签
@@ -232,7 +232,7 @@ func (c *DBInstanceRunningInfoCollector) handleDatabaseModeSwitch(ch chan<- prom
 		config.DeleteFromCache(AlarmSwitchStr)
 		config.SetCache(AlarmSwitchOccur, strconv.Itoa(AlarmStatus_Unusual), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime))
 	default:
-		config.SetCache(AlarmSwitchStr, modeStr, time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime))
+		config.SetCache(AlarmSwitchStr, modeStr, time.Minute*time.Duration(config.GlobalConfig.BigKeyDataCacheTime))
 		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
 	}
 }
