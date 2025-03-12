@@ -2,40 +2,9 @@
 
 # 介绍
 1. DM数据库适配prometheus监控的采集器，目前已支持DM8数据库同时提供grafana 8.5.X 以上版本的监控面板（其他的grafana版本需要自己绘制表盘）。
-2. 已支持的指标如下
-```
-   数据库线程数	dmdbms_thread_num_info
-   数据库事务等待数	dmdbms_trx_info
-   数据库死锁数	dmdbms_dead_lock_num_info
-   数据库的状态	dmdbms_status_info
-   数据库启动时间	dmdbms_start_time_info
-   主备集群同步延迟	dmdbms_rapply_stat
-   表空间总大小	dmdbms_tablespace_size_total_info
-   表空间空闲大小	dmdbms_tablespace_size_free_info
-   表空间数据文件总大小	dmdbms_tablespace_file_total_info
-   表空间数据文件空闲大小	dmdbms_tablespace_file_free_info
-   数据库会话数状态	dmdbms_session_type_info
-   数据库实例的错误事件	dmdbms_instance_log_error_info
-   查询内存池的当前使用状态	dmdbms_memory_curr_pool_info
-   查询内存池的配置上限	dmdbms_memory_total_pool_info
-   数据库授权查询	dmdbms_license_date
-   数据库定时任务错误	dmdbms_joblog_error_num
-   监控监视器进程	dmdbms_monitor_info
-   监控慢SQL语句	dmdbms_slow_sql_info
-   备库重演运行线程数	dmdbms_rapply_sys_task_num
-   备库重演内存堆积信息	dmdbms_rapply_sys_task_mem_used
-   数据库语句类型数量展示逻辑(tps qps的指标)	dmdbms_statement_type_info
-   检查点更新	dmdbms_ckpttime_info
-   检查用户信息	dmdbms_user_list_info
-   数据库版本	dmdbms_version
-   数据库启动天数	dmdbms_start_day
-   数据库归档状态	dmdbms_arch_status
-   dmap进程探活	dmdbms_dmap_process_is_exit
-   dmserver进程探活	dmdbms_dmserver_process_is_exit
-   dmwatcher进程探活	dmdbms_dmwatcher_process_is_exit
-   dmmonitor进程探活	dmdbms_dmmonitor_process_is_exit
-   dmagent进程探活	dmdbms_dmagent_process_is_exit
-```
+2. 已支持的指标如下,具体的实现逻辑请查看doc目录下的xlsx表格
+   <img src="./img/support_lable.png"  />
+
 3. 如果有问题，欢迎提issue。如该项目对您有用请点亮右上角的starred
 # 目录
 - doc目录存放的是相关的配置文件（告警模板、配置模板、表盘）
@@ -163,10 +132,10 @@ GRANT SELECT ON V$THREADS TO PROMETHEUS;
 
 ## 1） 第一种方式：直接启动
 ## 直接启动exporter程序后缀不跟参数,此时会自动使用同级目录下dameng_exporter.config配置文件的数据库账号及密码
-[root@VM-24-17-centos dm_prometheus]#  nohup ./dameng_exporter_v1.0.0_linux_amd64 > /dev/null 2>&1 &
+[root@VM-24-17-centos dm_prometheus]#  nohup ./dameng_exporter_linux_amd64 > /dev/null 2>&1 &
 
 ## 2) 第二种方式：添加参数形式启动  ./dameng_exporter_arm64 --help可以查看参数
-[root@VM-24-17-centos dm_prometheus]#  nohup ./dameng_exporter_arm64 --listenAddress=":9200" --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+[root@VM-24-17-centos dm_prometheus]#  nohup ./dameng_exporter_linux_amd64 --listenAddress=":9200" --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 
 # 通过浏览器访问http://被监控端IP:9200/metrics
 [root@server ~]# lsof -i:9200
@@ -269,6 +238,14 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 
 
 # 更新记录
+## v1.1.0
+1. 新增对每个指标的逻辑介绍,将描述放到doc目录下的xlsx表格中
+2. 新增归档切换频率的指标（dmdbms_arch_switch_rate）| 实现逻辑始终返回最新的这个归档的创建时间跟上个归档的创建时间 相减就是归档切换时间
+3. 新增数据守护集群中watcher的信息指标（dmdbms_dw_watcher_info）| 返回DW_STATUS的状态，可用来判断守护进程的状态open = 1,mount = 2,suspend = 3 ,other = 4
+4. 新增实例日志的错误信息指标（dmdbms_instance_log_error_info）|默认始终返回近5分钟内的错误实例日志的所有信息
+5. 因存在docker以及部署的exporter可能不在数据库的机器上等场景，所以关闭掉查询OS的DM进程的相关指标
+6. 修改打包的方式,打包的文件中不在添加版本号的信息统一名称，避免因为升级exporter而导致的大批量修改的工作
+
 ## v1.0.9
 1. 将依赖的数据库由v1.3.162版本调整为v1.4.48版本，解决ipv6连接异常的问题
 2. 修复开启慢SQL功能时，某些特殊场景下报错的问题，同时完善慢SQL的开启文档(https://mp.weixin.qq.com/s/FMzbrVjwC-6UdAIopg65wA)
