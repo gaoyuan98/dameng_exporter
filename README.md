@@ -2,7 +2,7 @@
 
 # 介绍
 1. DM数据库适配prometheus监控的采集器，目前已支持DM8数据库同时提供grafana 8.5.X 以上版本的监控面板（其他的grafana版本需要自己绘制表盘）。
-2. 已支持的指标如下,具体的实现逻辑请查看doc目录下的xlsx表格
+2. 已支持的指标如下,如需具体的实现sql及逻辑的xlsx表格。请搜索微信公众号: 达梦课代表 回复关键字 exporter资料 获取该文档。
    <img src="./img/support_lable.png"  />
 
 3. 如果有问题，欢迎提issue。如该项目对您有用请点亮右上角的starred
@@ -121,6 +121,10 @@ GRANT SELECT ON V$RAPPLY_SYS TO PROMETHEUS;
 GRANT SELECT ON V$PROCESS TO PROMETHEUS;
 GRANT SELECT ON V$LOCK TO PROMETHEUS;
 GRANT SELECT ON V$THREADS TO PROMETHEUS;
+GRANT SELECT ON V$INSTANCE_LOG_HISTORY TO PROMETHEUS;
+GRANT SELECT ON V$ARCH_FILE TO PROMETHEUS;
+GRANT SELECT ON V$DMWATCHER TO PROMETHEUS;
+GRANT SELECT ON V$INSTANCE TO PROMETHEUS;
 ```
 ## 3. 在数据库上运行
 1. 解压压缩包
