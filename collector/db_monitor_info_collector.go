@@ -13,7 +13,7 @@ import (
 
 // 定义数据结构
 type MonitorInfo struct {
-	DwConnTime sql.NullTime
+	DwConnTime sql.NullString
 	MonConfirm sql.NullString
 	MonId      sql.NullString
 	MonIp      sql.NullString
@@ -69,8 +69,8 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		//if strings.EqualFold(err.Error(), "v$dmmonitor") { // 检查视图不存在的特定错误
 		// 检查报错信息中是否包含 "v$dmmonitor" 字符串
-		if strings.Contains(err.Error(), "v$dmmonitor") {
-			logger.Logger.Warn("v$dmmonitor view does not exist, skipping future queries", zap.Error(err))
+		if strings.Contains(err.Error(), "V$DMMONITOR") {
+			logger.Logger.Warn("V$DMMONITOR view does not exist, skipping future queries", zap.Error(err))
 			c.viewExists = false
 			return
 		}
@@ -95,7 +95,7 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	// 发送数据到 Prometheus
 	for _, info := range monitorInfos {
 		hostName := config.GetHostName()
-		dwConnTime := NullTimeToString(info.DwConnTime)
+		dwConnTime := NullStringToString(info.DwConnTime)
 		monConfirm := NullStringToString(info.MonConfirm)
 		monId := NullStringToString(info.MonId)
 		monIp := NullStringToString(info.MonIp)

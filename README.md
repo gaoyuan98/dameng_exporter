@@ -58,21 +58,23 @@ Flags:
 ```shell
 ## linux amd64版本
 ## 拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.9_amd64
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.1_amd64
 ## 更换别名
-docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.9_amd64 dameng_exporter:v1.0.9_amd64
+docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.1_amd64 dameng_exporter:v1.1.1_amd64
 ## 启动
-docker run -d --name dameng_exporter_amd64 -p 9200:9200 dameng_exporter:v1.0.9_amd64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+docker run -d --name dameng_exporter_amd64 -p 9200:9200 dameng_exporter:v1.1.1_amd64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 
 
 ## linux arm64版本
 ## 拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.9_arm64
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.1_arm64
 ## 更换别名
-docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.0.9_arm64 dameng_exporter:v1.0.9_arm64
+docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.1_arm64 dameng_exporter:v1.1.1_arm64
 ## 启动
-docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.0.9_arm64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.1.1_arm64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 ```
+# 代码结构
+<img src="./img/diagram.png" />
 
 # 微信公众号
 扫码或微信公众号搜索“达梦课代表”分享DM数据库一线遇到的各类问题
@@ -125,6 +127,9 @@ GRANT SELECT ON V$INSTANCE_LOG_HISTORY TO PROMETHEUS;
 GRANT SELECT ON V$ARCH_FILE TO PROMETHEUS;
 GRANT SELECT ON V$DMWATCHER TO PROMETHEUS;
 GRANT SELECT ON V$INSTANCE TO PROMETHEUS;
+GRANT SELECT ON V$BUFFERPOOL TO PROMETHEUS;
+GRANT SELECT ON V$ARCH_SEND_INFO TO PROMETHEUS;
+GRANT SELECT ON v$arch_status TO PROMETHEUS;
 ```
 ## 3. 在数据库上运行
 1. 解压压缩包
@@ -242,6 +247,12 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 
 
 # 更新记录
+## v1.1.1
+1. 新增指标,展示所有归档信息的指标(dmdbms_arch_status_info),不在是仅展示LOCAL类型数据
+2. 新增指标,指标dmdbms_statement_type_info原基础的TPS、QPS基础上,新增DB time、逻辑读、物理读等指标项
+3. 新增指标,指标(dmdbms_arch_send_detail_info)显示当前集群主库节点上往其他节点发送的LSN号差值，一定程度可反映主备同步延迟
+4. 新增指标,指标(dmdbms_bufferpool_info),显示当前节点中的缓冲池信息，value为命中率，目前仅限fastpool
+5. 新增指标,指标(dmdbms_dual_info),查看dual表的状态,return false is 0, true is 1
 ## v1.1.0
 1. 新增对每个指标的逻辑介绍,将描述放到doc目录下的xlsx表格中
 2. 新增归档切换频率的指标（dmdbms_arch_switch_rate）| 实现逻辑始终返回最新的这个归档的创建时间跟上个归档的创建时间 相减就是归档切换时间

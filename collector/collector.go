@@ -53,6 +53,8 @@ const (
 	dmdbms_version                  string = "dmdbms_version"
 	dmdbms_arch_status              string = "dmdbms_arch_status"
 	dmdbms_arch_switch_rate         string = "dmdbms_arch_switch_rate"
+	dmdbms_arch_status_info         string = "dmdbms_arch_status_info"
+	dmdbms_arch_send_detail_info    string = "dmdbms_arch_send_detail_info"
 	dmdbms_start_day                string = "dmdbms_start_day"
 	dmdbms_rapply_sys_task_mem_used string = "dmdbms_rapply_sys_task_mem_used"
 	dmdbms_rapply_sys_task_num      string = "dmdbms_rapply_sys_task_num"
@@ -66,6 +68,10 @@ const (
 	dmdbms_instance_log_error_info string = "dmdbms_instance_log_error_info"
 	//DW守护进程的状态
 	dmdbms_dw_watcher_info string = "dmdbms_dw_watcher_info"
+	//DM缓冲池的命中率
+	dmdbms_bufferpool_info string = "dmdbms_bufferpool_info"
+	//DM的dual
+	dmdbms_dual_info string = "dmdbms_dual_info"
 )
 
 // MetricCollector 接口
@@ -109,6 +115,11 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDbInstanceLogErrorCollector(db.DBPool))
 		//Dw集群进程信息
 		collectors = append(collectors, NewDbDwWatcherInfoCollector(db.DBPool))
+		//数据库缓冲池的命中率
+		collectors = append(collectors, NewDbBufferPoolCollector(db.DBPool))
+		//dual
+		collectors = append(collectors, NewDbDualCollector(db.DBPool))
+
 	}
 	if config.GlobalConfig.RegisterDmhsMetrics {
 		// 添加中间件指标收集器

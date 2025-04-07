@@ -21,8 +21,10 @@ const (
 // 定义收集器结构体
 type DbArchStatusCollector struct {
 	db                 *sql.DB
-	archStatusDesc     *prometheus.Desc //归档状态
+	archStatusDesc     *prometheus.Desc //归档状态(本地)
 	archSwitchRateDesc *prometheus.Desc //归档切换频率
+	archStatusInfo     *prometheus.Desc //归档所有状态
+	archSendDetailInfo *prometheus.Desc //归档状态的发送详情
 }
 
 // 20250311 新增如果归档开启的话 返回这个归档跟上一个归档的间隔时间
@@ -34,6 +36,27 @@ type DbArchSwitchRateInfo struct {
 	clsn       sql.NullString
 	srcDbMagic sql.NullString
 	minusDiff  sql.NullFloat64
+}
+
+// 20250401 新增归档状态的所有信息不仅限于local状态
+type DbArchStatusInfo struct {
+	archType   sql.NullString
+	archDest   sql.NullString
+	archSrc    sql.NullString
+	archStatus sql.NullFloat64
+}
+
+// 20250401 新增归档状态的发送详情
+// SELECT ARCH_DEST,ARCH_TYPE,LSN_DIFFERENCE,LAST_SEND_CODE,LAST_SEND_DESC,TO_CHAR(LAST_START_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_START_TIME,TO_CHAR(LAST_END_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_END_TIME,LAST_SEND_TIME FROM V$ARCH_SEND_INFO;
+type DbArchSendDetailInfo struct {
+	archDest      sql.NullString
+	archType      sql.NullString
+	lsnDiff       sql.NullFloat64
+	lastSendCode  sql.NullString
+	lastSendDesc  sql.NullString
+	lastStartTime sql.NullString
+	lastEndTime   sql.NullString
+	lastSendTime  sql.NullString
 }
 
 // 初始化收集器
@@ -50,6 +73,19 @@ func NewDbArchStatusCollector(db *sql.DB) MetricCollector {
 			dmdbms_arch_switch_rate,
 			"Information about DM database archive switch rate，Always output the most recent piece of data",
 			[]string{"host_name", "status", "createTime", "path", "clsn", "srcDbMagic"},
+			nil,
+		),
+		archStatusInfo: prometheus.NewDesc(
+			dmdbms_arch_status_info,
+			"Information about DM database archive status, value info: vaild = 1,invaild = 0",
+			[]string{"host_name", "arch_type", "arch_dest", "arch_src"},
+			nil,
+		),
+
+		archSendDetailInfo: prometheus.NewDesc(
+			dmdbms_arch_send_detail_info,
+			"Information about DM database archive send detail info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
+			[]string{"host_name", "arch_type", "arch_dest", "last_send_code", "last_send_desc", "last_start_time", "last_end_time", "last_send_time"},
 			nil,
 		),
 	}
@@ -106,6 +142,50 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 			minusDiff,
 			hostname, status, createTime, path, clsn, srcDbMagic,
 		)
+
+		//查询所有归档的状态信息
+		dbArchStatusInfos, err := getDbArchStatusInfo(ctx, c.db)
+		if err != nil {
+			logger.Logger.Error("exec getDbArchStatusInfo func error", zap.Error(err))
+			return
+		}
+		for _, dbArchStatusInfo := range dbArchStatusInfos {
+			archType := NullStringToString(dbArchStatusInfo.archType)
+			archDest := NullStringToString(dbArchStatusInfo.archDest)
+			archSrc := NullStringToString(dbArchStatusInfo.archSrc)
+			archStatus := NullFloat64ToFloat64(dbArchStatusInfo.archStatus)
+			ch <- prometheus.MustNewConstMetric(
+				c.archStatusInfo,
+				prometheus.GaugeValue,
+				archStatus,
+				hostname, archType, archDest, archSrc,
+			)
+		}
+
+		//查询所有归档发送详情信息
+		dbArchSendInfos, err := getDbArchSendDetailInfo(ctx, c.db)
+		if err != nil {
+			logger.Logger.Error("exec getDbArchSendDetailInfo func error", zap.Error(err))
+			return
+		}
+		for _, dbArchSendInfo := range dbArchSendInfos {
+			archType := NullStringToString(dbArchSendInfo.archType)
+			archDest := NullStringToString(dbArchSendInfo.archDest)
+			lsnDiff := NullFloat64ToFloat64(dbArchSendInfo.lsnDiff)
+			lastSendCode := NullStringToString(dbArchSendInfo.lastSendCode)
+			lastSendDesc := NullStringToString(dbArchSendInfo.lastSendDesc)
+			lastStartTime := NullStringToString(dbArchSendInfo.lastStartTime)
+			lastEndTime := NullStringToString(dbArchSendInfo.lastEndTime)
+			lastSendTime := NullStringToString(dbArchSendInfo.lastSendTime)
+			ch <- prometheus.MustNewConstMetric(
+				c.archSendDetailInfo,
+				prometheus.GaugeValue,
+				lsnDiff,
+				hostname, archType, archDest, lastSendCode, lastSendDesc, lastStartTime, lastEndTime, lastSendTime,
+			)
+
+		}
+
 	}
 
 }
@@ -171,4 +251,50 @@ func getDbArchSwitchRate(ctx context.Context, db *sql.DB) (DbArchSwitchRateInfo,
 		return dbArchSwitchRateInfo, err
 	}
 	return dbArchSwitchRateInfo, nil
+}
+
+// 查询归档的所有状态信息
+func getDbArchStatusInfo(ctx context.Context, db *sql.DB) ([]DbArchStatusInfo, error) {
+	var dbArchStatusInfos []DbArchStatusInfo
+	rows, err := db.QueryContext(ctx, config.QueryArchiveSendStatusSql)
+	if err != nil {
+		handleDbQueryError(err)
+		return dbArchStatusInfos, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var dbArchStatusInfo DbArchStatusInfo
+		if err := rows.Scan(&dbArchStatusInfo.archStatus, &dbArchStatusInfo.archType, &dbArchStatusInfo.archDest, &dbArchStatusInfo.archSrc); err != nil {
+			logger.Logger.Error("Error scanning row", zap.Error(err))
+			continue
+		}
+		dbArchStatusInfos = append(dbArchStatusInfos, dbArchStatusInfo)
+	}
+	if err := rows.Err(); err != nil {
+		logger.Logger.Error("Error with rows", zap.Error(err))
+	}
+	return dbArchStatusInfos, nil
+}
+
+// 查询所有归档发送详情信息
+func getDbArchSendDetailInfo(ctx context.Context, db *sql.DB) ([]DbArchSendDetailInfo, error) {
+	var dbArchSendDetailInfos []DbArchSendDetailInfo
+	rows, err := db.QueryContext(ctx, config.QueryArchSendDetailInfo)
+	if err != nil {
+		handleDbQueryError(err)
+		return dbArchSendDetailInfos, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var dbArchSendDetailInfo DbArchSendDetailInfo
+		if err := rows.Scan(&dbArchSendDetailInfo.archDest, &dbArchSendDetailInfo.archType, &dbArchSendDetailInfo.lsnDiff, &dbArchSendDetailInfo.lastSendCode, &dbArchSendDetailInfo.lastSendDesc, &dbArchSendDetailInfo.lastStartTime, &dbArchSendDetailInfo.lastEndTime, &dbArchSendDetailInfo.lastSendTime); err != nil {
+			logger.Logger.Error("Error scanning row", zap.Error(err))
+			continue
+		}
+		dbArchSendDetailInfos = append(dbArchSendDetailInfos, dbArchSendDetailInfo)
+	}
+	if err := rows.Err(); err != nil {
+		logger.Logger.Error("Error with rows", zap.Error(err))
+	}
+	return dbArchSendDetailInfos, nil
 }

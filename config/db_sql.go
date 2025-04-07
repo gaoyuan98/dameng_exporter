@@ -78,11 +78,11 @@ GROUP BY
                    ORDER BY 1 DESC) 
              where EXEC_TIME >= ? and LAST_RECV_TIME > TO_TIMESTAMP('2000-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') LIMIT ?`
 	//查询监视器信息
-	QueryMonitorInfoSqlStr = `select /*+DM_EXPORTER*/ * from v$dmmonitor`
+	QueryMonitorInfoSqlStr = `SELECT /*+DM_EXPORTER*/ TO_CHAR(DW_CONN_TIME,'YYYY-MM-DD HH24:MI:SS') AS DW_CONN_TIME,MON_CONFIRM,MON_ID,MON_IP,MON_VERSION,MID FROM V$DMMONITOR`
 	//查询数据库的语句执行次数
-	QuerySqlExecuteCountSqlStr = `select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql')`
+	QuerySqlExecuteCountSqlStr = `select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count')`
 	//查询数据库参数
-	QueryParameterInfoSql = `select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE')`
+	QueryParameterInfoSql = `select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM')`
 	//查询检查点信息
 	QueryCheckPointInfoSql = `select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT`
 	//查询用户信息
@@ -110,4 +110,13 @@ GROUP BY
 	QueryArchiveSwitchRateSql = `SELECT /*+DM_EXPORTER*/ STATUS,TO_CHAR(CREATE_TIME,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME,PATH,CLSN,SRC_DB_MAGIC,DATEDIFF(MINUTE,LEAD(CREATE_TIME) OVER (ORDER BY create_time desc) ,create_time) MINUS_DIFF FROM V$ARCH_FILE order by create_time desc LIMIT 1;`
 	//查询实例的异常日志(近5分钟内)
 	QueryInstanceErrorLogSql = `SELECT /*+DM_EXPORTER*/ TO_CHAR(LOG_TIME,'YYYY-MM-DD HH24:MI:SS') AS LOG_TIME,PID,LEVEL$ AS LEVEL,TXT FROM V$INSTANCE_LOG_HISTORY WHERE DATEDIFF(MINUTE, LOG_TIME, GETDATE()) <= 5 AND LEVEL$ NOT IN ('INFO','WARN') ORDER BY SEQNO DESC;`
+	//新增需求 20250401
+	//查询归档的所有发送状态信息
+	QueryArchiveSendStatusSql = `select /*+DMDB_CHECK_FLAG*/ case ARCH_STATUS when 'VALID' then 1 when 'INVALID' then 0 end ARCH_STATUS,ARCH_TYPE,ARCH_DEST,ARCH_SRC from v$arch_status`
+	//归档信息LSN详情
+	QueryArchSendDetailInfo = `SELECT /*+DM_EXPORTER*/ ARCH_DEST,ARCH_TYPE,(MAX_SEND_LSN - LAST_SEND_LSN) AS LSN_DIFFERENCE,LAST_SEND_CODE,LAST_SEND_DESC,TO_CHAR(LAST_START_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_START_TIME,TO_CHAR(LAST_END_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_END_TIME,LAST_SEND_TIME FROM V$ARCH_SEND_INFO`
+	//查询缓冲池命中率（Fast）
+	QueryBufferPoolHitRateInfoSql = `SELECT /*+DM_EXPORTER*/ NAME,ROUND(SUM(RAT_HIT) /COUNT(*),4) HIT_RATE FROM V$BUFFERPOOL WHERE NAME ='FAST' GROUP BY NAME;`
+	//查询dual表
+	QueryDualInfoSql = `SELECT /*+DM_EXPORTER*/ 1 FROM DUAL;`
 )
