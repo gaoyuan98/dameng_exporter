@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -172,7 +173,8 @@ func execEncryptPwdCmd(encryptPwd *string) bool {
 func buildDSN(user, password, host string) string {
 	//dsn := "dm://SYSDBA:SYSDBA@120.53.103.235:5236?autoCommit=true"
 	escapedPwd, _ := config.DecryptPassword(password)
-	return fmt.Sprintf("dm://%s:%s@%s?autoCommit=true", user, escapedPwd, host)
+
+	return fmt.Sprintf("dm://%s:%s@%s?autoCommit=true", user, url.PathEscape(escapedPwd), host)
 }
 
 func fileExists(filename string) bool {

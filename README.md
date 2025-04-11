@@ -247,6 +247,8 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 
 
 # 更新记录
+## v1.1.2
+1. 修复当密码包含特殊字符时，连接失败的问题
 ## v1.1.1
 1. 新增指标,展示所有归档信息的指标(dmdbms_arch_status_info),不在是仅展示LOCAL类型数据
 2. 新增指标,指标dmdbms_statement_type_info原基础的TPS、QPS基础上,新增DB time、逻辑读、物理读等指标项
