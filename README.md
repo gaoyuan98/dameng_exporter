@@ -133,7 +133,7 @@ GRANT SELECT ON V$BUFFERPOOL TO PROMETHEUS;
 GRANT SELECT ON V$ARCH_SEND_INFO TO PROMETHEUS;
 GRANT SELECT ON v$arch_status TO PROMETHEUS;
 ```
-## 3. 在数据库上运行
+## 3. 在数据库所在操作系统中部署运行
 1. 解压压缩包
 2. 修改dameng_exporter.config配置文件的数据库账号及密码
 注意：程序运行后会自动对数据库密码部分进行密文处理，不用担心密码泄露问题
