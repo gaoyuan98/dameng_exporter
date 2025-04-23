@@ -87,7 +87,8 @@ docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.1.1_a
 相关文章如下，如有问题提issue
 1) dameng_exporter部署对接prometheus: https://mp.weixin.qq.com/s/l8LB0nZeevtyrtD_oa9oiQ
 2) prometheus配置DM的全局的告警面板: https://blog.csdn.net/qq_35349982/article/details/144426840
-3) dameng_exporter中如何开启监控慢sql功能: https://mp.weixin.qq.com/s/FMzbrVjwC-6UdAIopg65wA
+3) dameng_exporter中如何开启监控慢sql功能: https://mp.weixin.qq.com/s/FMzbrVjwC-6UdAIopg65wA **（慢SQL功能监控的是正在运行的慢SQL,而不是历史的慢SQL，exporter的监控逻辑查看该文章）**
+4) 如想要统计分析汇总一段时间内的慢SQL语句,可采用SQLLOG分析工具处理，详情跳转: https://mp.weixin.qq.com/s/WlwU32rIBF-hhXjafzNJiw
 
 ## 1. 下载已经编译好的exporter包
 https://github.com/gaoyuan98/dameng_exporter/releases
@@ -98,7 +99,8 @@ dameng_exporter_v1.X_linux_arm64.tar.gz（linux_arm平台）
 dameng_exporter_v1.X_windows_amd64.tar.gz（window_x64平台）
 ```
 
-## 2. 新建用户权限
+## 2. 新建用户并赋予权限
+注：此处是在新建一个用户来监控DM数据库也可以使用其他用户来连接，需要根据实际情况进行调整。
 ```sql
 ## 新建用户
 create tablespace "PROMETHEUS.DBF" datafile 'PROMETHEUS.DBF' size 512 CACHE = NORMAL;
