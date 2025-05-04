@@ -76,6 +76,8 @@ docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.1.1_a
 # 代码结构
 <img src="./img/diagram.png" />
 
+dameng_exporter源码分析:  [https://deepwiki.com/gaoyuan98/dameng_exporter](https://deepwiki.com/gaoyuan98/dameng_exporter)
+
 # 微信公众号
 扫码或微信公众号搜索“达梦课代表”分享DM数据库一线遇到的各类问题
 <br />
