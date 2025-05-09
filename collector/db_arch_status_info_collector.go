@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+	"sync"
 	"time"
 )
 
@@ -278,8 +279,16 @@ func getDbArchStatusInfo(ctx context.Context, db *sql.DB) ([]DbArchStatusInfo, e
 
 // 查询所有归档发送详情信息
 func getDbArchSendDetailInfo(ctx context.Context, db *sql.DB) ([]DbArchSendDetailInfo, error) {
+	//20250509 如果视图V$ARCH_APPLY_INFO存在,则使用视图V$ARCH_APPLY_INFO的RPKG_LSN字段
+	var querySql string
+	if ViewArchApplyInfoExists(ctx, db) {
+		querySql = config.QueryArchSendDetailInfo2
+	} else {
+		querySql = config.QueryArchSendDetailInfo
+	}
+
 	var dbArchSendDetailInfos []DbArchSendDetailInfo
-	rows, err := db.QueryContext(ctx, config.QueryArchSendDetailInfo)
+	rows, err := db.QueryContext(ctx, querySql)
 	if err != nil {
 		handleDbQueryError(err)
 		return dbArchSendDetailInfos, err
@@ -296,5 +305,26 @@ func getDbArchSendDetailInfo(ctx context.Context, db *sql.DB) ([]DbArchSendDetai
 	if err := rows.Err(); err != nil {
 		logger.Logger.Error("Error with rows", zap.Error(err))
 	}
+
 	return dbArchSendDetailInfos, nil
+}
+
+var (
+	viewArchApplyInfoCheckOnce sync.Once
+	viewArchApplyInfoExists    bool
+)
+
+func ViewArchApplyInfoExists(ctx context.Context, db *sql.DB) bool {
+	viewArchApplyInfoCheckOnce.Do(func() {
+		const query = "SELECT COUNT(1) FROM V$ARCH_APPLY_INFO"
+		var count int
+		if err := db.QueryRowContext(ctx, query).Scan(&count); err != nil {
+			logger.Logger.Warn("V$ARCH_APPLY_INFO not accessible, fallback to alternative query", zap.Error(err))
+			viewArchApplyInfoExists = false
+			return
+		}
+		logger.Logger.Info("V$ARCH_APPLY_INFO accessible")
+		viewArchApplyInfoExists = true
+	})
+	return viewArchApplyInfoExists
 }
