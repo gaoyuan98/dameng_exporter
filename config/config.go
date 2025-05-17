@@ -52,6 +52,11 @@ type Config struct {
 	CheckSlowSQL            bool
 	SlowSqlTime             int
 	SlowSqlMaxRows          int
+
+	// Basic Auth配置
+	EnableBasicAuth   bool
+	BasicAuthUsername string
+	BasicAuthPassword string
 }
 
 var DefaultConfig = Config{
@@ -80,6 +85,9 @@ var DefaultConfig = Config{
 	CheckSlowSQL:            false,
 	SlowSqlTime:             10000,
 	SlowSqlMaxRows:          10,
+	EnableBasicAuth:         false,
+	BasicAuthUsername:       "",
+	BasicAuthPassword:       "",
 }
 
 func LoadConfig(filePath string) (Config, error) {
@@ -198,6 +206,14 @@ func LoadConfig(filePath string) (Config, error) {
 			if val, err := strconv.Atoi(value); err == nil {
 				config.SlowSqlMaxRows = val
 			}
+		case "enableBasicAuth":
+			if val, err := strconv.ParseBool(value); err == nil {
+				config.EnableBasicAuth = val
+			}
+		case "basicAuthUsername":
+			config.BasicAuthUsername = value
+		case "basicAuthPassword":
+			config.BasicAuthPassword = value
 		}
 	}
 

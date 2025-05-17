@@ -45,6 +45,10 @@ Flags:
   --logMaxAge=30                Maximum log file age (Day)
   --encryptPwd=""               Password to encrypt and exit
   --[no-]encodeConfigPwd        Encode the password in the config file,default:true
+  --[no-]enableBasicAuth        Enable basic auth for metrics endpoint,default:false
+  --basicAuthUsername=""        Username for basic auth
+  --basicAuthPassword=""        Password for basic auth
+  --encryptBasicAuthPwd=""      Password to encrypt for basic auth and exit
 ```
 # 搭建效果图
 <img src="./img/tubiao_01.png" width="1000" height="500" />
@@ -79,7 +83,7 @@ docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.1.1_a
 dameng_exporter源码分析:  [https://deepwiki.com/gaoyuan98/dameng_exporter](https://deepwiki.com/gaoyuan98/dameng_exporter)
 
 # 微信公众号
-扫码或微信公众号搜索“达梦课代表”分享DM数据库一线遇到的各类问题
+扫码或微信公众号搜索"达梦课代表"分享DM数据库一线遇到的各类问题
 <br />
 <img src="./img/gzh01.png" />
 <br />
@@ -273,7 +277,7 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 2. 修复开启慢SQL功能时，某些特殊场景下报错的问题，同时完善慢SQL的开启文档(https://mp.weixin.qq.com/s/FMzbrVjwC-6UdAIopg65wA)
 3. 更新v1.0.9的docker镜像介质及地址
 ## v1.0.8
-1. 修复在window环境下运行时报unknown time zone “Asia/Shanghai”的问题
+1. 修复在window环境下运行时报unknown time zone "Asia/Shanghai"的问题
 2. 调整程序启动时的参数驼峰法命名，--help可查看
 ## 20241212
 1. 新增全局报警的表盘以及对应的rules
@@ -299,3 +303,54 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 2. 优化logger的日志展示,日志级别带颜色输出
 ## v1.0.2
 1. 新增自定义SQL指标的功能（在exporter的同级目录下创建一个custom_metrics.toml文件即可，写法与（oracledb_exporter相同）
+
+# Basic Auth配置说明
+dameng_exporter支持通过Basic Auth来保护metrics endpoint,防止未授权访问。配置方式如下:
+
+## 1. 生成加密密码
+使用`--encryptBasicAuthPwd`参数生成bcrypt加密的密码:
+```bash
+./dameng_exporter --encryptBasicAuthPwd=your_password
+```
+执行后会输出类似这样的结果:
+```
+Encrypted Basic Auth Password: $2y$12$y4PaNc0UM0Jzi07jJf6zcuRFyp2GlH6F5rUKcE.xk3Aug2khcqa7m
+```
+
+## 2. 配置dameng_exporter
+在配置文件中添加以下内容:
+```ini
+enableBasicAuth=true
+basicAuthUsername=prometheus
+basicAuthPassword=$2y$12$y4PaNc0UM0Jzi07jJf6zcuRFyp2GlH6F5rUKcE.xk3Aug2khcqa7m
+```
+
+或者通过命令行参数配置:
+```bash
+./dameng_exporter --enableBasicAuth=true --basicAuthUsername=prometheus --basicAuthPassword=$2y$12$y4PaNc0UM0Jzi07jJf6zcuRFyp2GlH6F5rUKcE.xk3Aug2khcqa7m
+```
+
+## 3. 配置Prometheus
+在Prometheus配置文件(prometheus.yml)中添加basic auth配置:
+```yaml
+scrape_configs:
+  - job_name: 'dameng'
+    static_configs:
+      - targets: ['localhost:9200']
+    basic_auth:
+      username: 'prometheus'
+      password: 'your_password'  # 使用原始密码,不是加密后的密码
+```
+
+## 4. 安全建议
+- 建议使用强密码
+- 定期更换密码
+- 限制配置文件的访问权限
+- 如果使用容器化部署,考虑使用环境变量或secrets来传递密码
+
+## 5. 故障排查
+如果无法获取metrics,检查:
+- bcrypt加密的密码是否正确
+- Prometheus中使用的原始密码是否正确
+- dameng_exporter的地址是否正确
+- 网络连接是否正常
