@@ -302,6 +302,7 @@ scrape_configs:
 2. 新增功能,为避免指标信息写露,添加basic auth的认证功能
 3. 新增功能,新增logLevel参数,默认为debug,可设置为debug,info,warn,error,fatal
 4. 更新功能,原dmdbms_arch_send_detail_info指标中lsn差值一直为0,现完善功能如数据库版本存在V$ARCH_APPLY_INFO视图,则基于此视图计算否则还是原有逻辑，注:指标存在局限性
+5. 将近期更新的指标完善到达梦的监控面板中，在doc目录下的达梦DB监控面板_20250518.json中
 ## v1.1.2
 1. 修复当密码包含特殊字符时，连接失败的问题
 ## v1.1.1
