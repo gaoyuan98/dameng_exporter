@@ -14,8 +14,8 @@
 # 参数
 ```
 # 每个版本存在差异,以每个版本实际结果为准
-[root@VM-24-16-centos opt]# ./dameng_exporter_v1.0.9_linux_amd64 --help
-usage: dameng_exporter_v1.0.9_linux_amd64 [<flags>]
+[root@VM-24-16-centos opt]# ./dameng_exporter_v1.x.x_linux_amd64 --help
+usage: dameng_exporter_v1.x.x_linux_amd64 [<flags>]
 
 
 Flags:
@@ -139,6 +139,7 @@ GRANT SELECT ON V$BUFFERPOOL TO PROMETHEUS;
 GRANT SELECT ON V$ARCH_SEND_INFO TO PROMETHEUS;
 GRANT SELECT ON v$arch_status TO PROMETHEUS;
 GRANT SELECT ON V$ARCH_APPLY_INFO TO PROMETHEUS;
+GRANT SELECT ON V$PURGE TO PROMETHEUS;
 ```
 ## 3. 在数据库所在操作系统中部署运行
 1. 解压压缩包
@@ -170,11 +171,11 @@ GRANT SELECT ON V$ARCH_APPLY_INFO TO PROMETHEUS;
   static_configs:
    - targets: ["192.168.112.135:9200"]
      labels:
-     cluster_name: '单机测试'
+       cluster_name: '单机测试'
      
 # 集群示例
 - job_name: "dmdbms_bgoak_dw"
- static_configs:
+  static_configs:
    - targets: ["192.168.112.135:9200","192.168.112.136:9200"]
      labels:
        cluster_name: 'OA集群DW'     
@@ -255,7 +256,14 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ```
 
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/gaoyuan98/dameng_exporter)
+
 # 更新记录
+## v1.1.3
+1. 新增功能,新增回滚段信息指标dmdbms_purge_objects_info
+2. 新增功能,为避免指标信息写露,添加basic auth的认证功能
+3. 新增功能,新增logLevel参数,默认为info,可设置为debug,info,warn,error,fatal
+4. 更新功能,原dmdbms_arch_send_detail_info指标中lsn差值一直为0,现完善功能如数据库版本存在V$ARCH_APPLY_INFO视图,则基于此视图计算否则还是原有逻辑，注:指标存在局限性
 ## v1.1.2
 1. 修复当密码包含特殊字符时，连接失败的问题
 ## v1.1.1

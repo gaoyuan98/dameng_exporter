@@ -7,11 +7,12 @@ import (
 	"dameng_exporter/logger"
 	"database/sql"
 	"errors"
+	"strings"
+	"sync"
+
 	"github.com/duke-git/lancet/v2/fileutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
-	"strings"
-	"sync"
 )
 
 var (
@@ -72,6 +73,8 @@ const (
 	dmdbms_bufferpool_info string = "dmdbms_bufferpool_info"
 	//DM的dual
 	dmdbms_dual_info string = "dmdbms_dual_info"
+	//回滚段信息
+	dmdbms_purge_objects_info string = "dmdbms_purge_objects_info"
 )
 
 // MetricCollector 接口
@@ -108,6 +111,8 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDbVersionCollector(db.DBPool))
 		collectors = append(collectors, NewDbArchStatusCollector(db.DBPool))
 		collectors = append(collectors, NewDbRapplySysCollector(db.DBPool))
+		//回滚段信息
+		collectors = append(collectors, NewPurgeCollector(db.DBPool))
 		//与DM数据库的归档状态
 		//collectors = append(collectors, NewInstanceLogErrorCollector(db.DBPool))
 		collectors = append(collectors, NewCkptCollector(db.DBPool))
