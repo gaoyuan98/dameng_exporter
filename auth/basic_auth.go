@@ -19,20 +19,58 @@ func BasicAuthMiddleware(next http.Handler) http.Handler {
 
 		username, password, ok := r.BasicAuth()
 		if !ok {
-			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="DAMENG Exporter Metrics"`)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprintf(w, "<html><body><h1>认证失败</h1><p>请提供Basic认证信息</p></body></html>")
+			fmt.Fprintf(w, `
+				<html>
+					<head>
+						<title>认证失败</title>
+						<style>
+							body { font-family: Arial, sans-serif; margin: 40px; }
+							.error { color: #d32f2f; }
+							.retry { margin-top: 20px; }
+							a { color: #1976d2; text-decoration: none; }
+							a:hover { text-decoration: underline; }
+						</style>
+					</head>
+					<body>
+						<h1 class="error">认证失败</h1>
+						<p>请提供有效的认证信息</p>
+						<div class="retry">
+							<a href="%s">重新登录</a>
+						</div>
+					</body>
+				</html>`, r.URL.Path)
 			logger.Logger.Warn("Basic auth failed: no credentials provided")
 			return
 		}
 
 		// 验证用户名
 		if username != config.GlobalConfig.BasicAuthUsername {
-			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="DAMENG Exporter Metrics"`)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprintf(w, "<html><body><h1>认证失败</h1><p>用户名 '%s' 不正确</p></body></html>", username)
+			fmt.Fprintf(w, `
+				<html>
+					<head>
+						<title>认证失败</title>
+						<style>
+							body { font-family: Arial, sans-serif; margin: 40px; }
+							.error { color: #d32f2f; }
+							.retry { margin-top: 20px; }
+							a { color: #1976d2; text-decoration: none; }
+							a:hover { text-decoration: underline; }
+						</style>
+					</head>
+					<body>
+						<h1 class="error">认证失败</h1>
+						<p>用户名 '%s' 不正确</p>
+						<div class="retry">
+							<a href="%s">重新登录</a>
+						</div>
+					</body>
+				</html>`, username, r.URL.Path)
 			logger.Logger.Warnf("Basic auth failed: invalid username '%s'", username)
 			return
 		}
@@ -40,10 +78,29 @@ func BasicAuthMiddleware(next http.Handler) http.Handler {
 		// 验证密码
 		err := bcrypt.CompareHashAndPassword([]byte(config.GlobalConfig.BasicAuthPassword), []byte(password))
 		if err != nil {
-			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="DAMENG Exporter Metrics"`)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprintf(w, "<html><body><h1>认证失败</h1><p>用户 '%s' 的密码不正确</p></body></html>", username)
+			fmt.Fprintf(w, `
+				<html>
+					<head>
+						<title>认证失败</title>
+						<style>
+							body { font-family: Arial, sans-serif; margin: 40px; }
+							.error { color: #d32f2f; }
+							.retry { margin-top: 20px; }
+							a { color: #1976d2; text-decoration: none; }
+							a:hover { text-decoration: underline; }
+						</style>
+					</head>
+					<body>
+						<h1 class="error">认证失败</h1>
+						<p>用户 '%s' 的密码不正确</p>
+						<div class="retry">
+							<a href="%s">重新登录</a>
+						</div>
+					</body>
+				</html>`, username, r.URL.Path)
 			logger.Logger.Warnf("Basic auth failed: invalid password for user '%s'", username)
 			return
 		}

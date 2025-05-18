@@ -35,6 +35,7 @@ type Config struct {
 	LogMaxSize      int
 	LogMaxBackups   int
 	LogMaxAge       int
+	LogLevel        string
 	DbHost          string
 	DbUser          string
 	DbPwd           string
@@ -72,6 +73,7 @@ var DefaultConfig = Config{
 	LogMaxSize:              10, //MB
 	LogMaxBackups:           3,  //个数
 	LogMaxAge:               30, //天
+	LogLevel:                "info",
 	BigKeyDataCacheTime:     60, //分
 	AlarmKeyCacheTime:       5,  //分
 	RegisterHostMetrics:     false,

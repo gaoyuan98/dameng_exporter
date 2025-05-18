@@ -54,6 +54,7 @@ func main() {
 		logMaxSize    = kingpin.Flag("logMaxSize", "Maximum log file size(MB)").Default(fmt.Sprint(config.DefaultConfig.LogMaxSize)).Int()
 		logMaxBackups = kingpin.Flag("logMaxBackups", "Maximum log file backups (number)").Default(fmt.Sprint(config.DefaultConfig.LogMaxBackups)).Int()
 		logMaxAge     = kingpin.Flag("logMaxAge", "Maximum log file age (Day)").Default(fmt.Sprint(config.DefaultConfig.LogMaxAge)).Int()
+		logLevel      = kingpin.Flag("logLevel", "Log level (debug|info|warn|error)").Default(config.DefaultConfig.LogLevel).String()
 
 		encryptPwd      = kingpin.Flag("encryptPwd", "Password to encrypt and exit").Default("").String()
 		encodeConfigPwd = kingpin.Flag("encodeConfigPwd", "Encode the password in the config file,default:"+strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Default(strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Bool()
@@ -77,7 +78,7 @@ func main() {
 		return
 	}
 	//合并配置文件属性
-	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows, enableBasicAuth, basicAuthUsername, basicAuthPassword)
+	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, logLevel, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows, enableBasicAuth, basicAuthUsername, basicAuthPassword)
 	// eg:初始化全局日志记录器，必须合并完配置在初始化 不然日志控制参数会失效
 	logger.InitLogger()
 	defer logger.Sync()
@@ -157,14 +158,14 @@ func EncryptPasswordConfig(configFile *string, encodeConfigPwd *bool) {
 }
 
 // 把 默认参数以及配置文件进行合并,
-func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int, enableBasicAuth *bool, basicAuthUsername, basicAuthPassword *string) {
+func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, logLevel *string, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int, enableBasicAuth *bool, basicAuthUsername, basicAuthPassword *string) {
 	//读取预先设定的配置文件
 	glocal_config, err := config.LoadConfig(*configFile)
 	if err != nil {
 		fmt.Printf("no loading default config file\n")
 	}
 	// 对默认值以及配置文件的参数进行合并覆盖
-	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows, enableBasicAuth, basicAuthUsername, basicAuthPassword)
+	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, logLevel, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows, enableBasicAuth, basicAuthUsername, basicAuthPassword)
 
 	config.GlobalConfig = &glocal_config
 }
@@ -192,7 +193,7 @@ func fileExists(filename string) bool {
 	return true
 }
 
-func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int, enableBasicAuth *bool, basicAuthUsername, basicAuthPassword *string) {
+func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, logLevel *string, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int, enableBasicAuth *bool, basicAuthUsername, basicAuthPassword *string) {
 	if listenAddr != nil && *listenAddr != config.DefaultConfig.ListenAddress {
 		glocal_config.ListenAddress = *listenAddr
 	}
@@ -267,5 +268,8 @@ func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *
 	}
 	if basicAuthPassword != nil && *basicAuthPassword != config.DefaultConfig.BasicAuthPassword {
 		glocal_config.BasicAuthPassword = *basicAuthPassword
+	}
+	if logLevel != nil && *logLevel != config.DefaultConfig.LogLevel {
+		glocal_config.LogLevel = *logLevel
 	}
 }
