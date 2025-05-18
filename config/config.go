@@ -35,6 +35,7 @@ type Config struct {
 	LogMaxSize      int
 	LogMaxBackups   int
 	LogMaxAge       int
+	LogLevel        string
 	DbHost          string
 	DbUser          string
 	DbPwd           string
@@ -52,6 +53,11 @@ type Config struct {
 	CheckSlowSQL            bool
 	SlowSqlTime             int
 	SlowSqlMaxRows          int
+
+	// Basic Auth配置
+	EnableBasicAuth   bool
+	BasicAuthUsername string
+	BasicAuthPassword string
 }
 
 var DefaultConfig = Config{
@@ -67,6 +73,7 @@ var DefaultConfig = Config{
 	LogMaxSize:              10, //MB
 	LogMaxBackups:           3,  //个数
 	LogMaxAge:               30, //天
+	LogLevel:                "info",
 	BigKeyDataCacheTime:     60, //分
 	AlarmKeyCacheTime:       5,  //分
 	RegisterHostMetrics:     false,
@@ -80,6 +87,9 @@ var DefaultConfig = Config{
 	CheckSlowSQL:            false,
 	SlowSqlTime:             10000,
 	SlowSqlMaxRows:          10,
+	EnableBasicAuth:         false,
+	BasicAuthUsername:       "",
+	BasicAuthPassword:       "",
 }
 
 func LoadConfig(filePath string) (Config, error) {
@@ -198,6 +208,14 @@ func LoadConfig(filePath string) (Config, error) {
 			if val, err := strconv.Atoi(value); err == nil {
 				config.SlowSqlMaxRows = val
 			}
+		case "enableBasicAuth":
+			if val, err := strconv.ParseBool(value); err == nil {
+				config.EnableBasicAuth = val
+			}
+		case "basicAuthUsername":
+			config.BasicAuthUsername = value
+		case "basicAuthPassword":
+			config.BasicAuthPassword = value
 		}
 	}
 

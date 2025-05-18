@@ -108,6 +108,6 @@ func getDbVersion(ctx context.Context, db *sql.DB) (string, error) {
 		dbVersion = strings.TrimSpace(dbVersion)
 	}
 
-	logger.Logger.Infof("Check Database version Info Success, version value %s", dbVersion)
+	logger.Logger.Debugf("Check Database version Info Success, version value %s", dbVersion)
 	return dbVersion, nil
 }

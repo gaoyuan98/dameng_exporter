@@ -1,21 +1,23 @@
 package main
 
 import (
+	"dameng_exporter/auth"
 	"dameng_exporter/collector"
 	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
 	"fmt"
-	"github.com/alecthomas/kingpin/v2"
-	"github.com/duke-git/lancet/v2/fileutil"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.uber.org/zap"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/alecthomas/kingpin/v2"
+	"github.com/duke-git/lancet/v2/fileutil"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -52,19 +54,31 @@ func main() {
 		logMaxSize    = kingpin.Flag("logMaxSize", "Maximum log file size(MB)").Default(fmt.Sprint(config.DefaultConfig.LogMaxSize)).Int()
 		logMaxBackups = kingpin.Flag("logMaxBackups", "Maximum log file backups (number)").Default(fmt.Sprint(config.DefaultConfig.LogMaxBackups)).Int()
 		logMaxAge     = kingpin.Flag("logMaxAge", "Maximum log file age (Day)").Default(fmt.Sprint(config.DefaultConfig.LogMaxAge)).Int()
+		logLevel      = kingpin.Flag("logLevel", "Log level (debug|info|warn|error)").Default(config.DefaultConfig.LogLevel).String()
 
 		encryptPwd      = kingpin.Flag("encryptPwd", "Password to encrypt and exit").Default("").String()
 		encodeConfigPwd = kingpin.Flag("encodeConfigPwd", "Encode the password in the config file,default:"+strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Default(strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Bool()
-		Version         = "v1.1.3"
-		landingPage     = []byte("<html><head><title>DAMENG DB Exporter " + Version + "</title></head><body><h1>DAMENG DB Exporter " + Version + "</h1><p><a href='/metrics'>Metrics</a></p></body></html>")
+
+		// Basic Auth配置
+		enableBasicAuth     = kingpin.Flag("enableBasicAuth", "Enable basic auth for metrics endpoint,default:"+strconv.FormatBool(config.DefaultConfig.EnableBasicAuth)).Default(strconv.FormatBool(config.DefaultConfig.EnableBasicAuth)).Bool()
+		basicAuthUsername   = kingpin.Flag("basicAuthUsername", "Username for basic auth").Default(config.DefaultConfig.BasicAuthUsername).String()
+		basicAuthPassword   = kingpin.Flag("basicAuthPassword", "Password for basic auth").Default(config.DefaultConfig.BasicAuthPassword).String()
+		encryptBasicAuthPwd = kingpin.Flag("encryptBasicAuthPwd", "Password to encrypt for basic auth and exit").Default("").String()
+
+		Version     = "v1.1.3"
+		landingPage = []byte("<html><head><title>DAMENG DB Exporter " + Version + "</title></head><body><h1>DAMENG DB Exporter " + Version + "</h1><p><a href='/metrics'>Metrics</a></p></body></html>")
 	)
 	kingpin.Parse()
 	//加密密码口令返回
 	if execEncryptPwdCmd(encryptPwd) {
 		return
 	}
+	//加密basic auth密码并返回
+	if auth.ExecEncryptBasicAuthPwdCmd(encryptBasicAuthPwd) {
+		return
+	}
 	//合并配置文件属性
-	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows)
+	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, logLevel, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows, enableBasicAuth, basicAuthUsername, basicAuthPassword)
 	// eg:初始化全局日志记录器，必须合并完配置在初始化 不然日志控制参数会失效
 	logger.InitLogger()
 	defer logger.Sync()
@@ -113,7 +127,7 @@ func main() {
 	logger.Logger.Info("Starting dmdb_exporter version " + Version)
 	logger.Logger.Info("Please visit: http://localhost" + config.GlobalConfig.ListenAddress + config.GlobalConfig.MetricPath)
 	//设置metric路径
-	http.Handle(config.GlobalConfig.MetricPath, promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+	http.Handle(config.GlobalConfig.MetricPath, auth.BasicAuthMiddleware(promhttp.HandlerFor(reg, promhttp.HandlerOpts{})))
 	//配置引导页
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write(landingPage)
@@ -126,7 +140,7 @@ func main() {
 }
 
 // 对配置文件的密码进行加密
-func EncryptPasswordConfig(configFile *string, encodeConfigPwd *bool) /*error*/ {
+func EncryptPasswordConfig(configFile *string, encodeConfigPwd *bool) {
 	//获取全路径
 	configFilePath, err := filepath.Abs(*configFile)
 	if err != nil {
@@ -140,24 +154,20 @@ func EncryptPasswordConfig(configFile *string, encodeConfigPwd *bool) /*error*/ 
 			logger.Logger.Fatalf("Error saving encoded password to config file: %v", err)
 		}
 		logger.Logger.Infof("Password in config file has been encoded")
-		//return
 	}
-	//return err
 }
 
 // 把 默认参数以及配置文件进行合并,
-func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int) /*(config.Config, error)*/ {
+func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, logLevel *string, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int, enableBasicAuth *bool, basicAuthUsername, basicAuthPassword *string) {
 	//读取预先设定的配置文件
 	glocal_config, err := config.LoadConfig(*configFile)
 	if err != nil {
-		//fmt.Printf("Error loading config file: %v\n", err)
 		fmt.Printf("no loading default config file\n")
 	}
 	// 对默认值以及配置文件的参数进行合并覆盖
-	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows)
+	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, logLevel, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows, enableBasicAuth, basicAuthUsername, basicAuthPassword)
 
 	config.GlobalConfig = &glocal_config
-	//return glocal_config, err
 }
 
 func execEncryptPwdCmd(encryptPwd *string) bool {
@@ -171,21 +181,19 @@ func execEncryptPwdCmd(encryptPwd *string) bool {
 }
 
 func buildDSN(user, password, host string) string {
-	//dsn := "dm://SYSDBA:SYSDBA@120.53.103.235:5236?autoCommit=true"
 	escapedPwd, _ := config.DecryptPassword(password)
-
 	return fmt.Sprintf("dm://%s:%s@%s?autoCommit=true", user, url.PathEscape(escapedPwd), host)
 }
 
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	if os.IsNotExist(err) {
-		return false /*, nil*/
+		return false
 	}
-	return true /*, err*/
+	return true
 }
 
-func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int) {
+func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, logLevel *string, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int, enableBasicAuth *bool, basicAuthUsername, basicAuthPassword *string) {
 	if listenAddr != nil && *listenAddr != config.DefaultConfig.ListenAddress {
 		glocal_config.ListenAddress = *listenAddr
 	}
@@ -252,5 +260,16 @@ func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *
 	if slowSqlMaxRows != nil && *slowSqlMaxRows != config.DefaultConfig.SlowSqlMaxRows {
 		glocal_config.SlowSqlMaxRows = *slowSqlMaxRows
 	}
-
+	if enableBasicAuth != nil && *enableBasicAuth != config.DefaultConfig.EnableBasicAuth {
+		glocal_config.EnableBasicAuth = *enableBasicAuth
+	}
+	if basicAuthUsername != nil && *basicAuthUsername != config.DefaultConfig.BasicAuthUsername {
+		glocal_config.BasicAuthUsername = *basicAuthUsername
+	}
+	if basicAuthPassword != nil && *basicAuthPassword != config.DefaultConfig.BasicAuthPassword {
+		glocal_config.BasicAuthPassword = *basicAuthPassword
+	}
+	if logLevel != nil && *logLevel != config.DefaultConfig.LogLevel {
+		glocal_config.LogLevel = *logLevel
+	}
 }
