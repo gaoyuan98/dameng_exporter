@@ -255,6 +255,44 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="SYSTEM"} 138
 dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ```
 
+# 7. Basic Auth认证权限配置
+随着对外暴露的指标越来越多,为保证数据安全现dameng_exporter已支持通过Basic Auth来保护metrics endpoint,防止未授权访问。
+
+配置方式如下:
+## 1. 生成加密密码
+使用`--encryptBasicAuthPwd`参数生成bcrypt加密的密码:
+```bash
+[root@localhost dameng_exporter]# ./dameng_exporter_linux_amd64 --encryptBasicAuthPwd=Dameng123#
+## 执行后会输出类似这样的结果:
+Encrypted Basic Auth Password: $2a$12$6knT1Oz4elbt0/kaP/GXN.rC3rWOwNkCliGJGhcxz0A6y8lGxaTQe
+```
+
+## 2. 配置dameng_exporter
+在配置文件中添加以下内容:
+```ini
+enableBasicAuth=true
+basicAuthUsername=admin
+basicAuthPassword=$2a$12$6knT1Oz4elbt0/kaP/GXN.rC3rWOwNkCliGJGhcxz0A6y8lGxaTQe
+```
+
+## 3. 配置Prometheus
+在Prometheus配置文件(prometheus.yml)中,在原有基础上添加basic auth配置。
+
+注: 此处配置的password中的密码必须跟dameng_exporter.config中的password一致才行,否则认证会失败
+```yaml
+scrape_configs:
+   # 添加的是数据库监控的接口9200接口，如果是一套集群，则在targets标签后进行逗号拼接，如下图所示
+   - job_name: "dm_db_single"
+     static_configs:
+        - targets: ["192.168.112.135:9200"]
+          labels:
+             cluster_name: '权限认证测试'
+     basic_auth:
+        username: "admin"
+        password: "$2a$12$6knT1Oz4elbt0/kaP/GXN.rC3rWOwNkCliGJGhcxz0A6y8lGxaTQe"
+```
+<img src="./img/basic_auth_01.png"/>
+
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/gaoyuan98/dameng_exporter)
 
@@ -262,7 +300,7 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ## v1.1.3
 1. 新增功能,新增回滚段信息指标dmdbms_purge_objects_info
 2. 新增功能,为避免指标信息写露,添加basic auth的认证功能
-3. 新增功能,新增logLevel参数,默认为info,可设置为debug,info,warn,error,fatal
+3. 新增功能,新增logLevel参数,默认为debug,可设置为debug,info,warn,error,fatal
 4. 更新功能,原dmdbms_arch_send_detail_info指标中lsn差值一直为0,现完善功能如数据库版本存在V$ARCH_APPLY_INFO视图,则基于此视图计算否则还是原有逻辑，注:指标存在局限性
 ## v1.1.2
 1. 修复当密码包含特殊字符时，连接失败的问题
@@ -311,54 +349,3 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 2. 优化logger的日志展示,日志级别带颜色输出
 ## v1.0.2
 1. 新增自定义SQL指标的功能（在exporter的同级目录下创建一个custom_metrics.toml文件即可，写法与（oracledb_exporter相同）
-
-# Basic Auth配置说明
-dameng_exporter支持通过Basic Auth来保护metrics endpoint,防止未授权访问。配置方式如下:
-
-## 1. 生成加密密码
-使用`--encryptBasicAuthPwd`参数生成bcrypt加密的密码:
-```bash
-./dameng_exporter --encryptBasicAuthPwd=your_password
-```
-执行后会输出类似这样的结果:
-```
-Encrypted Basic Auth Password: $2y$12$y4PaNc0UM0Jzi07jJf6zcuRFyp2GlH6F5rUKcE.xk3Aug2khcqa7m
-```
-
-## 2. 配置dameng_exporter
-在配置文件中添加以下内容:
-```ini
-enableBasicAuth=true
-basicAuthUsername=prometheus
-basicAuthPassword=$2y$12$y4PaNc0UM0Jzi07jJf6zcuRFyp2GlH6F5rUKcE.xk3Aug2khcqa7m
-```
-
-或者通过命令行参数配置:
-```bash
-./dameng_exporter --enableBasicAuth=true --basicAuthUsername=prometheus --basicAuthPassword=$2y$12$y4PaNc0UM0Jzi07jJf6zcuRFyp2GlH6F5rUKcE.xk3Aug2khcqa7m
-```
-
-## 3. 配置Prometheus
-在Prometheus配置文件(prometheus.yml)中添加basic auth配置:
-```yaml
-scrape_configs:
-  - job_name: 'dameng'
-    static_configs:
-      - targets: ['localhost:9200']
-    basic_auth:
-      username: 'prometheus'
-      password: 'your_password'  # 使用原始密码,不是加密后的密码
-```
-
-## 4. 安全建议
-- 建议使用强密码
-- 定期更换密码
-- 限制配置文件的访问权限
-- 如果使用容器化部署,考虑使用环境变量或secrets来传递密码
-
-## 5. 故障排查
-如果无法获取metrics,检查:
-- bcrypt加密的密码是否正确
-- Prometheus中使用的原始密码是否正确
-- dameng_exporter的地址是否正确
-- 网络连接是否正常

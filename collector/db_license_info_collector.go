@@ -94,7 +94,7 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 		} else {
 			licenseStatus = "无限制"
 			returnDateStr = "-1"
-			logger.Logger.Info("Check Database License Date Info Success, Expired Unlimited")
+			logger.Logger.Debugf("Check Database License Date Info Success, Expired Unlimited")
 		}
 
 		ch <- prometheus.MustNewConstMetric(

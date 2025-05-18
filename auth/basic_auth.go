@@ -1,13 +1,21 @@
 package auth
 
 import (
+	"crypto/subtle"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+// isEncryptedPassword 判断密码是否为bcrypt加密格式
+func isEncryptedPassword(password string) bool {
+	// bcrypt加密后的密码格式: $2a$10$...
+	return strings.HasPrefix(password, "$2a$")
+}
 
 // BasicAuthMiddleware 处理Basic认证的中间件
 func BasicAuthMiddleware(next http.Handler) http.Handler {
@@ -47,7 +55,7 @@ func BasicAuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		// 验证用户名
-		if username != config.GlobalConfig.BasicAuthUsername {
+		if subtle.ConstantTimeCompare([]byte(username), []byte(config.GlobalConfig.BasicAuthUsername)) != 1 {
 			w.Header().Set("WWW-Authenticate", `Basic realm="DAMENG Exporter Metrics"`)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusUnauthorized)
@@ -75,9 +83,45 @@ func BasicAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		// 获取配置的密码
+		configuredPassword := config.GlobalConfig.BasicAuthPassword
+		//logger.Logger.Debugf("Configured password type: %v", isEncryptedPassword(configuredPassword))
+		//logger.Logger.Debugf("Configured password: %s", configuredPassword)
+		//logger.Logger.Debugf("Received password type: %v", isEncryptedPassword(password))
+		//logger.Logger.Debugf("Received password: %s", password)
+
 		// 验证密码
-		err := bcrypt.CompareHashAndPassword([]byte(config.GlobalConfig.BasicAuthPassword), []byte(password))
-		if err != nil {
+		var authSuccess bool
+
+		// 如果配置的是加密密码
+		if isEncryptedPassword(configuredPassword) {
+			// 尝试使用bcrypt验证
+			err := bcrypt.CompareHashAndPassword([]byte(configuredPassword), []byte(password))
+			if err == nil {
+				authSuccess = true
+				//logger.Logger.Debugf("Password verified using bcrypt")
+			} else {
+				// 如果bcrypt验证失败，且传入的也是加密密码，尝试直接比较
+				if isEncryptedPassword(password) {
+					authSuccess = subtle.ConstantTimeCompare([]byte(password), []byte(configuredPassword)) == 1
+					//logger.Logger.Debugf("Comparing encrypted passwords directly")
+				}
+			}
+		} else {
+			// 如果配置的是明文密码
+			if isEncryptedPassword(password) {
+				// 如果传入的是加密密码，尝试用传入的密文验证配置的明文
+				err := bcrypt.CompareHashAndPassword([]byte(password), []byte(configuredPassword))
+				authSuccess = err == nil
+				//logger.Logger.Debugf("Verifying plain password against encrypted password")
+			} else {
+				// 如果传入的也是明文，直接比较
+				authSuccess = subtle.ConstantTimeCompare([]byte(password), []byte(configuredPassword)) == 1
+				//logger.Logger.Debugf("Comparing plain passwords directly")
+			}
+		}
+
+		if !authSuccess {
 			w.Header().Set("WWW-Authenticate", `Basic realm="DAMENG Exporter Metrics"`)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusUnauthorized)

@@ -73,7 +73,7 @@ var DefaultConfig = Config{
 	LogMaxSize:              10, //MB
 	LogMaxBackups:           3,  //个数
 	LogMaxAge:               30, //天
-	LogLevel:                "info",
+	LogLevel:                "debug",
 	BigKeyDataCacheTime:     60, //分
 	AlarmKeyCacheTime:       5,  //分
 	RegisterHostMetrics:     false,
@@ -145,7 +145,8 @@ func LoadConfig(filePath string) (Config, error) {
 			if val, err := strconv.Atoi(value); err == nil {
 				config.ConnMaxLifetime = val
 			}
-
+		case "logLevel":
+			config.LogLevel = value
 		case "logMaxSize":
 			if val, err := strconv.Atoi(value); err == nil {
 				config.LogMaxSize = val
