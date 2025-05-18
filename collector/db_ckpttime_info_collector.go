@@ -99,7 +99,7 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 
 		ch <- prometheus.MustNewConstMetric(
 			c.ckptTimeInfoDesc,
-			prometheus.GaugeValue,
+			prometheus.CounterValue,
 			NullFloat64ToFloat64(info.CkptTimeUsed),
 			hostname, /*, ckptTotalCount, ckptReserveCount, ckptFlushedPages*/
 		)

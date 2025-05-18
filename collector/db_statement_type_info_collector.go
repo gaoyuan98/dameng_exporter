@@ -82,7 +82,7 @@ func (c *DbSqlExecTypeCollector) Collect(ch chan<- prometheus.Metric) {
 
 		ch <- prometheus.MustNewConstMetric(
 			c.statementTypeDesc,
-			prometheus.GaugeValue,
+			prometheus.CounterValue,
 			NullFloat64ToFloat64(info.StatVal),
 			hostname, statementName,
 		)
