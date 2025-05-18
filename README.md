@@ -262,7 +262,7 @@ dmdbms_test_table_metrics_total_size_mb{host_name="gy",name="TEMP"} 74
 ## v1.1.3
 1. 新增功能,新增回滚段信息指标dmdbms_purge_objects_info
 2. 新增功能,为避免指标信息写露,添加basic auth的认证功能
-3. 新增功能,新增logLevel参数,默认为info,可设置为debug,info,warn,error,fatal
+3. 新增功能,新增logLevel参数,默认为debug,可设置为debug,info,warn,error,fatal
 4. 更新功能,原dmdbms_arch_send_detail_info指标中lsn差值一直为0,现完善功能如数据库版本存在V$ARCH_APPLY_INFO视图,则基于此视图计算否则还是原有逻辑，注:指标存在局限性
 ## v1.1.2
 1. 修复当密码包含特殊字符时，连接失败的问题
@@ -318,19 +318,19 @@ dameng_exporter支持通过Basic Auth来保护metrics endpoint,防止未授权�
 ## 1. 生成加密密码
 使用`--encryptBasicAuthPwd`参数生成bcrypt加密的密码:
 ```bash
-./dameng_exporter --encryptBasicAuthPwd=your_password
+[root@localhost dameng_exporter]# ./dameng_exporter_linux_amd64 --encryptBasicAuthPwd=Dameng123#
 ```
 执行后会输出类似这样的结果:
 ```
-Encrypted Basic Auth Password: $2y$12$y4PaNc0UM0Jzi07jJf6zcuRFyp2GlH6F5rUKcE.xk3Aug2khcqa7m
+Encrypted Basic Auth Password: $2a$12$wE4LM0T4507U7eRVZscqHujGzh0QaPb0jHe3GSrkmgb7O4G8ya80G
 ```
 
 ## 2. 配置dameng_exporter
 在配置文件中添加以下内容:
 ```ini
 enableBasicAuth=true
-basicAuthUsername=prometheus
-basicAuthPassword=$2y$12$y4PaNc0UM0Jzi07jJf6zcuRFyp2GlH6F5rUKcE.xk3Aug2khcqa7m
+basicAuthUsername=admin
+basicAuthPassword=$2a$12$wE4LM0T4507U7eRVZscqHujGzh0QaPb0jHe3GSrkmgb7O4G8ya80G
 ```
 
 或者通过命令行参数配置:

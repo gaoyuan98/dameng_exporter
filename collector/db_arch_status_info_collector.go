@@ -323,7 +323,7 @@ func ViewArchApplyInfoExists(ctx context.Context, db *sql.DB) bool {
 			viewArchApplyInfoExists = false
 			return
 		}
-		logger.Logger.Info("V$ARCH_APPLY_INFO accessible")
+		logger.Logger.Debugf("V$ARCH_APPLY_INFO accessible")
 		viewArchApplyInfoExists = true
 	})
 	return viewArchApplyInfoExists
