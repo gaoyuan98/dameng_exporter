@@ -20,6 +20,9 @@ import (
 	"go.uber.org/zap"
 )
 
+// Version 定义版本号
+const Version = "v1.1.3"
+
 func main() {
 
 	var (
@@ -65,7 +68,6 @@ func main() {
 		basicAuthPassword   = kingpin.Flag("basicAuthPassword", "Password for basic auth").Default(config.DefaultConfig.BasicAuthPassword).String()
 		encryptBasicAuthPwd = kingpin.Flag("encryptBasicAuthPwd", "Password to encrypt for basic auth and exit").Default("").String()
 
-		Version     = "v1.1.3"
 		landingPage = []byte("<html><head><title>DAMENG DB Exporter " + Version + "</title></head><body><h1>DAMENG DB Exporter " + Version + "</h1><p><a href='/metrics'>Metrics</a></p></body></html>")
 	)
 	kingpin.Parse()
@@ -79,6 +81,9 @@ func main() {
 	}
 	//合并配置文件属性
 	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, logLevel, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows, enableBasicAuth, basicAuthUsername, basicAuthPassword)
+	// 设置版本号
+	config.SetVersion(Version)
+	config.GlobalConfig.Version = Version
 	// eg:初始化全局日志记录器，必须合并完配置在初始化 不然日志控制参数会失效
 	logger.InitLogger()
 	defer logger.Sync()

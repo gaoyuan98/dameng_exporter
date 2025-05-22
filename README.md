@@ -91,10 +91,15 @@ dameng_exporter源码分析:  [https://deepwiki.com/gaoyuan98/dameng_exporter](h
 
 # 搭建步骤
 相关文章如下，如有问题提issue
-1) dameng_exporter部署对接prometheus: https://mp.weixin.qq.com/s/l8LB0nZeevtyrtD_oa9oiQ
-2) prometheus配置DM的全局的告警面板: https://blog.csdn.net/qq_35349982/article/details/144426840
-3) dameng_exporter中如何开启监控慢sql功能: https://mp.weixin.qq.com/s/FMzbrVjwC-6UdAIopg65wA **（慢SQL功能监控的是正在运行的慢SQL,而不是历史的慢SQL，exporter的监控逻辑查看该文章）**
-4) 如想要统计分析汇总一段时间内的慢SQL语句,可采用SQLLOG分析工具处理，详情跳转: https://mp.weixin.qq.com/s/WlwU32rIBF-hhXjafzNJiw
+1) 达梦数据库+Prometheus监控适配速览: https://mp.weixin.qq.com/s/CGKakimuFNTQx7epHS6YdA
+2) 达梦数据库+Prometheus监控专题｜1. Prometheus+Grafana基础监控平台搭建: https://mp.weixin.qq.com/s/TL2j3WrwILI9AnG73yPgJg
+3) 达梦数据库+Prometheus监控专题｜2. 部署dameng_exporter数据采集组件: https://mp.weixin.qq.com/s/Dca0j4UcIFL4FUxCqkcJ7A
+4) 达梦数据库+Prometheus监控专题｜3. 监控项告警配置详解（短信/邮件）: https://mp.weixin.qq.com/s/41m-CS1qOau9vWZId62BUw
+5) 达梦数据库+Prometheus监控专题｜4. 解决Prometheus未授权访问漏洞问题: https://mp.weixin.qq.com/s/1wqErvITsrw3hIvYRvSBTQ
+6) 达梦数据库+Prometheus监控专题｜5. dameng_exporter配置页面的basic auth: https://mp.weixin.qq.com/s/zLwQvQXFDM7VWNt4Dk43rQ
+7) prometheus配置DM的全局的告警面板: https://blog.csdn.net/qq_35349982/article/details/144426840
+8) dameng_exporter中如何开启监控慢sql功能: https://mp.weixin.qq.com/s/FMzbrVjwC-6UdAIopg65wA **（慢SQL功能监控的是正在运行的慢SQL,而不是历史的慢SQL，exporter的监控逻辑查看该文章）**
+9) 如想要统计分析汇总一段时间内的慢SQL语句,可采用SQLLOG分析工具处理，详情跳转: https://mp.weixin.qq.com/s/WlwU32rIBF-hhXjafzNJiw
 
 ## 1. 下载已经编译好的exporter包
 https://github.com/gaoyuan98/dameng_exporter/releases
@@ -297,6 +302,8 @@ scrape_configs:
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/gaoyuan98/dameng_exporter)
 
 # 更新记录
+## v1.1.4
+1. 新增指标，dameng_exporter_build_info，显示当前版本信息(类似于node_exporter_build_info信息)
 ## v1.1.3
 1. 新增功能,新增回滚段信息指标dmdbms_purge_objects_info
 2. 新增功能,为避免指标信息写露,添加basic auth的认证功能
