@@ -75,7 +75,7 @@ var DefaultConfig = Config{
 	CustomMetricsFile: "./custom_metrics.toml",
 	ListenAddress:     ":9200",
 	MetricPath:        "/metrics",
-	Version:           "v1.1.3",
+	Version:           "v1.1.4",
 	//QueryTimeout:    30 * time.Second,
 	QueryTimeout:            30, //秒
 	MaxIdleConns:            1,  //个数

@@ -45,7 +45,7 @@ func (c *BuildInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}()
 
 	// 获取构建信息
-	revision := "d49755e011130f8e4d8e48f4d143fb8d97af56ba"
+	revision := "c5f75112e4cd549a16aa922727f9171ca2b4f793"
 	branch := "HEAD"
 	goversion := runtime.Version()
 	goos := runtime.GOOS
