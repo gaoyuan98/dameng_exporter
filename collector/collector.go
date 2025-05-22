@@ -22,6 +22,7 @@ var (
 )
 
 const (
+	dameng_exporter_build_info        string = "dameng_exporter_build_info"
 	dmdbms_node_uname_info            string = "dmdbms_node_uname_info"
 	dmdbms_tablespace_file_total_info string = "dmdbms_tablespace_file_total_info"
 	dmdbms_tablespace_file_free_info  string = "dmdbms_tablespace_file_free_info"
@@ -90,6 +91,8 @@ func RegisterCollectors(reg *prometheus.Registry) {
 	logger.Logger.Debugf("exporter running system is %v", GetOS())
 
 	collectors = append(collectors, NewSystemInfoCollector())
+	// #12 添加类似node_exporter的build信息
+	collectors = append(collectors, NewBuildInfoCollector())
 	//
 	if config.GlobalConfig.RegisterHostMetrics && strings.Compare(GetOS(), OS_LINUX) == 0 {
 		collectors = append(collectors, NewDmapProcessCollector(db.DBPool))

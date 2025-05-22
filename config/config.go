@@ -9,6 +9,7 @@ import (
 )
 
 var hostName string
+var version string
 
 func SetHostName(hn string) {
 	hostName = hn
@@ -18,6 +19,14 @@ func GetHostName() string {
 	return hostName
 }
 
+func SetVersion(v string) {
+	version = v
+}
+
+func GetVersion() string {
+	return version
+}
+
 var GlobalConfig *Config
 
 type Config struct {
@@ -25,6 +34,7 @@ type Config struct {
 	CustomMetricsFile string
 	ListenAddress     string
 	MetricPath        string
+	Version           string
 
 	//QueryTimeout  time.Duration
 	QueryTimeout int
@@ -65,6 +75,7 @@ var DefaultConfig = Config{
 	CustomMetricsFile: "./custom_metrics.toml",
 	ListenAddress:     ":9200",
 	MetricPath:        "/metrics",
+	Version:           "v1.1.4",
 	//QueryTimeout:    30 * time.Second,
 	QueryTimeout:            30, //秒
 	MaxIdleConns:            1,  //个数
