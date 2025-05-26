@@ -136,4 +136,16 @@ GROUP BY
 
 	// 系统信息查询
 	QuerySystemInfoSqlStr = `SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1`
+
+	// 版本信息查询
+	QueryVersionInfoSqlStr = `SELECT /*+DAMENG_EXPORTER*/ ID_CODE
+      ,BUILD_TYPE
+      ,       TO_NUMBER(SUBSTR(VER,1,2),'XX')
+       ||'.'||TO_NUMBER(SUBSTR(VER,3,2),'XX')
+       ||'.'||TO_NUMBER(SUBSTR(VER,5,2),'XX')
+       ||'.'||TO_NUMBER(SUBSTR(VER,7,2),'XX') AS INNER_VER
+  FROM (SELECT DECODE(SUBSTR(VER,1,2),'03','企业版','05','安全版','02','标准版','其他') AS BUILD_TYPE
+              ,RAWTOHEX(CAST(SUBSTR(VER,3) AS INT)) AS VER
+          FROM (SELECT REGEXP_SUBSTR(ID_CODE,'[^-]+',1,1) AS VER)
+       )`
 )
