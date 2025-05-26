@@ -302,6 +302,8 @@ scrape_configs:
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/gaoyuan98/dameng_exporter)
 
 # 更新记录
+## v1.1.5(未发版)
+1. 新增了两个系统信息指标：dmdbms_system_cpu_info 显示CPU核心数、dmdbms_system_memory_info显示物理内存大小（字节)
 ## v1.1.4
 1. 新增指标，dameng_exporter_build_info，显示当前版本信息(类似于node_exporter_build_info信息)
 ## v1.1.3

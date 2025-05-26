@@ -76,6 +76,10 @@ const (
 	dmdbms_dual_info string = "dmdbms_dual_info"
 	//回滚段信息
 	dmdbms_purge_objects_info string = "dmdbms_purge_objects_info"
+
+	// 系统信息指标
+	dmdbms_system_cpu_info    string = "dmdbms_system_cpu_info"
+	dmdbms_system_memory_info string = "dmdbms_system_memory_info"
 )
 
 // MetricCollector 接口
@@ -127,6 +131,8 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDbBufferPoolCollector(db.DBPool))
 		//dual
 		collectors = append(collectors, NewDbDualCollector(db.DBPool))
+		//系统信息
+		collectors = append(collectors, NewDBSystemInfoCollector(db.DBPool))
 
 	}
 	if config.GlobalConfig.RegisterDmhsMetrics {
