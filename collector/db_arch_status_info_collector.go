@@ -21,11 +21,13 @@ const (
 
 // 定义收集器结构体
 type DbArchStatusCollector struct {
-	db                 *sql.DB
-	archStatusDesc     *prometheus.Desc //归档状态(本地)
-	archSwitchRateDesc *prometheus.Desc //归档切换频率
-	archStatusInfo     *prometheus.Desc //归档所有状态
-	archSendDetailInfo *prometheus.Desc //归档状态的发送详情
+	db                       *sql.DB
+	archStatusDesc           *prometheus.Desc //归档状态(本地)
+	archSwitchRateDesc       *prometheus.Desc //归档切换频率
+	archSwitchRateDetailInfo *prometheus.Desc //归档切换频率详情
+	archStatusInfo           *prometheus.Desc //归档所有状态
+	archSendDetailInfo       *prometheus.Desc //归档状态的发送详情
+	archSendDiffValue        *prometheus.Desc //归档发送的差值
 }
 
 // 20250311 新增如果归档开启的话 返回这个归档跟上一个归档的间隔时间
@@ -73,9 +75,16 @@ func NewDbArchStatusCollector(db *sql.DB) MetricCollector {
 		archSwitchRateDesc: prometheus.NewDesc(
 			dmdbms_arch_switch_rate,
 			"Information about DM database archive switch rate，Always output the most recent piece of data",
+			[]string{"host_name" /*, "status", "createTime", "path", "clsn", "srcDbMagic"*/},
+			nil,
+		),
+		archSwitchRateDetailInfo: prometheus.NewDesc(
+			dmdbms_arch_switch_rate_detail_info,
+			"Information about DM database archive switch rate info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
 			[]string{"host_name", "status", "createTime", "path", "clsn", "srcDbMagic"},
 			nil,
 		),
+
 		archStatusInfo: prometheus.NewDesc(
 			dmdbms_arch_status_info,
 			"Information about DM database archive status, value info: vaild = 1,invaild = 0",
@@ -89,12 +98,22 @@ func NewDbArchStatusCollector(db *sql.DB) MetricCollector {
 			[]string{"host_name", "arch_type", "arch_dest", "last_send_code", "last_send_desc", "last_start_time", "last_end_time", "last_send_time"},
 			nil,
 		),
+		archSendDiffValue: prometheus.NewDesc(
+			dmdbms_arch_send_diff_value,
+			"Information about DM database archive send detail info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
+			[]string{"host_name", "arch_type", "arch_dest"},
+			nil,
+		),
 	}
 }
 
 func (c *DbArchStatusCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.archStatusDesc
 	ch <- c.archSwitchRateDesc
+	ch <- c.archSwitchRateDetailInfo
+	ch <- c.archStatusInfo
+	ch <- c.archSendDetailInfo
+	ch <- c.archSendDiffValue
 }
 
 func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
@@ -137,8 +156,16 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		createTime := NullStringToString(dbArchSwitchRateInfo.createTime)
 		minusDiff := NullFloat64ToFloat64(dbArchSwitchRateInfo.minusDiff)
 		hostname := config.GetHostName()
+		//做折线图
 		ch <- prometheus.MustNewConstMetric(
 			c.archSwitchRateDesc,
+			prometheus.GaugeValue,
+			minusDiff,
+			hostname,
+		)
+		//归档切换的详细信息
+		ch <- prometheus.MustNewConstMetric(
+			c.archSwitchRateDetailInfo,
 			prometheus.GaugeValue,
 			minusDiff,
 			hostname, status, createTime, path, clsn, srcDbMagic,
@@ -183,6 +210,13 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 				prometheus.GaugeValue,
 				lsnDiff,
 				hostname, archType, archDest, lastSendCode, lastSendDesc, lastStartTime, lastEndTime, lastSendTime,
+			)
+			//20250605 存放diff差值
+			ch <- prometheus.MustNewConstMetric(
+				c.archSendDiffValue,
+				prometheus.GaugeValue,
+				lsnDiff,
+				hostname, archType, archDest,
 			)
 
 		}
