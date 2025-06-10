@@ -145,6 +145,7 @@ GRANT SELECT ON V$ARCH_SEND_INFO TO PROMETHEUS;
 GRANT SELECT ON v$arch_status TO PROMETHEUS;
 GRANT SELECT ON V$ARCH_APPLY_INFO TO PROMETHEUS;
 GRANT SELECT ON V$PURGE TO PROMETHEUS;
+GRANT SELECT ON V$DYNAMIC_TABLES TO PROMETHEUS;
 ```
 ## 3. 在数据库所在操作系统中部署运行
 1. 解压压缩包
@@ -302,6 +303,12 @@ scrape_configs:
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/gaoyuan98/dameng_exporter)
 
 # 更新记录
+## v1.1.5(未发版)
+1. 新增了两个系统信息指标：dmdbms_system_cpu_info 显示CPU核心数、dmdbms_system_memory_info显示物理内存大小（字节)
+2. 优化查询dmdbms_version指标的SQL逻辑
+3. 优化dmdbms_arch_send_detail_info、dmdbms_arch_switch_rate_detail_info指标的标签，避免无法做折线图
+4. 优化执行sql前检查视图是否存在的逻辑,改用V$DYNAMIC_TABLES视图
+5. 优化dmdbms_arch_send_detail_info指标在低版本v1.2.84中字段缺失执行报错的问题
 ## v1.1.4
 1. 新增指标，dameng_exporter_build_info，显示当前版本信息(类似于node_exporter_build_info信息)
 ## v1.1.3

@@ -133,4 +133,26 @@ GROUP BY
 
 	// 回滚段查询
 	QueryPurgeInfoSqlStr = `SELECT /*+DAMENG_EXPORTER*/ OBJ_NUM,IS_RUNNING,PURG_FOR_TS from V$PURGE`
+
+	// 系统信息查询
+	QuerySystemInfoSqlStr = `SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1`
+
+	// 版本信息查询
+	QueryVersionInfoSqlStr = `SELECT /*+DAMENG_EXPORTER*/ ID_CODE
+      ,BUILD_TYPE
+      ,       TO_NUMBER(SUBSTR(VER,1,2),'XX')
+       ||'.'||TO_NUMBER(SUBSTR(VER,3,2),'XX')
+       ||'.'||TO_NUMBER(SUBSTR(VER,5,2),'XX')
+       ||'.'||TO_NUMBER(SUBSTR(VER,7,2),'XX') AS INNER_VER
+  FROM (SELECT DECODE(SUBSTR(VER,1,2),'03','企业版','05','安全版','02','标准版','其他') AS BUILD_TYPE
+              ,RAWTOHEX(CAST(SUBSTR(VER,3) AS INT)) AS VER
+          FROM (SELECT REGEXP_SUBSTR(ID_CODE,'[^-]+',1,1) AS VER)
+       )`
+
+	// 检查视图和字段是否存在的SQL
+	// 检查V$ARCH_APPLY_INFO视图是否存在
+	QueryArchApplyInfoExists = "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO'"
+
+	// 检查V$ARCH_SEND_INFO视图中的特定字段是否存在
+	QueryArchSendInfoFieldsExist = "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_SEND_INFO' AND COLNAME IN ('LAST_SEND_CODE','LAST_SEND_DESC')"
 )

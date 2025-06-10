@@ -21,7 +21,7 @@ import (
 )
 
 // Version 定义版本号
-const Version = "v1.1.4"
+const Version = "v1.1.5"
 
 func main() {
 
