@@ -6,10 +6,11 @@ import (
 	"dameng_exporter/logger"
 	"database/sql"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
 )
 
 // 定义常量
@@ -350,15 +351,15 @@ var (
 
 func ViewArchApplyInfoExists(ctx context.Context, db *sql.DB) bool {
 	viewArchApplyInfoCheckOnce.Do(func() {
-		const query = "SELECT COUNT(1) FROM V$ARCH_APPLY_INFO"
+		const query = "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO'"
 		var count int
 		if err := db.QueryRowContext(ctx, query).Scan(&count); err != nil {
-			logger.Logger.Warn("V$ARCH_APPLY_INFO not accessible, fallback to alternative query", zap.Error(err))
+			logger.Logger.Warn("Failed to check V$ARCH_APPLY_INFO existence", zap.Error(err))
 			viewArchApplyInfoExists = false
 			return
 		}
-		logger.Logger.Debugf("V$ARCH_APPLY_INFO accessible")
-		viewArchApplyInfoExists = true
+		viewArchApplyInfoExists = count == 1
+		logger.Logger.Debugf("V$ARCH_APPLY_INFO exists: %v", viewArchApplyInfoExists)
 	})
 	return viewArchApplyInfoExists
 }

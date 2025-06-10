@@ -5,10 +5,11 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
+	"sync"
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
-	"strings"
-	"time"
 )
 
 // 定义数据结构
@@ -28,6 +29,42 @@ type MonitorInfoCollector struct {
 	viewExists      bool
 }
 
+var (
+	viewDmMonitorCheckOnce sync.Once
+	viewDmMonitorExists    bool
+)
+
+// ViewDmMonitorExists 检查V$DMMONITOR视图是否存在
+// 使用sync.Once确保检查只执行一次，结果会被缓存供后续使用
+// 通过查询V$DYNAMIC_TABLES系统表来判断视图是否存在
+// 参数:
+//   - ctx: 上下文，用于控制查询超时
+//   - db: 数据库连接
+//
+// 返回值:
+//   - bool: 视图存在返回true，否则返回false
+func ViewDmMonitorExists(ctx context.Context, db *sql.DB) bool {
+	viewDmMonitorCheckOnce.Do(func() {
+		const query = "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR'"
+		var count int
+		if err := db.QueryRowContext(ctx, query).Scan(&count); err != nil {
+			logger.Logger.Warn("Failed to check V$DMMONITOR existence", zap.Error(err))
+			viewDmMonitorExists = false
+			return
+		}
+		viewDmMonitorExists = count == 1
+		logger.Logger.Debugf("V$DMMONITOR exists: %v", viewDmMonitorExists)
+	})
+	return viewDmMonitorExists
+}
+
+// NewMonitorInfoCollector 创建一个新的监控信息收集器
+// 初始化收集器并设置监控指标的描述信息
+// 参数:
+//   - db: 数据库连接
+//
+// 返回值:
+//   - MetricCollector: 实现了MetricCollector接口的收集器实例
 func NewMonitorInfoCollector(db *sql.DB) MetricCollector {
 	return &MonitorInfoCollector{
 		db: db,
@@ -57,23 +94,17 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
 		return
 	}
-	//不存在则直接返回
-	if !c.viewExists {
-		return
-	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
 	defer cancel()
 
+	// 检查视图是否存在
+	if !ViewDmMonitorExists(ctx, c.db) {
+		return
+	}
+
 	rows, err := c.db.QueryContext(ctx, config.QueryMonitorInfoSqlStr)
 	if err != nil {
-		//if strings.EqualFold(err.Error(), "v$dmmonitor") { // 检查视图不存在的特定错误
-		// 检查报错信息中是否包含 "v$dmmonitor" 字符串
-		if strings.Contains(err.Error(), "V$DMMONITOR") {
-			logger.Logger.Warn("V$DMMONITOR view does not exist, skipping future queries", zap.Error(err))
-			c.viewExists = false
-			return
-		}
 		handleDbQueryError(err)
 		return
 	}
