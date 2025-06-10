@@ -6,6 +6,7 @@ import (
 	"dameng_exporter/logger"
 	"database/sql"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -312,6 +313,37 @@ func getDbArchStatusInfo(ctx context.Context, db *sql.DB) ([]DbArchStatusInfo, e
 	return dbArchStatusInfos, nil
 }
 
+var (
+	viewArchApplyInfoCheckOnce      sync.Once
+	viewArchApplyInfoExists         bool
+	viewArchSendInfoFieldsCheckOnce sync.Once
+	viewArchSendInfoFieldsExist     bool
+)
+
+// ViewArchSendInfoFieldsExist 检查V$ARCH_SEND_INFO视图中的特定字段是否存在
+// 检查LAST_SEND_CODE和LAST_SEND_DESC字段是否都存在
+// 使用sync.Once确保检查只执行一次
+// 参数:
+//   - ctx: 上下文，用于控制查询超时
+//   - db: 数据库连接
+//
+// 返回值:
+//   - bool: 两个字段都存在返回true，否则返回false
+func ViewArchSendInfoFieldsExist(ctx context.Context, db *sql.DB) bool {
+	viewArchSendInfoFieldsCheckOnce.Do(func() {
+		var count int
+		if err := db.QueryRowContext(ctx, config.QueryArchSendInfoFieldsExist).Scan(&count); err != nil {
+			logger.Logger.Warn("Failed to check V$ARCH_SEND_INFO fields existence", zap.Error(err))
+			viewArchSendInfoFieldsExist = false
+			return
+		}
+		// 如果count为2，说明两个字段都存在
+		viewArchSendInfoFieldsExist = count == 2
+		logger.Logger.Debugf("V$ARCH_SEND_INFO fields exist: %v (LAST_SEND_CODE，LAST_SEND_DESC)", viewArchSendInfoFieldsExist)
+	})
+	return viewArchSendInfoFieldsExist
+}
+
 // 查询所有归档发送详情信息
 func getDbArchSendDetailInfo(ctx context.Context, db *sql.DB) ([]DbArchSendDetailInfo, error) {
 	//20250509 如果视图V$ARCH_APPLY_INFO存在,则使用视图V$ARCH_APPLY_INFO的RPKG_LSN字段
@@ -320,6 +352,13 @@ func getDbArchSendDetailInfo(ctx context.Context, db *sql.DB) ([]DbArchSendDetai
 		querySql = config.QueryArchSendDetailInfo2
 	} else {
 		querySql = config.QueryArchSendDetailInfo
+	}
+
+	//20250610 检查V$ARCH_SEND_INFO视图中的字段是否存在（LAST_SEND_CODE，LAST_SEND_DESC）
+	if !ViewArchSendInfoFieldsExist(ctx, db) {
+		// 如果字段不存在，将相关字段替换为空字符串
+		querySql = strings.ReplaceAll(querySql, "LAST_SEND_CODE,", "'' AS LAST_SEND_CODE,")
+		querySql = strings.ReplaceAll(querySql, "LAST_SEND_DESC,", "'' AS LAST_SEND_DESC,")
 	}
 
 	var dbArchSendDetailInfos []DbArchSendDetailInfo
@@ -344,17 +383,11 @@ func getDbArchSendDetailInfo(ctx context.Context, db *sql.DB) ([]DbArchSendDetai
 	return dbArchSendDetailInfos, nil
 }
 
-var (
-	viewArchApplyInfoCheckOnce sync.Once
-	viewArchApplyInfoExists    bool
-)
-
 func ViewArchApplyInfoExists(ctx context.Context, db *sql.DB) bool {
 	viewArchApplyInfoCheckOnce.Do(func() {
-		const query = "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO'"
 		var count int
-		if err := db.QueryRowContext(ctx, query).Scan(&count); err != nil {
-			logger.Logger.Warn("Failed to check V$ARCH_APPLY_INFO existence", zap.Error(err))
+		if err := db.QueryRowContext(ctx, config.QueryArchApplyInfoExists).Scan(&count); err != nil {
+			logger.Logger.Warn("V$ARCH_APPLY_INFO not accessible, fallback to alternative query", zap.Error(err))
 			viewArchApplyInfoExists = false
 			return
 		}

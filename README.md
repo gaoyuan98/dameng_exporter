@@ -308,6 +308,7 @@ scrape_configs:
 2. 优化查询dmdbms_version指标的SQL逻辑
 3. 优化dmdbms_arch_send_detail_info、dmdbms_arch_switch_rate_detail_info指标的标签，避免无法做折线图
 4. 优化执行sql前检查视图是否存在的逻辑,改用V$DYNAMIC_TABLES视图
+5. 优化dmdbms_arch_send_detail_info指标在低版本v1.2.84中字段缺失执行报错的问题
 ## v1.1.4
 1. 新增指标，dameng_exporter_build_info，显示当前版本信息(类似于node_exporter_build_info信息)
 ## v1.1.3
