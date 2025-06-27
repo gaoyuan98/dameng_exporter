@@ -62,6 +62,7 @@ const (
 	dmdbms_start_day                    string = "dmdbms_start_day"
 	dmdbms_rapply_sys_task_mem_used     string = "dmdbms_rapply_sys_task_mem_used"
 	dmdbms_rapply_sys_task_num          string = "dmdbms_rapply_sys_task_num"
+	dmdbms_rapply_time_diff             string = "dmdbms_rapply_time_diff"
 	//dmdbms_instance_log_error_info  string = "dmdbms_instance_log_error_info"
 	dmdbms_dmap_process_is_exit      string = "dmdbms_dmap_process_is_exit"
 	dmdbms_dmserver_process_is_exit  string = "dmdbms_dmserver_process_is_exit"
@@ -120,6 +121,7 @@ func RegisterCollectors(reg *prometheus.Registry) {
 		collectors = append(collectors, NewDbVersionCollector(db.DBPool))
 		collectors = append(collectors, NewDbArchStatusCollector(db.DBPool))
 		collectors = append(collectors, NewDbRapplySysCollector(db.DBPool))
+		collectors = append(collectors, NewDbRapplyTimeDiffCollector(db.DBPool))
 		//回滚段信息
 		collectors = append(collectors, NewPurgeCollector(db.DBPool))
 		//与DM数据库的归档状态

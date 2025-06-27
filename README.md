@@ -133,6 +133,7 @@ GRANT SELECT ON DBA_FREE_SPACE TO PROMETHEUS;
 GRANT SELECT ON V$TRXWAIT TO PROMETHEUS;
 GRANT SELECT ON V$CKPT TO PROMETHEUS;
 GRANT SELECT ON V$RAPPLY_SYS TO PROMETHEUS;
+GRANT SELECT ON V$RAPPLY_STAT TO PROMETHEUS;
 GRANT SELECT ON V$PROCESS TO PROMETHEUS;
 GRANT SELECT ON V$LOCK TO PROMETHEUS;
 GRANT SELECT ON V$THREADS TO PROMETHEUS;
@@ -146,6 +147,7 @@ GRANT SELECT ON v$arch_status TO PROMETHEUS;
 GRANT SELECT ON V$ARCH_APPLY_INFO TO PROMETHEUS;
 GRANT SELECT ON V$PURGE TO PROMETHEUS;
 GRANT SELECT ON V$DYNAMIC_TABLES TO PROMETHEUS;
+GRANT SELECT ON V$DYNAMIC_TABLE_COLUMNS TO PROMETHEUS;
 ```
 ## 3. 在数据库所在操作系统中部署运行
 1. 解压压缩包
@@ -303,6 +305,8 @@ scrape_configs:
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/gaoyuan98/dameng_exporter)
 
 # 更新记录
+## v1.1.6
+1. 新增指标dmdbms_rapply_time_diff,收集备库同步延迟信息（当有大事务时不准）
 ## v1.1.5
 1. 新增了两个系统信息指标：dmdbms_system_cpu_info 显示CPU核心数、dmdbms_system_memory_info显示物理内存大小（字节)
 2. 优化查询dmdbms_version指标的SQL逻辑
