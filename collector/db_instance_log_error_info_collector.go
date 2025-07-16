@@ -5,9 +5,10 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
-	"time"
 )
 
 // 定义数据结构
@@ -78,6 +79,9 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		logger.Logger.Error("Error with rows", zap.Error(err))
 	}
 
+	// 对instanceLogInfos进行去重处理
+	instanceLogInfos = removeDuplicateLogInfos(instanceLogInfos)
+
 	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	for _, info := range instanceLogInfos {
@@ -98,4 +102,33 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			hostname, pid, level, logTime, txt,
 		)
 	}
+}
+
+// 移除重复的日志记录（保留原始顺序）
+func removeDuplicateLogInfos(logs []InstanceLogInfo) []InstanceLogInfo {
+	// 使用map来跟踪已经看到的日志
+	seen := make(map[string]bool)
+	result := []InstanceLogInfo{} // 保留原始顺序的结果集
+
+	// 按原始顺序遍历，只保留第一次出现的元素
+	for _, info := range logs {
+		// 为每条日志创建一个唯一标识
+		pid := NullStringToString(info.Pid)
+		level := NullStringToString(info.Level)
+		logTime := NullStringToString(info.LogTime)
+		txt := NullStringToString(info.Txt)
+
+		key := pid + "|" + level + "|" + logTime + "|" + txt
+
+		// 如果这个日志已经见过，则跳过
+		if seen[key] {
+			continue
+		}
+
+		// 标记为已见，并添加到结果中
+		seen[key] = true
+		result = append(result, info)
+	}
+
+	return result
 }
