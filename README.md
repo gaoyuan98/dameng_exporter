@@ -307,6 +307,7 @@ scrape_configs:
 # 更新记录
 ## v1.1.6
 1. 新增指标dmdbms_rapply_time_diff,收集备库同步延迟信息（当有大事务时不准）
+2. 修复dmdbms_instance_log_error_info指标数据重复的问题
 ## v1.1.5
 1. 新增了两个系统信息指标：dmdbms_system_cpu_info 显示CPU核心数、dmdbms_system_memory_info显示物理内存大小（字节)
 2. 优化查询dmdbms_version指标的SQL逻辑
