@@ -62,20 +62,20 @@ Flags:
 ```shell
 ## linux amd64版本
 ## 拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.1_amd64
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.6_amd64
 ## 更换别名
-docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.1_amd64 dameng_exporter:v1.1.1_amd64
+docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.6_amd64 dameng_exporter:v1.1.6_amd64
 ## 启动
-docker run -d --name dameng_exporter_amd64 -p 9200:9200 dameng_exporter:v1.1.1_amd64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+docker run -d --name dameng_exporter_amd64 -p 9200:9200 dameng_exporter:v1.1.6_amd64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 
 
 ## linux arm64版本
 ## 拉取镜像
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.1_arm64
+docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.6_arm64
 ## 更换别名
-docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.1_arm64 dameng_exporter:v1.1.1_arm64
+docker tag registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.1.6_arm64 dameng_exporter:v1.1.6_arm64
 ## 启动
-docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.1.1_arm64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
+docker run -d --name dameng_exporter_arm64 -p 9200:9200 dameng_exporter:v1.1.6_arm64 --dbHost="ip地址:端口(192.168.121.001:5236)" --dbUser="SYSDBA" --dbPwd="数据库密码(SYSDBA)"
 ```
 # 代码结构
 <img src="./img/diagram.png" />
