@@ -35,26 +35,3 @@ func GetKeyExists(key string) bool {
 	_, found := c.Get(key)
 	return found
 }
-
-/*// 示例主函数
-func main() {
-	// 设置缓存
-	SetCache("key1", "value1", 2*time.Minute)
-
-	// 获取缓存
-	if value, ok := GetFromCache("key1"); ok {
-		fmt.Println("Got from cache:", value)
-	} else {
-		fmt.Println("Cache miss for key1")
-	}
-
-	// 删除缓存
-	DeleteFromCache("key1")
-
-	// 尝试获取已删除的缓存
-	if value, ok := GetFromCache("key1"); ok {
-		fmt.Println("Got from cache:", value)
-	} else {
-		fmt.Println("Cache miss for key1")
-	}
-}*/

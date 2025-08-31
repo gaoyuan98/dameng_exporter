@@ -43,20 +43,20 @@ priority = 1
 labels = "role=master"
 
 # 数据源配置示例2：备库（演示用，使用相同地址）
-#[[datasource]]
-#name = "slave1"
-#description = "备库1"
-#enabled = false  # 暂时禁用
-#dbHost = "127.0.0.1:5236"
-#dbUser = "SYSDBA"
-#dbPwd = "SYSDBA"
-#queryTimeout = 20
-#maxOpenConns = 5
-#maxIdleConns = 1
-#connMaxLifetime = 20
-#bigKeyDataCacheTime = 30
-#alarmKeyCacheTime = 3
-#checkSlowSQL = false
-#registerDatabaseMetrics = true
-#priority = 2
-#labels = "role=slave"
+[[datasource]]
+name = "slave1"
+description = "备库1"
+enabled = true
+dbHost = "10.77.18.91:5236"
+dbUser = "SYSDBA"
+dbPwd = "Dameng123."
+queryTimeout = 20
+maxOpenConns = 5
+maxIdleConns = 1
+connMaxLifetime = 20
+bigKeyDataCacheTime = 30
+alarmKeyCacheTime = 3
+checkSlowSQL = false
+registerDatabaseMetrics = true
+priority = 2
+labels = "role=slave"
