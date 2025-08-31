@@ -111,6 +111,129 @@ func LoadConfig(filePath string) (Config, error) {
 	}
 	defer file.Close()
 
+	// 定义配置项解析器（所有key使用小写，实现大小写不敏感）
+	parsers := map[string]func(string){
+		// 字符串类型配置
+		"configfile":        func(v string) { config.ConfigFile = v },
+		"custommetricsfile": func(v string) { config.CustomMetricsFile = v },
+		"listenaddress":     func(v string) { config.ListenAddress = v },
+		"metricpath":        func(v string) { config.MetricPath = v },
+		"loglevel":          func(v string) { config.LogLevel = v },
+		"dbuser":            func(v string) { config.DbUser = v },
+		"dbpwd": func(v string) {
+			// 如果密码是加密的，自动解密
+			if decryptedPwd, err := DecryptPassword(v); err == nil {
+				config.DbPwd = decryptedPwd
+			} else {
+				config.DbPwd = v
+			}
+		},
+		"dbhost":            func(v string) { config.DbHost = v },
+		"basicauthusername": func(v string) { config.BasicAuthUsername = v },
+		"basicauthpassword": func(v string) {
+			// 如果Basic Auth密码是加密的，自动解密
+			if decryptedPwd, err := DecryptPassword(v); err == nil {
+				config.BasicAuthPassword = decryptedPwd
+			} else {
+				config.BasicAuthPassword = v
+			}
+		},
+
+		// 整数类型配置
+		"querytimeout": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.QueryTimeout = val
+			}
+		},
+		"maxidleconns": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.MaxIdleConns = val
+			}
+		},
+		"maxopenconns": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.MaxOpenConns = val
+			}
+		},
+		"connmaxlifetime": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.ConnMaxLifetime = val
+			}
+		},
+		"logmaxsize": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.LogMaxSize = val
+			}
+		},
+		"logmaxbackups": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.LogMaxBackups = val
+			}
+		},
+		"logmaxage": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.LogMaxAge = val
+			}
+		},
+		"bigkeydatacachetime": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.BigKeyDataCacheTime = val
+			}
+		},
+		"alarmkeycachetime": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.AlarmKeyCacheTime = val
+			}
+		},
+		"slowsqltime": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.SlowSqlTime = val
+			}
+		},
+		"slowsqllimitrows": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.SlowSqlMaxRows = val
+			}
+		},
+
+		// 布尔类型配置
+		"registerhostmetrics": func(v string) {
+			if val, err := strconv.ParseBool(v); err == nil {
+				config.RegisterHostMetrics = val
+			}
+		},
+		"registerdatabasemetrics": func(v string) {
+			if val, err := strconv.ParseBool(v); err == nil {
+				config.RegisterDatabaseMetrics = val
+			}
+		},
+		"registerdmhsmetrics": func(v string) {
+			if val, err := strconv.ParseBool(v); err == nil {
+				config.RegisterDmhsMetrics = val
+			}
+		},
+		"registercustommetrics": func(v string) {
+			if val, err := strconv.ParseBool(v); err == nil {
+				config.RegisterCustomMetrics = val
+			}
+		},
+		"encodeconfigpwd": func(v string) {
+			if val, err := strconv.ParseBool(v); err == nil {
+				config.EncodeConfigPwd = val
+			}
+		},
+		"checkslowsql": func(v string) {
+			if val, err := strconv.ParseBool(v); err == nil {
+				config.CheckSlowSQL = val
+			}
+		},
+		"enablebasicauth": func(v string) {
+			if val, err := strconv.ParseBool(v); err == nil {
+				config.EnableBasicAuth = val
+			}
+		},
+	}
+
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -121,118 +244,51 @@ func LoadConfig(filePath string) (Config, error) {
 		if len(parts) != 2 {
 			continue
 		}
-		key := strings.TrimSpace(parts[0])
+		// 将key转换为小写，实现大小写不敏感
+		key := strings.ToLower(strings.TrimSpace(parts[0]))
 		value := strings.TrimSpace(parts[1])
-		switch key {
-		case "configFile":
-			config.ConfigFile = value
-		case "customMetricsFile":
-			config.CustomMetricsFile = value
-		case "listenAddress":
-			config.ListenAddress = value
-		case "metricPath":
-			config.MetricPath = value
-		case "queryTimeout":
-			/*			d, err := time.ParseDuration(value)
-						if err == nil {
-							config.QueryTimeout = d
-						}*/
-			if val, err := strconv.Atoi(value); err == nil {
-				config.QueryTimeout = val
-			}
-		case "maxIdleConns":
-			if val, err := strconv.Atoi(value); err == nil {
-				config.MaxIdleConns = val
-			}
-		case "maxOpenConns":
-			if val, err := strconv.Atoi(value); err == nil {
-				config.MaxOpenConns = val
-			}
-		case "connMaxLifetime":
-			/*			d, err := time.ParseDuration(value)
-						if err == nil {
-							config.ConnMaxLifetime = d
-						}*/
-			if val, err := strconv.Atoi(value); err == nil {
-				config.ConnMaxLifetime = val
-			}
-		case "logLevel":
-			config.LogLevel = value
-		case "logMaxSize":
-			if val, err := strconv.Atoi(value); err == nil {
-				config.LogMaxSize = val
-			}
-		case "logMaxBackups":
-			if val, err := strconv.Atoi(value); err == nil {
-				config.LogMaxBackups = val
-			}
-		case "logMaxAge":
-			if val, err := strconv.Atoi(value); err == nil {
-				config.LogMaxAge = val
-			}
-		case "dbUser":
-			config.DbUser = value
-		case "dbPwd":
-			config.DbPwd = value
-		case "dbHost":
-			/*			if val, err := strconv.Atoi(value); err == nil {
-						config.DbHost = val
-					}*/
-			config.DbHost = value
-		case "bigKeyDataCacheTime":
-			if val, err := strconv.Atoi(value); err == nil {
-				config.BigKeyDataCacheTime = val
-			}
-		case "alarmKeyCacheTime":
-			if val, err := strconv.Atoi(value); err == nil {
-				config.AlarmKeyCacheTime = val
-			}
-		case "registerHostMetrics":
-			if val, err := strconv.ParseBool(value); err == nil {
-				config.RegisterHostMetrics = val
-			}
-		case "registerDatabaseMetrics":
-			if val, err := strconv.ParseBool(value); err == nil {
-				config.RegisterDatabaseMetrics = val
-			}
-		case "registerDmhsMetrics":
-			if val, err := strconv.ParseBool(value); err == nil {
-				config.RegisterDmhsMetrics = val
-			}
-		case "registerCustomMetrics":
-			if val, err := strconv.ParseBool(value); err == nil {
-				config.RegisterCustomMetrics = val
-			}
-		case "encodeConfigPwd":
-			if val, err := strconv.ParseBool(value); err == nil {
-				config.EncodeConfigPwd = val
-			}
 
-		case "checkSlowSql":
-			if val, err := strconv.ParseBool(value); err == nil {
-				config.CheckSlowSQL = val
-			}
-		case "slowSqlTime":
-			if val, err := strconv.Atoi(value); err == nil {
-				config.SlowSqlTime = val
-			}
-		case "slowSqlLimitRows":
-			if val, err := strconv.Atoi(value); err == nil {
-				config.SlowSqlMaxRows = val
-			}
-		case "enableBasicAuth":
-			if val, err := strconv.ParseBool(value); err == nil {
-				config.EnableBasicAuth = val
-			}
-		case "basicAuthUsername":
-			config.BasicAuthUsername = value
-		case "basicAuthPassword":
-			config.BasicAuthPassword = value
+		// 使用解析器map处理配置项
+		if parser, exists := parsers[key]; exists {
+			parser(value)
 		}
 	}
 
 	return config, scanner.Err()
 }
+
+// StringCategorized 按类别输出，每个类别一行
+func (c *Config) StringCategorized() string {
+	maskedPwd := "***"
+	if c.DbPwd == "" {
+		maskedPwd = "(empty)"
+	}
+	maskedBasicAuthPwd := ""
+	if c.BasicAuthPassword != "" {
+		maskedBasicAuthPwd = "***"
+	} else {
+		maskedBasicAuthPwd = "(empty)"
+	}
+
+	return fmt.Sprintf(`Configuration loaded:
+  [Database] Host=%s, User=%s, Password=%s
+  [Server] Listen=%s, MetricPath=%s, BasicAuth=%v(user=%s,pwd=%s)
+  [Connection] MaxOpen=%d, MaxIdle=%d, Timeout=%ds, MaxLifetime=%dm
+  [Logging] Level=%s, MaxSize=%dMB, MaxBackups=%d, MaxAge=%dd
+  [Cache] BigKeyCache=%dm, AlarmKeyCache=%dm
+  [Features] HostMetrics=%v, DBMetrics=%v, DmhsMetrics=%v, CustomMetrics=%v
+  [SlowSQL] Enabled=%v, Threshold=%dms, MaxRows=%d
+  [Security] EncodeConfigPwd=%v`,
+		c.DbHost, c.DbUser, maskedPwd,
+		c.ListenAddress, c.MetricPath, c.EnableBasicAuth, c.BasicAuthUsername, maskedBasicAuthPwd,
+		c.MaxOpenConns, c.MaxIdleConns, c.QueryTimeout, c.ConnMaxLifetime,
+		c.LogLevel, c.LogMaxSize, c.LogMaxBackups, c.LogMaxAge,
+		c.BigKeyDataCacheTime, c.AlarmKeyCacheTime,
+		c.RegisterHostMetrics, c.RegisterDatabaseMetrics, c.RegisterDmhsMetrics, c.RegisterCustomMetrics,
+		c.CheckSlowSQL, c.SlowSqlTime, c.SlowSqlMaxRows,
+		c.EncodeConfigPwd)
+}
+
 func UpdateConfigPassword(filePath, encryptedPwd string) error {
 	// Read the existing file
 	inputFile, err := os.Open(filePath)
