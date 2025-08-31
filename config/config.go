@@ -29,6 +29,9 @@ func GetVersion() string {
 
 var GlobalConfig *Config
 
+// GlobalMultiConfig 全局多数据源配置实例（用于多数据源模式）
+var GlobalMultiConfig *MultiSourceConfig
+
 type Config struct {
 	ConfigFile        string
 	CustomMetricsFile string

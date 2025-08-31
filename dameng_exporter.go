@@ -90,9 +90,6 @@ func main() {
 	// 创建一个新的注册器，如果使用系统自带的,会多余出很多指标
 	reg := prometheus.NewRegistry()
 
-	//新建数据库连接
-	// DSN (Data Source Name) format: user/password@host:port/service_name
-	dsn := buildDSN(config.GlobalConfig.DbUser, config.GlobalConfig.DbPwd, config.GlobalConfig.DbHost)
 	// 获取主机名
 	hostname, host_err := os.Hostname()
 	if host_err != nil {
@@ -112,18 +109,29 @@ func main() {
 		}
 	}
 
-	// 初始化数据库连接池
-	err := db.InitDBPool(dsn)
-	if err != nil {
-		logger.Logger.Fatalf("Failed to initialize database pool: %v", zap.Error(err))
+	// 初始化数据库连接池（统一使用多数据源架构）
+	// 如果没有多数据源配置，则从全局配置创建一个单数据源的多数据源配置
+	if config.GlobalMultiConfig == nil {
+		logger.Logger.Info("Converting legacy config to multi-datasource format")
+		config.GlobalMultiConfig = config.ConvertLegacyToMultiSource(config.GlobalConfig)
 	}
-	defer db.CloseDBPool() // 关闭数据库连接池
+
+	logger.Logger.Infof("Initializing with %d datasource(s)", len(config.GlobalMultiConfig.DataSources))
+	poolManager := db.NewDBPoolManager(config.GlobalMultiConfig)
+	err := poolManager.InitPools()
+	if err != nil {
+		logger.Logger.Fatalf("Failed to initialize datasource pools: %v", zap.Error(err))
+	}
+	defer poolManager.Close()
+
+	// 设置全局DBPool为兼容模式（向后兼容）
+	db.DBPool = poolManager.GetLegacyPool()
 
 	//对配置文件密码进行加密,确认密码无误后在进行加密
 	EncryptPasswordConfig(args.ConfigFile, args.EncodeConfigPwd)
 
-	//注册指标
-	collector.RegisterCollectors(reg)
+	//注册指标（统一使用多数据源架构）
+	collector.RegisterCollectorsWithPoolManager(reg, poolManager)
 	logger.Logger.Info("Starting dmdb_exporter version " + Version)
 	logger.Logger.Info("Please visit: http://localhost" + config.GlobalConfig.ListenAddress + config.GlobalConfig.MetricPath)
 	//设置metric路径
@@ -159,11 +167,44 @@ func EncryptPasswordConfig(configFile *string, encodeConfigPwd *bool) {
 
 // mergeConfigParam 合并配置文件和命令行参数
 func mergeConfigParam(args *config.CmdArgs) {
-	//读取预先设定的配置文件
-	glocal_config, err := config.LoadConfig(*args.ConfigFile)
-	if err != nil {
-		fmt.Printf("no loading default config file\n")
+	// 检测配置文件格式
+	var glocal_config config.Config
+
+	// 尝试检测配置文件格式
+	if fileutil.IsExist(*args.ConfigFile) {
+		format := config.DetectConfigFormat(*args.ConfigFile)
+
+		if format == "toml" {
+			// 新的TOML格式配置
+			fmt.Printf("Detected TOML format config file\n")
+			multiConfig, err := config.LoadMultiSourceConfig(*args.ConfigFile)
+			if err != nil {
+				fmt.Printf("Error loading TOML config file: %v\n", err)
+				// 尝试旧格式
+				glocal_config, err = config.LoadConfig(*args.ConfigFile)
+				if err != nil {
+					fmt.Printf("no loading default config file\n")
+				}
+			} else {
+				fmt.Printf("Successfully loaded TOML config with %d datasources\n", len(multiConfig.DataSources))
+				// 转换多数据源配置为全局配置（用于兼容）
+				glocal_config = config.ConvertMultiToGlobal(multiConfig)
+				// 保存多数据源配置
+				config.GlobalMultiConfig = multiConfig
+			}
+		} else {
+			// 旧格式配置文件
+			var err error
+			glocal_config, err = config.LoadConfig(*args.ConfigFile)
+			if err != nil {
+				fmt.Printf("no loading default config file\n")
+			}
+		}
+	} else {
+		// 配置文件不存在，使用默认配置
+		glocal_config = config.DefaultConfig
 	}
+
 	// 对默认值以及配置文件的参数进行合并覆盖
 	config.MergeConfig(&glocal_config, args)
 

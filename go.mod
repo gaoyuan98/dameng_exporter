@@ -3,7 +3,7 @@ module dameng_exporter
 go 1.23.0
 
 require (
-	github.com/BurntSushi/toml v1.4.0
+	github.com/BurntSushi/toml v1.5.0
 	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/duke-git/lancet/v2 v2.3.2
 	github.com/gaoyuan98/dm v1.4.48
