@@ -23,64 +23,58 @@ import (
 // Version 定义版本号
 const Version = "v1.1.6"
 
-func main() {
-
-	var (
-		configFile = kingpin.Flag("configFile", "Path to configuration file").Default(config.DefaultConfig.ConfigFile).String()
-		listenAddr = kingpin.Flag("listenAddress", "Address to listen on").Default(config.DefaultConfig.ListenAddress).String()
-		metricPath = kingpin.Flag("metricPath", "Path for metrics").Default(config.DefaultConfig.MetricPath).String()
-		dbHost     = kingpin.Flag("dbHost", "Database Host").Default(config.DefaultConfig.DbHost).String()
-		dbUser     = kingpin.Flag("dbUser", "Database user").Default(config.DefaultConfig.DbUser).String()
-		dbPwd      = kingpin.Flag("dbPwd", "Database password").Default(config.DefaultConfig.DbPwd).String()
-		//queryTimeout = kingpin.Flag("queryTimeout", "Timeout for queries").Default(config.DefaultConfig.QueryTimeout.String()).Duration()
-		queryTimeout = kingpin.Flag("queryTimeout", "Timeout for queries  (Second)").Default(fmt.Sprint(config.DefaultConfig.QueryTimeout)).Int()
-		maxOpenConns = kingpin.Flag("maxOpenConns", "Maximum open connections (number)").Default(fmt.Sprint(config.DefaultConfig.MaxOpenConns)).Int()
-		maxIdleConns = kingpin.Flag("maxIdleConns", "Maximum idle connections (number)").Default(fmt.Sprint(config.DefaultConfig.MaxIdleConns)).Int()
-		connMaxLife  = kingpin.Flag("connMaxLifetime", "Connection maximum lifetime (Minute)").Default(fmt.Sprint(config.DefaultConfig.ConnMaxLifetime)).Int()
-
-		//是否检查慢SQL
-		checkSlowSQL = kingpin.Flag("checkSlowSql", "Check slow SQL,default:"+strconv.FormatBool(config.DefaultConfig.CheckSlowSQL)).Default(strconv.FormatBool(config.DefaultConfig.CheckSlowSQL)).Bool()
-		//SQL检查的毫秒数
-		slowSqlTime = kingpin.Flag("slowSqlTime", "Slow SQL time (Millisecond)").Default(fmt.Sprint(config.DefaultConfig.SlowSqlTime)).Int()
-		//回显的条数
-		slowSqlMaxRows = kingpin.Flag("slowSqlLimitRows", "Slow SQL return limit row").Default(fmt.Sprint(config.DefaultConfig.SlowSqlMaxRows)).Int()
-
-		registerHostMetrics     = kingpin.Flag("registerHostMetrics", "Register host metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Bool()
-		registerDatabaseMetrics = kingpin.Flag("registerDatabaseMetrics", "Register database metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Bool()
-		registerDmhsMetrics     = kingpin.Flag("registerDmhsMetrics", "Register dmhs metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Bool()
-		//注册自定义指标
-		registerCustomMetrics = kingpin.Flag("registerCustomMetrics", "Register custom metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterCustomMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterCustomMetrics)).Bool()
-
-		bigKeyDataCacheTime = kingpin.Flag("bigKeyDataCacheTime", "Big key data cache time (Minute)").Default(fmt.Sprint(config.DefaultConfig.BigKeyDataCacheTime)).Int()
-		AlarmKeyCacheTime   = kingpin.Flag("alarmKeyCacheTime", "Alarm key cache time (Minute)").Default(fmt.Sprint(config.DefaultConfig.AlarmKeyCacheTime)).Int()
-
-		logMaxSize    = kingpin.Flag("logMaxSize", "Maximum log file size(MB)").Default(fmt.Sprint(config.DefaultConfig.LogMaxSize)).Int()
-		logMaxBackups = kingpin.Flag("logMaxBackups", "Maximum log file backups (number)").Default(fmt.Sprint(config.DefaultConfig.LogMaxBackups)).Int()
-		logMaxAge     = kingpin.Flag("logMaxAge", "Maximum log file age (Day)").Default(fmt.Sprint(config.DefaultConfig.LogMaxAge)).Int()
-		logLevel      = kingpin.Flag("logLevel", "Log level (debug|info|warn|error)").Default(config.DefaultConfig.LogLevel).String()
-
-		encryptPwd      = kingpin.Flag("encryptPwd", "Password to encrypt and exit").Default("").String()
-		encodeConfigPwd = kingpin.Flag("encodeConfigPwd", "Encode the password in the config file,default:"+strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Default(strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Bool()
-
-		// Basic Auth配置
-		enableBasicAuth     = kingpin.Flag("enableBasicAuth", "Enable basic auth for metrics endpoint,default:"+strconv.FormatBool(config.DefaultConfig.EnableBasicAuth)).Default(strconv.FormatBool(config.DefaultConfig.EnableBasicAuth)).Bool()
-		basicAuthUsername   = kingpin.Flag("basicAuthUsername", "Username for basic auth").Default(config.DefaultConfig.BasicAuthUsername).String()
-		basicAuthPassword   = kingpin.Flag("basicAuthPassword", "Password for basic auth").Default(config.DefaultConfig.BasicAuthPassword).String()
-		encryptBasicAuthPwd = kingpin.Flag("encryptBasicAuthPwd", "Password to encrypt for basic auth and exit").Default("").String()
-
-		landingPage = []byte("<html><head><title>DAMENG DB Exporter " + Version + "</title></head><body><h1>DAMENG DB Exporter " + Version + "</h1><p><a href='/metrics'>Metrics</a></p></body></html>")
-	)
+// parseFlags 解析命令行参数
+func parseFlags() *config.CmdArgs {
+	args := &config.CmdArgs{
+		ConfigFile:              kingpin.Flag("configFile", "Path to configuration file").Default(config.DefaultConfig.ConfigFile).String(),
+		ListenAddr:              kingpin.Flag("listenAddress", "Address to listen on").Default(config.DefaultConfig.ListenAddress).String(),
+		MetricPath:              kingpin.Flag("metricPath", "Path for metrics").Default(config.DefaultConfig.MetricPath).String(),
+		DbHost:                  kingpin.Flag("dbHost", "Database Host").Default(config.DefaultConfig.DbHost).String(),
+		DbUser:                  kingpin.Flag("dbUser", "Database user").Default(config.DefaultConfig.DbUser).String(),
+		DbPwd:                   kingpin.Flag("dbPwd", "Database password").Default(config.DefaultConfig.DbPwd).String(),
+		QueryTimeout:            kingpin.Flag("queryTimeout", "Timeout for queries (Second)").Default(fmt.Sprint(config.DefaultConfig.QueryTimeout)).Int(),
+		MaxOpenConns:            kingpin.Flag("maxOpenConns", "Maximum open connections (number)").Default(fmt.Sprint(config.DefaultConfig.MaxOpenConns)).Int(),
+		MaxIdleConns:            kingpin.Flag("maxIdleConns", "Maximum idle connections (number)").Default(fmt.Sprint(config.DefaultConfig.MaxIdleConns)).Int(),
+		ConnMaxLife:             kingpin.Flag("connMaxLifetime", "Connection maximum lifetime (Minute)").Default(fmt.Sprint(config.DefaultConfig.ConnMaxLifetime)).Int(),
+		CheckSlowSQL:            kingpin.Flag("checkSlowSql", "Check slow SQL,default:"+strconv.FormatBool(config.DefaultConfig.CheckSlowSQL)).Default(strconv.FormatBool(config.DefaultConfig.CheckSlowSQL)).Bool(),
+		SlowSqlTime:             kingpin.Flag("slowSqlTime", "Slow SQL time (Millisecond)").Default(fmt.Sprint(config.DefaultConfig.SlowSqlTime)).Int(),
+		SlowSqlMaxRows:          kingpin.Flag("slowSqlLimitRows", "Slow SQL return limit row").Default(fmt.Sprint(config.DefaultConfig.SlowSqlMaxRows)).Int(),
+		RegisterHostMetrics:     kingpin.Flag("registerHostMetrics", "Register host metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterHostMetrics)).Bool(),
+		RegisterDatabaseMetrics: kingpin.Flag("registerDatabaseMetrics", "Register database metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDatabaseMetrics)).Bool(),
+		RegisterDmhsMetrics:     kingpin.Flag("registerDmhsMetrics", "Register dmhs metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterDmhsMetrics)).Bool(),
+		RegisterCustomMetrics:   kingpin.Flag("registerCustomMetrics", "Register custom metrics,default:"+strconv.FormatBool(config.DefaultConfig.RegisterCustomMetrics)).Default(strconv.FormatBool(config.DefaultConfig.RegisterCustomMetrics)).Bool(),
+		BigKeyDataCacheTime:     kingpin.Flag("bigKeyDataCacheTime", "Big key data cache time (Minute)").Default(fmt.Sprint(config.DefaultConfig.BigKeyDataCacheTime)).Int(),
+		AlarmKeyCacheTime:       kingpin.Flag("alarmKeyCacheTime", "Alarm key cache time (Minute)").Default(fmt.Sprint(config.DefaultConfig.AlarmKeyCacheTime)).Int(),
+		LogMaxSize:              kingpin.Flag("logMaxSize", "Maximum log file size(MB)").Default(fmt.Sprint(config.DefaultConfig.LogMaxSize)).Int(),
+		LogMaxBackups:           kingpin.Flag("logMaxBackups", "Maximum log file backups (number)").Default(fmt.Sprint(config.DefaultConfig.LogMaxBackups)).Int(),
+		LogMaxAge:               kingpin.Flag("logMaxAge", "Maximum log file age (Day)").Default(fmt.Sprint(config.DefaultConfig.LogMaxAge)).Int(),
+		LogLevel:                kingpin.Flag("logLevel", "Log level (debug|info|warn|error)").Default(config.DefaultConfig.LogLevel).String(),
+		EncryptPwd:              kingpin.Flag("encryptPwd", "Password to encrypt and exit").Default("").String(),
+		EncodeConfigPwd:         kingpin.Flag("encodeConfigPwd", "Encode the password in the config file,default:"+strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Default(strconv.FormatBool(config.DefaultConfig.EncodeConfigPwd)).Bool(),
+		EnableBasicAuth:         kingpin.Flag("enableBasicAuth", "Enable basic auth for metrics endpoint,default:"+strconv.FormatBool(config.DefaultConfig.EnableBasicAuth)).Default(strconv.FormatBool(config.DefaultConfig.EnableBasicAuth)).Bool(),
+		BasicAuthUsername:       kingpin.Flag("basicAuthUsername", "Username for basic auth").Default(config.DefaultConfig.BasicAuthUsername).String(),
+		BasicAuthPassword:       kingpin.Flag("basicAuthPassword", "Password for basic auth").Default(config.DefaultConfig.BasicAuthPassword).String(),
+		EncryptBasicAuthPwd:     kingpin.Flag("encryptBasicAuthPwd", "Password to encrypt for basic auth and exit").Default("").String(),
+	}
 	kingpin.Parse()
+	return args
+}
+
+func main() {
+	landingPage := []byte("<html><head><title>DAMENG DB Exporter " + Version + "</title></head><body><h1>DAMENG DB Exporter " + Version + "</h1><p><a href='/metrics'>Metrics</a></p></body></html>")
+
+	// 解析命令行参数
+	args := parseFlags()
 	//加密密码口令返回
-	if execEncryptPwdCmd(encryptPwd) {
+	if execEncryptPwdCmd(args.EncryptPwd) {
 		return
 	}
 	//加密basic auth密码并返回
-	if auth.ExecEncryptBasicAuthPwdCmd(encryptBasicAuthPwd) {
+	if auth.ExecEncryptBasicAuthPwdCmd(args.EncryptBasicAuthPwd) {
 		return
 	}
 	//合并配置文件属性
-	mergeConfigParam(configFile, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, logLevel, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows, enableBasicAuth, basicAuthUsername, basicAuthPassword)
+	mergeConfigParam(args)
 	// 设置版本号
 	config.SetVersion(Version)
 	config.GlobalConfig.Version = Version
@@ -88,7 +82,8 @@ func main() {
 	logger.InitLogger()
 	defer logger.Sync()
 
-	logger.Logger.Debugf("mergeConfigParam: %v", config.GlobalConfig)
+	// 使用分类输出格式，每个类别一行
+	logger.Logger.Infof("%s", config.GlobalConfig.StringCategorized())
 	//项目开源地址
 	logger.Logger.Infof("The open source address of the project: https://github.com/gaoyuan98/dameng_exporter")
 
@@ -125,7 +120,7 @@ func main() {
 	defer db.CloseDBPool() // 关闭数据库连接池
 
 	//对配置文件密码进行加密,确认密码无误后在进行加密
-	EncryptPasswordConfig(configFile, encodeConfigPwd)
+	EncryptPasswordConfig(args.ConfigFile, args.EncodeConfigPwd)
 
 	//注册指标
 	collector.RegisterCollectors(reg)
@@ -162,15 +157,15 @@ func EncryptPasswordConfig(configFile *string, encodeConfigPwd *bool) {
 	}
 }
 
-// 把 默认参数以及配置文件进行合并,
-func mergeConfigParam(configFile *string, listenAddr *string, metricPath *string, queryTimeout, maxIdleConns *int, maxOpenConns, connMaxLife *int, logMaxSize *int, logMaxBackups *int, logMaxAge *int, logLevel *string, dbUser *string, dbPwd *string, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int, enableBasicAuth *bool, basicAuthUsername, basicAuthPassword *string) {
+// mergeConfigParam 合并配置文件和命令行参数
+func mergeConfigParam(args *config.CmdArgs) {
 	//读取预先设定的配置文件
-	glocal_config, err := config.LoadConfig(*configFile)
+	glocal_config, err := config.LoadConfig(*args.ConfigFile)
 	if err != nil {
 		fmt.Printf("no loading default config file\n")
 	}
 	// 对默认值以及配置文件的参数进行合并覆盖
-	applyConfigFromFlags(&glocal_config, listenAddr, metricPath, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife, logMaxSize, logMaxBackups, logMaxAge, logLevel, dbUser, dbPwd, dbHost, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics, bigKeyDataCacheTime, AlarmKeyCacheTime, encodeConfigPwd, checkSlowSQL, slowSqlTime, slowSqlMaxRows, enableBasicAuth, basicAuthUsername, basicAuthPassword)
+	config.MergeConfig(&glocal_config, args)
 
 	config.GlobalConfig = &glocal_config
 }
@@ -196,85 +191,4 @@ func fileExists(filename string) bool {
 		return false
 	}
 	return true
-}
-
-func applyConfigFromFlags(glocal_config *config.Config, listenAddr, metricPath *string, queryTimeout, maxIdleConns, maxOpenConns, connMaxLife *int, logMaxSize, logMaxBackups, logMaxAge *int, logLevel *string, dbUser, dbPwd, dbHost *string, registerHostMetrics, registerDatabaseMetrics, registerDmhsMetrics, registerCustomMetrics *bool, bigKeyDataCacheTime, AlarmKeyCacheTime *int, encodeConfigPwd *bool, checkSlowSQL *bool, slowSqlTime, slowSqlMaxRows *int, enableBasicAuth *bool, basicAuthUsername, basicAuthPassword *string) {
-	if listenAddr != nil && *listenAddr != config.DefaultConfig.ListenAddress {
-		glocal_config.ListenAddress = *listenAddr
-	}
-	if metricPath != nil && *metricPath != config.DefaultConfig.MetricPath {
-		glocal_config.MetricPath = *metricPath
-	}
-	if queryTimeout != nil && *queryTimeout != config.DefaultConfig.QueryTimeout {
-		glocal_config.QueryTimeout = *queryTimeout
-	}
-	if maxIdleConns != nil && *maxIdleConns != config.DefaultConfig.MaxIdleConns {
-		glocal_config.MaxIdleConns = *maxIdleConns
-	}
-	if maxOpenConns != nil && *maxOpenConns != config.DefaultConfig.MaxOpenConns {
-		glocal_config.MaxOpenConns = *maxOpenConns
-	}
-	if connMaxLife != nil && *connMaxLife != config.DefaultConfig.ConnMaxLifetime {
-		glocal_config.ConnMaxLifetime = *connMaxLife
-	}
-	if logMaxSize != nil && *logMaxSize != config.DefaultConfig.LogMaxSize {
-		glocal_config.LogMaxSize = *logMaxSize
-	}
-	if logMaxBackups != nil && *logMaxBackups != config.DefaultConfig.LogMaxBackups {
-		glocal_config.LogMaxBackups = *logMaxBackups
-	}
-	if logMaxAge != nil && *logMaxAge != config.DefaultConfig.LogMaxAge {
-		glocal_config.LogMaxAge = *logMaxAge
-	}
-	if dbUser != nil && *dbUser != config.DefaultConfig.DbUser {
-		glocal_config.DbUser = *dbUser
-	}
-	if dbPwd != nil && *dbPwd != config.DefaultConfig.DbPwd {
-		glocal_config.DbPwd = *dbPwd
-	}
-	if dbHost != nil && *dbHost != config.DefaultConfig.DbHost {
-		glocal_config.DbHost = *dbHost
-	}
-	if registerHostMetrics != nil && *registerHostMetrics != config.DefaultConfig.RegisterHostMetrics {
-		glocal_config.RegisterHostMetrics = *registerHostMetrics
-	}
-	if registerDatabaseMetrics != nil && *registerDatabaseMetrics != config.DefaultConfig.RegisterDatabaseMetrics {
-		glocal_config.RegisterDatabaseMetrics = *registerDatabaseMetrics
-	}
-	if registerDmhsMetrics != nil && *registerDmhsMetrics != config.DefaultConfig.RegisterDmhsMetrics {
-		glocal_config.RegisterDmhsMetrics = *registerDmhsMetrics
-	}
-	if registerCustomMetrics != nil && *registerCustomMetrics != config.DefaultConfig.RegisterCustomMetrics {
-		glocal_config.RegisterCustomMetrics = *registerCustomMetrics
-	}
-	if bigKeyDataCacheTime != nil && *bigKeyDataCacheTime != config.DefaultConfig.BigKeyDataCacheTime {
-		glocal_config.BigKeyDataCacheTime = *bigKeyDataCacheTime
-	}
-	if AlarmKeyCacheTime != nil && *AlarmKeyCacheTime != config.DefaultConfig.AlarmKeyCacheTime {
-		glocal_config.AlarmKeyCacheTime = *AlarmKeyCacheTime
-	}
-	if encodeConfigPwd != nil && *encodeConfigPwd != config.DefaultConfig.EncodeConfigPwd {
-		glocal_config.EncodeConfigPwd = *encodeConfigPwd
-	}
-	if checkSlowSQL != nil && *checkSlowSQL != config.DefaultConfig.CheckSlowSQL {
-		glocal_config.CheckSlowSQL = *checkSlowSQL
-	}
-	if slowSqlTime != nil && *slowSqlTime != config.DefaultConfig.SlowSqlTime {
-		glocal_config.SlowSqlTime = *slowSqlTime
-	}
-	if slowSqlMaxRows != nil && *slowSqlMaxRows != config.DefaultConfig.SlowSqlMaxRows {
-		glocal_config.SlowSqlMaxRows = *slowSqlMaxRows
-	}
-	if enableBasicAuth != nil && *enableBasicAuth != config.DefaultConfig.EnableBasicAuth {
-		glocal_config.EnableBasicAuth = *enableBasicAuth
-	}
-	if basicAuthUsername != nil && *basicAuthUsername != config.DefaultConfig.BasicAuthUsername {
-		glocal_config.BasicAuthUsername = *basicAuthUsername
-	}
-	if basicAuthPassword != nil && *basicAuthPassword != config.DefaultConfig.BasicAuthPassword {
-		glocal_config.BasicAuthPassword = *basicAuthPassword
-	}
-	if logLevel != nil && *logLevel != config.DefaultConfig.LogLevel {
-		glocal_config.LogLevel = *logLevel
-	}
 }
