@@ -5,6 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
+	"fmt"
 	"sync"
 	"time"
 
@@ -83,7 +84,7 @@ func (c *MonitorInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Database connection is not available: %v", c.dataSource, err), zap.Error(err))
 		return
 	}
 
@@ -106,14 +107,14 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info MonitorInfo
 		if err := rows.Scan(&info.DwConnTime, &info.MonConfirm, &info.MonId, &info.MonIp, &info.MonVersion, &info.Mid); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		monitorInfos = append(monitorInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 	for _, info := range monitorInfos {

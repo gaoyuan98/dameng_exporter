@@ -52,7 +52,7 @@ func (c *DbVersionCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 
 	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Database connection is not available: %v", c.dataSource, err), zap.Error(err))
 		return
 	}
 
@@ -66,7 +66,7 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 		// 如果V2版本失败，使用V1版本
 		dbVersion, err := c.getDbVersionV1(ctx, c.db)
 		if err != nil {
-			logger.Logger.Error("exec getDbVersionV1 func error", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] exec getDbVersionV1 func error", c.dataSource), zap.Error(err))
 			return
 		}
 		// 使用V1版本时，新增标签填充空值

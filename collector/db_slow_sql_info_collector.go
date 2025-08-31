@@ -5,6 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"time"
@@ -55,7 +56,7 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Database connection is not available: %v", c.dataSource, err), zap.Error(err))
 		return
 	}
 
@@ -73,14 +74,14 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info SessionInfo
 		if err := rows.Scan(&info.ExecTime, &info.SlowSQL, &info.SessID, &info.CurrSch, &info.ThrdID, &info.LastRecvTime, &info.ConnIP); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		sessionInfos = append(sessionInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 	for _, info := range sessionInfos {

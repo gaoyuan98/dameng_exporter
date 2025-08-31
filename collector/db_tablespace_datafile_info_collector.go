@@ -67,7 +67,7 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		// 将缓存中的 JSON 字符串转换为 TablespaceInfo 切片
 		if err := json.Unmarshal([]byte(cachedJSON), &tablespaceInfos); err != nil {
 			// 处理反序列化错误
-			logger.Logger.Error("Error unmarshaling cached data", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error unmarshaling cached data", c.dataSource), zap.Error(err))
 			// 反序列化失败，忽略缓存中的数据，继续查询数据库
 			cachedJSON = "" // 清空缓存数据，确保后续不使用过期或损坏的数据
 		} else {
@@ -82,7 +82,7 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Database connection is not available: %v", c.dataSource, err), zap.Error(err))
 		return
 	}
 
@@ -99,13 +99,13 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info TableSpaceDateFileInfo
 		if err := rows.Scan(&info.Path, &info.TotalSize, &info.FreeSize, &info.AutoExtend, &info.NextSize, &info.MaxSize); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		tablespaceInfos = append(tablespaceInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 	for _, info := range tablespaceInfos {
@@ -117,7 +117,7 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	valueJSON, err := json.Marshal(tablespaceInfos)
 	if err != nil {
 		// 处理序列化错误
-		logger.Logger.Error("TablespaceInfo ", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] TablespaceInfo marshal error", c.dataSource), zap.Error(err))
 		return
 	}
 	// 将查询结果存入缓存，重用之前定义的cacheKey

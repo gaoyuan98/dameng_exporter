@@ -5,6 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"strings"
@@ -46,7 +47,7 @@ func (c *DbJobRunningInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Database connection is not available: %v", c.dataSource, err), zap.Error(err))
 		return
 	}
 
@@ -69,13 +70,13 @@ func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	var errorCountInfo ErrorCountInfo
 	if rows.Next() {
 		if err := rows.Scan(&errorCountInfo.ErrorNum); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			return
 		}
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 

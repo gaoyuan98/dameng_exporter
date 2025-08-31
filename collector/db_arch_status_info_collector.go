@@ -133,7 +133,7 @@ func (c *DbArchStatusCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 
 	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Database connection is not available: %v", c.dataSource, err), zap.Error(err))
 		return
 	}
 
@@ -143,7 +143,7 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	// 获取数据库归档状态信息
 	dbArchStatus, err := c.getDbArchStatus(ctx, c.db)
 	if err != nil {
-		logger.Logger.Error("exec getDbArchStatus func error", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] exec getDbArchStatus func error", c.dataSource), zap.Error(err))
 		setArchMetric(ch, c.archStatusDesc, DB_ARCH_INVALID)
 		return
 	}
@@ -182,7 +182,7 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		//查询所有归档的状态信息
 		dbArchStatusInfos, err := c.getDbArchStatusInfo(ctx, c.db)
 		if err != nil {
-			logger.Logger.Error("exec getDbArchStatusInfo func error", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] exec getDbArchStatusInfo func error", c.dataSource), zap.Error(err))
 			return
 		}
 		for _, dbArchStatusInfo := range dbArchStatusInfos {
@@ -201,7 +201,7 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		//查询所有归档发送详情信息
 		dbArchSendInfos, err := c.getDbArchSendDetailInfo(ctx, c.db)
 		if err != nil {
-			logger.Logger.Error("exec getDbArchSendDetailInfo func error", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] exec getDbArchSendDetailInfo func error", c.dataSource), zap.Error(err))
 			return
 		}
 		for _, dbArchSendInfo := range dbArchSendInfos {
@@ -290,7 +290,7 @@ func (c *DbArchStatusCollector) getDbArchSwitchRate(ctx context.Context, db *sql
 	defer rows.Close()
 	rows.Next()
 	if err := rows.Scan(&dbArchSwitchRateInfo.status, &dbArchSwitchRateInfo.createTime, &dbArchSwitchRateInfo.path, &dbArchSwitchRateInfo.clsn, &dbArchSwitchRateInfo.srcDbMagic, &dbArchSwitchRateInfo.minusDiff); err != nil {
-		logger.Logger.Error("Error scanning row", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 		return dbArchSwitchRateInfo, err
 	}
 	return dbArchSwitchRateInfo, nil
@@ -308,13 +308,13 @@ func (c *DbArchStatusCollector) getDbArchStatusInfo(ctx context.Context, db *sql
 	for rows.Next() {
 		var dbArchStatusInfo DbArchStatusInfo
 		if err := rows.Scan(&dbArchStatusInfo.archStatus, &dbArchStatusInfo.archType, &dbArchStatusInfo.archDest, &dbArchStatusInfo.archSrc); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		dbArchStatusInfos = append(dbArchStatusInfos, dbArchStatusInfo)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	return dbArchStatusInfos, nil
 }
@@ -364,13 +364,13 @@ func (c *DbArchStatusCollector) getDbArchSendDetailInfo(ctx context.Context, db 
 	for rows.Next() {
 		var dbArchSendDetailInfo DbArchSendDetailInfo
 		if err := rows.Scan(&dbArchSendDetailInfo.archDest, &dbArchSendDetailInfo.archType, &dbArchSendDetailInfo.lsnDiff, &dbArchSendDetailInfo.lastSendCode, &dbArchSendDetailInfo.lastSendDesc, &dbArchSendDetailInfo.lastStartTime, &dbArchSendDetailInfo.lastEndTime, &dbArchSendDetailInfo.lastSendTime); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		dbArchSendDetailInfos = append(dbArchSendDetailInfos, dbArchSendDetailInfo)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 
 	return dbArchSendDetailInfos, nil

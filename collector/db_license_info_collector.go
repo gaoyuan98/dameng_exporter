@@ -48,7 +48,7 @@ func (c *DbLicenseCollector) Describe(ch chan<- *prometheus.Desc) {
 func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 
 	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Database connection is not available: %v", c.dataSource, err), zap.Error(err))
 		return
 	}
 
@@ -66,13 +66,13 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info DbLicenseInfo
 		if err := rows.Scan(&info.ExpiredDate); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		licenseInfos = append(licenseInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 
@@ -84,7 +84,7 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 		if expiredDateStr != "" {
 			expiredDate, err := time.Parse("20060102", expiredDateStr)
 			if err != nil {
-				logger.Logger.Error("Error parsing date", zap.Error(err))
+				logger.Logger.Error(fmt.Sprintf("[%s] Error parsing date", c.dataSource), zap.Error(err))
 				continue
 			}
 			betweenDay := expiredDate.Sub(time.Now()).Hours() / 24
