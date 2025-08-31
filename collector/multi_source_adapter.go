@@ -92,9 +92,8 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 	// 获取所有健康的连接池
 	pools := a.poolManager.GetHealthyPools()
 
-	// 为每个数据源采集指标
+	// 为每个数据源采集指标 - 使用流式处理，不等待所有数据源完成
 	var wg sync.WaitGroup
-	metricChan := make(chan prometheus.Metric, 1000)
 
 	for _, pool := range pools {
 		wg.Add(1)
@@ -115,16 +114,26 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 
 			// 创建临时channel收集指标
 			tempChan := make(chan prometheus.Metric, 100)
-			done := make(chan bool)
 
-			// 启动goroutine转发指标并添加数据源标签
+			// 启动goroutine实时转发指标并添加数据源标签
+			// 关键改进：直接写入最终的ch，实现真正的流式处理
+			var innerWg sync.WaitGroup
+			innerWg.Add(1)
 			go func() {
+				defer innerWg.Done()
 				for metric := range tempChan {
 					// 使用MetricWrapper包装指标以注入数据源标签
 					wrappedMetric := NewMetricWrapper(metric, labelInjector)
-					metricChan <- wrappedMetric
+					// 直接发送到最终的channel，立即返回给Prometheus
+					// 这样快速的数据源可以立即返回结果
+					select {
+					case ch <- wrappedMetric:
+						// 成功发送
+					case <-time.After(10 * time.Second):
+						// 添加超时保护，避免永久阻塞
+						logger.Logger.Warnf("[%s] Timeout sending metric for %s", p.Name, a.collectorName)
+					}
 				}
-				done <- true
 			}()
 
 			// 执行采集
@@ -132,28 +141,23 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 
 			// 关闭临时channel
 			close(tempChan)
-			<-done
+
+			// 等待内部转发完成
+			innerWg.Wait()
 
 			// 记录执行时间，包含数据源和采集器名称
 			duration := time.Since(startTime)
 			if a.collectorName != "" {
-				logger.Logger.Debugf("[%s] %s exec time: %vms", p.Name, a.collectorName, duration.Milliseconds())
+				logger.Logger.Infof("[%s] %s completed in: %vms", p.Name, a.collectorName, duration.Milliseconds())
 			} else {
-				logger.Logger.Debugf("[%s] collector exec time: %vms", p.Name, duration.Milliseconds())
+				logger.Logger.Infof("[%s] collector completed in: %vms", p.Name, duration.Milliseconds())
 			}
 		}(pool)
 	}
 
-	// 等待所有采集完成
-	go func() {
-		wg.Wait()
-		close(metricChan)
-	}()
-
-	// 转发所有指标
-	for metric := range metricChan {
-		ch <- metric
-	}
+	// 等待所有goroutine完成
+	// 注意：由于直接写入ch，快速的数据源会立即返回结果，不会被慢的数据源阻塞
+	wg.Wait()
 }
 
 // AdaptCollector 适配单个采集器到多数据源
