@@ -4,7 +4,11 @@ import (
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
 	"database/sql"
+	"fmt"
+	"reflect"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -13,15 +17,52 @@ import (
 type MultiSourceAdapter struct {
 	poolManager     *db.DBPoolManager
 	createCollector func(*sql.DB) MetricCollector
+	collectorName   string // 采集器名称
 	mu              sync.Mutex
 }
 
 // NewMultiSourceAdapter 创建多数据源适配器
 func NewMultiSourceAdapter(poolManager *db.DBPoolManager, createFunc func(*sql.DB) MetricCollector) *MultiSourceAdapter {
-	return &MultiSourceAdapter{
+	adapter := &MultiSourceAdapter{
 		poolManager:     poolManager,
 		createCollector: createFunc,
 	}
+
+	// 尝试获取采集器名称
+	if poolManager != nil {
+		pools := poolManager.GetHealthyPools()
+		if len(pools) > 0 {
+			// 创建一个临时采集器来获取类型名称
+			tempCollector := createFunc(pools[0].DB)
+			adapter.collectorName = getCollectorName(tempCollector)
+		}
+	}
+
+	return adapter
+}
+
+// getCollectorName 获取采集器的名称
+func getCollectorName(collector MetricCollector) string {
+	if collector == nil {
+		return "UnknownCollector"
+	}
+
+	// 获取类型名称
+	t := reflect.TypeOf(collector)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	// 获取类型名称
+	name := t.Name()
+	if name == "" {
+		name = fmt.Sprintf("%v", t)
+	}
+
+	// 移除Collector后缀，使名称更简洁
+	name = strings.TrimSuffix(name, "Collector")
+
+	return name
 }
 
 // Describe 实现Prometheus Collector接口
@@ -47,6 +88,9 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 		wg.Add(1)
 		go func(p *db.DataSourcePool) {
 			defer wg.Done()
+
+			// 记录开始时间
+			startTime := time.Now()
 
 			// 创建采集器实例
 			collector := a.createCollector(p.DB)
@@ -74,6 +118,14 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 			// 关闭临时channel
 			close(tempChan)
 			<-done
+
+			// 记录执行时间，包含数据源和采集器名称
+			duration := time.Since(startTime)
+			if a.collectorName != "" {
+				logger.Logger.Debugf("[%s] %s exec time: %vms", p.Name, a.collectorName, duration.Milliseconds())
+			} else {
+				logger.Logger.Debugf("[%s] collector exec time: %vms", p.Name, duration.Milliseconds())
+			}
 		}(pool)
 	}
 

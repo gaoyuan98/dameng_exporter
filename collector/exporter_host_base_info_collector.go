@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
-	"time"
 )
 
 // SystemInfo 结构体，用于存储系统信息
@@ -45,11 +44,6 @@ func (c *SystemInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect 方法
 func (c *SystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("host func exec time: %vms", duration.Milliseconds())
-	}()
 
 	systemInfo := getSystemInfo()
 

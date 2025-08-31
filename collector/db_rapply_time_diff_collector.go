@@ -39,11 +39,6 @@ func (c *DbRapplyTimeDiffCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time: %vms", duration.Milliseconds())
-	}()
 
 	if err := c.db.Ping(); err != nil {
 		logger.Logger.Error("Database connection is not available", zap.Error(err))

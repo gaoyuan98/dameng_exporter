@@ -2,7 +2,7 @@
 # 全局配置
 listenAddress = ":9200"
 metricPath = "/metrics"
-logLevel = "info"
+logLevel = "debug"
 logMaxSize = 10
 logMaxBackups = 3
 logMaxAge = 30

@@ -40,12 +40,6 @@ func (c *DbSqlExecTypeCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbSqlExecTypeCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
 	if err := c.db.Ping(); err != nil {
 		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))

@@ -47,12 +47,6 @@ func (c *TableSpaceInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *TableSpaceInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
 	//保存全局结果对象，可以用来做缓存以及序列化
 	var tablespaceInfos []TableSpaceInfo

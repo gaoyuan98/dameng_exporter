@@ -44,11 +44,6 @@ func (c *DbVersionCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
 	if err := c.db.Ping(); err != nil {
 		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))

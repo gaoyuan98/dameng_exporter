@@ -2,9 +2,7 @@ package collector
 
 import (
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"runtime"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -38,11 +36,6 @@ func (c *BuildInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect 实现 prometheus.Collector 接口
 func (c *BuildInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("build info func exec time: %vms", duration.Milliseconds())
-	}()
 
 	// 获取构建信息
 	revision := "70ab247ddcb5c9e3c76be98a8ad399275ff0d727"
