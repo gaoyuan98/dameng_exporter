@@ -6,15 +6,22 @@ import (
 	"dameng_exporter/logger"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"time"
 )
 
 type TableSpaceDateFileInfoCollector struct {
-	db        *sql.DB
-	totalDesc *prometheus.Desc
-	freeDesc  *prometheus.Desc
+	db         *sql.DB
+	totalDesc  *prometheus.Desc
+	freeDesc   *prometheus.Desc
+	dataSource string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *TableSpaceDateFileInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 type TableSpaceDateFileInfo struct {
@@ -54,8 +61,9 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	//保存全局结果对象，可以用来做缓存以及序列化
 	var tablespaceInfos []TableSpaceDateFileInfo
 
-	// 从缓存中获取数据
-	if cachedJSON, found := config.GetFromCache(dmdbms_tablespace_file_total_info); found {
+	// 从缓存中获取数据，使用带数据源的缓存键
+	cacheKey := fmt.Sprintf("%s_%s", dmdbms_tablespace_file_total_info, c.dataSource)
+	if cachedJSON, found := config.GetFromCache(cacheKey); found {
 		// 将缓存中的 JSON 字符串转换为 TablespaceInfo 切片
 		if err := json.Unmarshal([]byte(cachedJSON), &tablespaceInfos); err != nil {
 			// 处理反序列化错误
@@ -63,7 +71,7 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			// 反序列化失败，忽略缓存中的数据，继续查询数据库
 			cachedJSON = "" // 清空缓存数据，确保后续不使用过期或损坏的数据
 		} else {
-			logger.Logger.Infof("Use cache TablespaceDateFile data")
+			logger.Logger.Infof("[%s] Use cache TablespaceDateFile data", c.dataSource)
 			// 使用缓存的数据
 			for _, info := range tablespaceInfos {
 				ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, config.GetHostName(), info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
@@ -112,8 +120,8 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		logger.Logger.Error("TablespaceInfo ", zap.Error(err))
 		return
 	}
-	// 将查询结果存入缓存
-	config.SetCache(dmdbms_tablespace_file_total_info, string(valueJSON), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime)) // 设置缓存有效时间为5分钟
-	logger.Logger.Infof("TablespaceFileInfoCollector exec finish")
+	// 将查询结果存入缓存，重用之前定义的cacheKey
+	config.SetCache(cacheKey, string(valueJSON), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime)) // 设置缓存有效时间为5分钟
+	logger.Logger.Infof("[%s] TablespaceFileInfoCollector exec finish", c.dataSource)
 
 }

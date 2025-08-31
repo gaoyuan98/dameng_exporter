@@ -27,35 +27,33 @@ type MonitorInfoCollector struct {
 	db              *sql.DB
 	monitorInfoDesc *prometheus.Desc
 	viewExists      bool
+	dataSource      string // 数据源名称
+
+	// 每个实例独立的视图检查缓存
+	viewCheckOnce sync.Once
+	viewChecked   bool
 }
 
-var (
-	viewDmMonitorCheckOnce sync.Once
-	viewDmMonitorExists    bool
-)
+// SetDataSource 实现DataSourceAware接口
+func (c *MonitorInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
+}
 
-// ViewDmMonitorExists 检查V$DMMONITOR视图是否存在
-// 使用sync.Once确保检查只执行一次，结果会被缓存供后续使用
-// 通过查询V$DYNAMIC_TABLES系统表来判断视图是否存在
-// 参数:
-//   - ctx: 上下文，用于控制查询超时
-//   - db: 数据库连接
-//
-// 返回值:
-//   - bool: 视图存在返回true，否则返回false
-func ViewDmMonitorExists(ctx context.Context, db *sql.DB) bool {
-	viewDmMonitorCheckOnce.Do(func() {
+// checkDmMonitorExists 检查V$DMMONITOR视图是否存在
+// 使用sync.Once确保每个数据源只检查一次
+func (c *MonitorInfoCollector) checkDmMonitorExists(ctx context.Context) bool {
+	c.viewCheckOnce.Do(func() {
 		const query = "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR'"
 		var count int
-		if err := db.QueryRowContext(ctx, query).Scan(&count); err != nil {
-			logger.Logger.Warn("Failed to check V$DMMONITOR existence", zap.Error(err))
-			viewDmMonitorExists = false
+		if err := c.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
+			logger.Logger.Warnf("[%s] Failed to check V$DMMONITOR existence: %v", c.dataSource, err)
+			c.viewChecked = false
 			return
 		}
-		viewDmMonitorExists = count == 1
-		logger.Logger.Debugf("V$DMMONITOR exists: %v", viewDmMonitorExists)
+		c.viewChecked = count == 1
+		logger.Logger.Debugf("[%s] V$DMMONITOR exists: %v", c.dataSource, c.viewChecked)
 	})
-	return viewDmMonitorExists
+	return c.viewChecked
 }
 
 // NewMonitorInfoCollector 创建一个新的监控信息收集器
@@ -93,7 +91,7 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	defer cancel()
 
 	// 检查视图是否存在
-	if !ViewDmMonitorExists(ctx, c.db) {
+	if !c.checkDmMonitorExists(ctx) {
 		return
 	}
 

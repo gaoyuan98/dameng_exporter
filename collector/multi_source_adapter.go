@@ -13,6 +13,18 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// DataSourceAware 接口，用于标识支持数据源感知的采集器
+type DataSourceAware interface {
+	SetDataSource(name string)
+}
+
+// SetDataSourceIfSupported 用于设置采集器的数据源名称
+func SetDataSourceIfSupported(collector MetricCollector, dataSource string) {
+	if dsa, ok := collector.(DataSourceAware); ok {
+		dsa.SetDataSource(dataSource)
+	}
+}
+
 // MultiSourceAdapter 多数据源适配器，用于快速改造现有采集器
 type MultiSourceAdapter struct {
 	poolManager     *db.DBPoolManager
@@ -94,6 +106,9 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 
 			// 创建采集器实例
 			collector := a.createCollector(p.DB)
+
+			// 如果采集器支持数据源感知，设置数据源名称
+			SetDataSourceIfSupported(collector, p.Name)
 
 			// 创建标签注入器
 			labelInjector := NewLabelInjectorFromPool(p)

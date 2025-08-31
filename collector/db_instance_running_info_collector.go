@@ -5,6 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"go.uber.org/zap"
@@ -24,6 +25,12 @@ type DBInstanceRunningInfoCollector struct {
 	statusOccursDesc    *prometheus.Desc
 	switchingOccursDesc *prometheus.Desc
 	dbStartDayDesc      *prometheus.Desc
+	dataSource          string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DBInstanceRunningInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 const (
@@ -213,8 +220,12 @@ Default Case：如果 AlarmSwitchStr 缓存键不存在，设置 switchingOccurs
 func (c *DBInstanceRunningInfoCollector) handleDatabaseModeSwitch(ch chan<- prometheus.Metric, mode float64) {
 	modeStr := strconv.FormatFloat(mode, 'f', -1, 64)
 
-	cachedModeValue, modeExists := config.GetFromCache(AlarmSwitchStr) //这个key存储的是 mode值
-	switchOccurExists := config.GetKeyExists(AlarmSwitchOccur)         //这个key表示已经发生切换了，保留的时间
+	// 使用带数据源的缓存键
+	switchStrKey := fmt.Sprintf("%s_%s", AlarmSwitchStr, c.dataSource)
+	switchOccurKey := fmt.Sprintf("%s_%s", AlarmSwitchOccur, c.dataSource)
+
+	cachedModeValue, modeExists := config.GetFromCache(switchStrKey) //这个key存储的是 mode值
+	switchOccurExists := config.GetKeyExists(switchOccurKey)         //这个key表示已经发生切换了，保留的时间
 
 	switch {
 	case switchOccurExists:
@@ -223,40 +234,10 @@ func (c *DBInstanceRunningInfoCollector) handleDatabaseModeSwitch(ch chan<- prom
 		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
 	case modeExists:
 		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual, config.GetHostName())
-		config.DeleteFromCache(AlarmSwitchStr)
-		config.SetCache(AlarmSwitchOccur, strconv.Itoa(AlarmStatus_Unusual), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime))
+		config.DeleteFromCache(switchStrKey)
+		config.SetCache(switchOccurKey, strconv.Itoa(AlarmStatus_Unusual), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime))
 	default:
-		config.SetCache(AlarmSwitchStr, modeStr, time.Minute*time.Duration(config.GlobalConfig.BigKeyDataCacheTime))
+		config.SetCache(switchStrKey, modeStr, time.Minute*time.Duration(config.GlobalConfig.BigKeyDataCacheTime))
 		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
 	}
 }
-
-/*
-func (c *DBInstanceRunningInfoCollector) handleDatabaseModeSwitch(ch chan<- prometheus.Metric, mode float64) {
-	//，'f'表示以小数形式输出，-1表示将所有小数位都输出，64表示mode的类型是float64。
-	modeStr := strconv.FormatFloat(mode, 'f', -1, 64)
-
-	if config.GetKeyExists(AlarmSwitchOccur) {
-		// 如果key存在表名发生过切换
-		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual, config.GetHostName())
-	} else {
-		// 判断是否发生切换
-		if config.GetKeyExists(AlarmSwitchStr) {
-			// 判断模式是否发生切换
-			if cachedMode, found := config.GetFromCache(AlarmSwitchStr); found && cachedMode == modeStr {
-				// 模式未发生变化
-				ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
-			} else {
-				// 模式发生变化
-				ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual, config.GetHostName())
-				config.DeleteFromCache(AlarmSwitchStr)
-				config.SetCache(AlarmSwitchOccur, strconv.Itoa(AlarmStatus_Unusual), 30*time.Minute)
-			}
-		} else {
-			// 第一次出现，更新缓存
-			config.SetCache(AlarmSwitchStr, modeStr, 30*time.Minute)
-			ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
-		}
-	}
-}
-*/

@@ -21,6 +21,12 @@ type DbLicenseInfo struct {
 type DbLicenseCollector struct {
 	db              *sql.DB
 	licenseDateDesc *prometheus.Desc
+	dataSource      string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbLicenseCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbLicenseCollector(db *sql.DB) MetricCollector {
@@ -84,11 +90,11 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 			betweenDay := expiredDate.Sub(time.Now()).Hours() / 24
 			returnDateStr = fmt.Sprintf("%.0f", betweenDay)
 			licenseStatus = returnDateStr
-			logger.Logger.Infof("Check Database License Date Info Success, betweenDay is %s day", returnDateStr)
+			logger.Logger.Infof("[%s] Check Database License Date Info Success, betweenDay is %s day", c.dataSource, returnDateStr)
 		} else {
 			licenseStatus = "无限制"
 			returnDateStr = "-1"
-			logger.Logger.Debugf("Check Database License Date Info Success, Expired Unlimited")
+			logger.Logger.Debugf("[%s] Check Database License Date Info Success, Expired Unlimited", c.dataSource)
 		}
 
 		ch <- prometheus.MustNewConstMetric(

@@ -30,6 +30,18 @@ type DbArchStatusCollector struct {
 	archStatusInfo           *prometheus.Desc //归档所有状态
 	archSendDetailInfo       *prometheus.Desc //归档状态的发送详情
 	archSendDiffValue        *prometheus.Desc //归档发送的差值
+	dataSource               string           // 数据源名称
+
+	// 每个实例独立的视图检查缓存
+	archSendFieldsCheckOnce sync.Once
+	archSendFieldsExist     bool
+	archApplyInfoCheckOnce  sync.Once
+	archApplyInfoExists     bool
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbArchStatusCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // 20250311 新增如果归档开启的话 返回这个归档跟上一个归档的间隔时间
@@ -129,7 +141,7 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	defer cancel()
 
 	// 获取数据库归档状态信息
-	dbArchStatus, err := getDbArchStatus(ctx, c.db)
+	dbArchStatus, err := c.getDbArchStatus(ctx, c.db)
 	if err != nil {
 		logger.Logger.Error("exec getDbArchStatus func error", zap.Error(err))
 		setArchMetric(ch, c.archStatusDesc, DB_ARCH_INVALID)
@@ -140,7 +152,7 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	//如果归档是开启的，则查询归档切换频率
 	if dbArchStatus == DB_ARCH_VALID {
 		//查询语句并封装对象
-		dbArchSwitchRateInfo, err := getDbArchSwitchRate(ctx, c.db)
+		dbArchSwitchRateInfo, err := c.getDbArchSwitchRate(ctx, c.db)
 		if err != nil {
 			//logger.Logger.Error("exec getDbArchSwitchRate func error", zap.Error(err))
 			return
@@ -168,7 +180,7 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		)
 
 		//查询所有归档的状态信息
-		dbArchStatusInfos, err := getDbArchStatusInfo(ctx, c.db)
+		dbArchStatusInfos, err := c.getDbArchStatusInfo(ctx, c.db)
 		if err != nil {
 			logger.Logger.Error("exec getDbArchStatusInfo func error", zap.Error(err))
 			return
@@ -187,7 +199,7 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 
 		//查询所有归档发送详情信息
-		dbArchSendInfos, err := getDbArchSendDetailInfo(ctx, c.db)
+		dbArchSendInfos, err := c.getDbArchSendDetailInfo(ctx, c.db)
 		if err != nil {
 			logger.Logger.Error("exec getDbArchSendDetailInfo func error", zap.Error(err))
 			return
@@ -233,7 +245,7 @@ func setArchMetric(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int
 }
 
 // 获取数据库归档状态信息
-func getDbArchStatus(ctx context.Context, db *sql.DB) (int, error) {
+func (c *DbArchStatusCollector) getDbArchStatus(ctx context.Context, db *sql.DB) (int, error) {
 	var dbArchStatus string
 
 	// 查询 PARA_VALUE
@@ -261,12 +273,12 @@ func getDbArchStatus(ctx context.Context, db *sql.DB) (int, error) {
 		return DB_ARCH_NO_ENABLE, nil
 	}
 
-	logger.Logger.Info("Check Database Arch Status Info Success")
+	logger.Logger.Infof("[%s] Check Database Arch Status Info Success", c.dataSource)
 	return DB_ARCH_INVALID, nil
 }
 
 // 查询归档切换频率
-func getDbArchSwitchRate(ctx context.Context, db *sql.DB) (DbArchSwitchRateInfo, error) {
+func (c *DbArchStatusCollector) getDbArchSwitchRate(ctx context.Context, db *sql.DB) (DbArchSwitchRateInfo, error) {
 
 	var dbArchSwitchRateInfo DbArchSwitchRateInfo
 
@@ -285,7 +297,7 @@ func getDbArchSwitchRate(ctx context.Context, db *sql.DB) (DbArchSwitchRateInfo,
 }
 
 // 查询归档的所有状态信息
-func getDbArchStatusInfo(ctx context.Context, db *sql.DB) ([]DbArchStatusInfo, error) {
+func (c *DbArchStatusCollector) getDbArchStatusInfo(ctx context.Context, db *sql.DB) ([]DbArchStatusInfo, error) {
 	var dbArchStatusInfos []DbArchStatusInfo
 	rows, err := db.QueryContext(ctx, config.QueryArchiveSendStatusSql)
 	if err != nil {
@@ -307,49 +319,36 @@ func getDbArchStatusInfo(ctx context.Context, db *sql.DB) ([]DbArchStatusInfo, e
 	return dbArchStatusInfos, nil
 }
 
-var (
-	viewArchApplyInfoCheckOnce      sync.Once
-	viewArchApplyInfoExists         bool
-	viewArchSendInfoFieldsCheckOnce sync.Once
-	viewArchSendInfoFieldsExist     bool
-)
-
-// ViewArchSendInfoFieldsExist 检查V$ARCH_SEND_INFO视图中的特定字段是否存在
+// checkArchSendInfoFields 检查V$ARCH_SEND_INFO视图中的特定字段是否存在
 // 检查LAST_SEND_CODE和LAST_SEND_DESC字段是否都存在
-// 使用sync.Once确保检查只执行一次
-// 参数:
-//   - ctx: 上下文，用于控制查询超时
-//   - db: 数据库连接
-//
-// 返回值:
-//   - bool: 两个字段都存在返回true，否则返回false
-func ViewArchSendInfoFieldsExist(ctx context.Context, db *sql.DB) bool {
-	viewArchSendInfoFieldsCheckOnce.Do(func() {
+// 使用sync.Once确保每个数据源只检查一次
+func (c *DbArchStatusCollector) checkArchSendInfoFields(ctx context.Context) bool {
+	c.archSendFieldsCheckOnce.Do(func() {
 		var count int
-		if err := db.QueryRowContext(ctx, config.QueryArchSendInfoFieldsExist).Scan(&count); err != nil {
-			logger.Logger.Warn("Failed to check V$ARCH_SEND_INFO fields existence", zap.Error(err))
-			viewArchSendInfoFieldsExist = false
+		if err := c.db.QueryRowContext(ctx, config.QueryArchSendInfoFieldsExist).Scan(&count); err != nil {
+			logger.Logger.Warnf("[%s] Failed to check V$ARCH_SEND_INFO fields existence: %v", c.dataSource, err)
+			c.archSendFieldsExist = false
 			return
 		}
 		// 如果count为2，说明两个字段都存在
-		viewArchSendInfoFieldsExist = count == 2
-		logger.Logger.Debugf("V$ARCH_SEND_INFO fields exist: %v (LAST_SEND_CODE，LAST_SEND_DESC)", viewArchSendInfoFieldsExist)
+		c.archSendFieldsExist = count == 2
+		logger.Logger.Debugf("[%s] V$ARCH_SEND_INFO fields exist: %v (LAST_SEND_CODE，LAST_SEND_DESC)", c.dataSource, c.archSendFieldsExist)
 	})
-	return viewArchSendInfoFieldsExist
+	return c.archSendFieldsExist
 }
 
 // 查询所有归档发送详情信息
-func getDbArchSendDetailInfo(ctx context.Context, db *sql.DB) ([]DbArchSendDetailInfo, error) {
+func (c *DbArchStatusCollector) getDbArchSendDetailInfo(ctx context.Context, db *sql.DB) ([]DbArchSendDetailInfo, error) {
 	//20250509 如果视图V$ARCH_APPLY_INFO存在,则使用视图V$ARCH_APPLY_INFO的RPKG_LSN字段
 	var querySql string
-	if ViewArchApplyInfoExists(ctx, db) {
+	if c.checkArchApplyInfoExists(ctx) {
 		querySql = config.QueryArchSendDetailInfo2
 	} else {
 		querySql = config.QueryArchSendDetailInfo
 	}
 
 	//20250610 检查V$ARCH_SEND_INFO视图中的字段是否存在（LAST_SEND_CODE，LAST_SEND_DESC）
-	if !ViewArchSendInfoFieldsExist(ctx, db) {
+	if !c.checkArchSendInfoFields(ctx) {
 		// 如果字段不存在，将相关字段替换为空字符串
 		querySql = strings.ReplaceAll(querySql, "LAST_SEND_CODE,", "'' AS LAST_SEND_CODE,")
 		querySql = strings.ReplaceAll(querySql, "LAST_SEND_DESC,", "'' AS LAST_SEND_DESC,")
@@ -377,16 +376,18 @@ func getDbArchSendDetailInfo(ctx context.Context, db *sql.DB) ([]DbArchSendDetai
 	return dbArchSendDetailInfos, nil
 }
 
-func ViewArchApplyInfoExists(ctx context.Context, db *sql.DB) bool {
-	viewArchApplyInfoCheckOnce.Do(func() {
+// checkArchApplyInfoExists 检查V$ARCH_APPLY_INFO视图是否存在
+// 使用sync.Once确保每个数据源只检查一次
+func (c *DbArchStatusCollector) checkArchApplyInfoExists(ctx context.Context) bool {
+	c.archApplyInfoCheckOnce.Do(func() {
 		var count int
-		if err := db.QueryRowContext(ctx, config.QueryArchApplyInfoExists).Scan(&count); err != nil {
-			logger.Logger.Warn("V$ARCH_APPLY_INFO not accessible, fallback to alternative query", zap.Error(err))
-			viewArchApplyInfoExists = false
+		if err := c.db.QueryRowContext(ctx, config.QueryArchApplyInfoExists).Scan(&count); err != nil {
+			logger.Logger.Warnf("[%s] V$ARCH_APPLY_INFO not accessible: %v", c.dataSource, err)
+			c.archApplyInfoExists = false
 			return
 		}
-		viewArchApplyInfoExists = count == 1
-		logger.Logger.Debugf("V$ARCH_APPLY_INFO exists: %v", viewArchApplyInfoExists)
+		c.archApplyInfoExists = count == 1
+		logger.Logger.Debugf("[%s] V$ARCH_APPLY_INFO exists: %v", c.dataSource, c.archApplyInfoExists)
 	})
-	return viewArchApplyInfoExists
+	return c.archApplyInfoExists
 }

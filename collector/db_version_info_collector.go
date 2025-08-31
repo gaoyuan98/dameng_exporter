@@ -17,6 +17,12 @@ import (
 type DbVersionCollector struct {
 	db              *sql.DB
 	versionInfoDesc *prometheus.Desc
+	dataSource      string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbVersionCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // 版本信息结构体
@@ -54,11 +60,11 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 	defer cancel()
 
 	// 尝试使用V2版本获取版本信息
-	versionInfo, err := getDbVersionV2(ctx, c.db)
+	versionInfo, err := c.getDbVersionV2(ctx, c.db)
 	if err != nil {
 		logger.Logger.Warn("V2 version query failed, falling back to V1 version", zap.Error(err))
 		// 如果V2版本失败，使用V1版本
-		dbVersion, err := getDbVersionV1(ctx, c.db)
+		dbVersion, err := c.getDbVersionV1(ctx, c.db)
 		if err != nil {
 			logger.Logger.Error("exec getDbVersionV1 func error", zap.Error(err))
 			return
@@ -89,7 +95,7 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 // 获取数据库版本信息 V2版本
-func getDbVersionV2(ctx context.Context, db *sql.DB) (*DbVersionInfo, error) {
+func (c *DbVersionCollector) getDbVersionV2(ctx context.Context, db *sql.DB) (*DbVersionInfo, error) {
 	var versionInfo DbVersionInfo
 
 	row := db.QueryRowContext(ctx, config.QueryVersionInfoSqlStr)
@@ -98,12 +104,12 @@ func getDbVersionV2(ctx context.Context, db *sql.DB) (*DbVersionInfo, error) {
 		return nil, err
 	}
 
-	logger.Logger.Debugf("Check Database version Info V2 Success, version info: %+v", versionInfo)
+	logger.Logger.Debugf("[%s] Check Database version Info V2 Success, version info: %+v", c.dataSource, versionInfo)
 	return &versionInfo, nil
 }
 
 // 获取数据库版本信息 V1版本
-func getDbVersionV1(ctx context.Context, db *sql.DB) (string, error) {
+func (c *DbVersionCollector) getDbVersionV1(ctx context.Context, db *sql.DB) (string, error) {
 	var dbVersion string
 
 	query := `SELECT /*+DM_EXPORTER*/ position('BUILD_VERSION', to_char(TABLEDEF('SYS', 'V$INSTANCE'))) POS FROM dual`
@@ -137,6 +143,6 @@ func getDbVersionV1(ctx context.Context, db *sql.DB) (string, error) {
 		dbVersion = strings.TrimSpace(dbVersion)
 	}
 
-	logger.Logger.Debugf("Check Database version Info V1 Success, version value %s", dbVersion)
+	logger.Logger.Debugf("[%s] Check Database version Info V1 Success, version value %s", c.dataSource, dbVersion)
 	return dbVersion, nil
 }

@@ -24,6 +24,12 @@ type CkptCollector struct {
 	db               *sql.DB
 	ckptTimeInfoDesc *prometheus.Desc
 	viewExists       bool
+	dataSource       string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *CkptCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewCkptCollector(db *sql.DB) MetricCollector {
@@ -61,7 +67,7 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		//if strings.EqualFold(err.Error(), "CKPT") { // 检查视图不存在的特定错误
 		if strings.Contains(err.Error(), "v$CKPT") {
-			logger.Logger.Warn("v$CKPT view does not exist, skipping future queries", zap.Error(err))
+			logger.Logger.Warnf("[%s] v$CKPT view does not exist, skipping future queries: %v", c.dataSource, err)
 			c.viewExists = false
 			return
 		}

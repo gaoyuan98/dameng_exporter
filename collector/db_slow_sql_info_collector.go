@@ -13,6 +13,12 @@ import (
 type SessionInfoCollector struct {
 	db              *sql.DB
 	slowSQLInfoDesc *prometheus.Desc
+	dataSource      string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *SessionInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // 定义数据结构
@@ -44,7 +50,7 @@ func (c *SessionInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	if !config.GlobalConfig.CheckSlowSQL {
-		logger.Logger.Debug("CheckSlowSQL is false, skip collecting slow SQL info")
+		logger.Logger.Debugf("[%s] CheckSlowSQL is false, skip collecting slow SQL info", c.dataSource)
 		return
 	}
 
