@@ -1,13 +1,16 @@
 package collector
 
 import (
+	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
+	"dameng_exporter/metrics"
 	"database/sql"
 	"fmt"
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -100,7 +103,7 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 		go func(p *db.DataSourcePool) {
 			defer wg.Done()
 
-			// 记录开始时间
+			// 记录collector开始时间
 			startTime := time.Now()
 
 			// 创建采集器实例
@@ -112,45 +115,91 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 			// 创建标签注入器
 			labelInjector := NewLabelInjectorFromPool(p)
 
-			// 创建临时channel收集指标
-			tempChan := make(chan prometheus.Metric, 100)
+			// 简化超时控制 - 安全的实现方式
+			timeout := time.Duration(config.GlobalConfig.GlobalTimeoutSeconds) * time.Second
 
-			// 启动goroutine实时转发指标并添加数据源标签
-			// 关键改进：直接写入最终的ch，实现真正的流式处理
-			var innerWg sync.WaitGroup
-			innerWg.Add(1)
+			// 最终版：防goroutine泄露的安全超时控制
+			timedOut := false
+			var metricCount int32 = 0 // 使用原子操作避免竞态
+
+			// 创建安全的收集channel
+			safeChan := make(chan prometheus.Metric, 1000) // 大缓冲防止阻塞
+			stopForward := make(chan struct{})
+			forwardDone := make(chan struct{})
+
+			// 转发goroutine - 可以被安全终止
 			go func() {
-				defer innerWg.Done()
-				for metric := range tempChan {
-					// 使用MetricWrapper包装指标以注入数据源标签
-					wrappedMetric := NewMetricWrapper(metric, labelInjector)
-					// 直接发送到最终的channel，立即返回给Prometheus
-					// 这样快速的数据源可以立即返回结果
+				defer close(forwardDone)
+				for {
 					select {
-					case ch <- wrappedMetric:
-						// 成功发送
-					case <-time.After(10 * time.Second):
-						// 添加超时保护，避免永久阻塞
-						logger.Logger.Warnf("[%s] Timeout sending metric for %s", p.Name, a.collectorName)
+					case <-stopForward:
+						// 收到停止信号，退出
+						return
+					case metric, ok := <-safeChan:
+						if !ok {
+							// channel关闭，正常退出
+							return
+						}
+						// 转发指标
+						wrappedMetric := NewMetricWrapper(metric, labelInjector)
+						select {
+						case ch <- wrappedMetric:
+							atomic.AddInt32(&metricCount, 1)
+						default:
+							// 主channel满了，丢弃
+						}
 					}
 				}
 			}()
 
-			// 执行采集
-			collector.Collect(tempChan)
+			// 采集goroutine - 可以在后台继续运行
+			collectDone := make(chan struct{})
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						logger.Logger.Debugf("[%s] Collector panic recovered: %v", p.Name, r)
+					}
+					close(safeChan) // 安全关闭channel
+					close(collectDone)
+				}()
 
-			// 关闭临时channel
-			close(tempChan)
+				// 执行采集 - 即使超时也能继续完成
+				collector.Collect(safeChan)
+			}()
 
-			// 等待内部转发完成
-			innerWg.Wait()
-
-			// 记录执行时间，包含数据源和采集器名称
-			duration := time.Since(startTime)
-			if a.collectorName != "" {
-				logger.Logger.Infof("[%s] %s completed in: %vms", p.Name, a.collectorName, duration.Milliseconds())
+			// 超时控制逻辑
+			if timeout <= 0 {
+				// 无超时限制
+				<-collectDone
+				<-forwardDone
+				timedOut = false
 			} else {
-				logger.Logger.Infof("[%s] collector completed in: %vms", p.Name, duration.Milliseconds())
+				// 带超时控制
+				select {
+				case <-collectDone:
+					// 采集正常完成
+					<-forwardDone // 等待转发完成
+					timedOut = false
+				case <-time.After(timeout):
+					// 超时 - 停止转发但让采集器继续
+					timedOut = true
+					logger.Logger.Warnf("[%s] FORCE TERMINATING %s after %v (timeout=%v)",
+						p.Name, a.collectorName, time.Since(startTime), timeout)
+					close(stopForward) // 发送停止信号
+					<-forwardDone      // 等待转发goroutine退出
+				}
+			}
+
+			// 记录结果
+			collectorDuration := time.Since(startTime)
+			elapsedTime := metrics.GetElapsedTime()
+
+			if timedOut {
+				logger.Logger.Warnf("[%s] %s TIMED OUT | Collector: %vms | Elapsed: %vms | Metrics: %d",
+					p.Name, a.collectorName, collectorDuration.Milliseconds(), elapsedTime.Milliseconds(), metricCount)
+			} else {
+				logger.Logger.Infof("[%s] %s completed | Collector: %vms | Elapsed: %vms | Metrics: %d",
+					p.Name, a.collectorName, collectorDuration.Milliseconds(), elapsedTime.Milliseconds(), metricCount)
 			}
 		}(pool)
 	}

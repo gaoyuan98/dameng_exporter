@@ -31,6 +31,12 @@ type CmdArgs struct {
 	BasicAuthUsername       *string
 	BasicAuthPassword       *string
 	EncryptBasicAuthPwd     *string
+
+	// 全局超时控制参数
+	GlobalTimeoutSeconds *int
+	P99LatencyTarget     *float64
+	EnablePartialReturn  *bool
+	LatencyWindowSize    *int
 }
 
 // MergeConfig 合并命令行参数到配置
@@ -49,6 +55,12 @@ func MergeConfig(config *Config, args *CmdArgs) {
 	}
 
 	applyBoolFlag := func(flagValue *bool, defaultValue bool, configField *bool) {
+		if flagValue != nil && *flagValue != defaultValue {
+			*configField = *flagValue
+		}
+	}
+
+	applyFloat64Flag := func(flagValue *float64, defaultValue float64, configField *float64) {
 		if flagValue != nil && *flagValue != defaultValue {
 			*configField = *flagValue
 		}
@@ -85,4 +97,10 @@ func MergeConfig(config *Config, args *CmdArgs) {
 	applyBoolFlag(args.EncodeConfigPwd, DefaultConfig.EncodeConfigPwd, &config.EncodeConfigPwd)
 	applyBoolFlag(args.CheckSlowSQL, DefaultConfig.CheckSlowSQL, &config.CheckSlowSQL)
 	applyBoolFlag(args.EnableBasicAuth, DefaultConfig.EnableBasicAuth, &config.EnableBasicAuth)
+
+	// 应用全局超时控制配置
+	applyIntFlag(args.GlobalTimeoutSeconds, DefaultConfig.GlobalTimeoutSeconds, &config.GlobalTimeoutSeconds)
+	applyFloat64Flag(args.P99LatencyTarget, DefaultConfig.P99LatencyTarget, &config.P99LatencyTarget)
+	applyBoolFlag(args.EnablePartialReturn, DefaultConfig.EnablePartialReturn, &config.EnablePartialReturn)
+	applyIntFlag(args.LatencyWindowSize, DefaultConfig.LatencyWindowSize, &config.LatencyWindowSize)
 }

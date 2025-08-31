@@ -78,6 +78,12 @@ func ConvertLegacyConfig(oldConfig *Config) *MultiSourceConfig {
 		CollectStrategy:     StrategyHybrid,
 		MaxConcurrentGroups: 3,
 		GroupTimeout:        60,
+
+		// 全局超时控制配置
+		GlobalTimeoutSeconds: oldConfig.GlobalTimeoutSeconds,
+		P99LatencyTarget:     oldConfig.P99LatencyTarget,
+		EnablePartialReturn:  oldConfig.EnablePartialReturn,
+		LatencyWindowSize:    oldConfig.LatencyWindowSize,
 	}
 
 	// 创建单个数据源
@@ -168,5 +174,11 @@ func ConvertMultiToGlobal(msc *MultiSourceConfig) Config {
 		RegisterDmhsMetrics:     ds.RegisterDmhsMetrics,
 		RegisterCustomMetrics:   ds.RegisterCustomMetrics,
 		CustomMetricsFile:       ds.CustomMetricsFile,
+
+		// 全局超时控制配置
+		GlobalTimeoutSeconds: msc.GlobalTimeoutSeconds,
+		P99LatencyTarget:     msc.P99LatencyTarget,
+		EnablePartialReturn:  msc.EnablePartialReturn,
+		LatencyWindowSize:    msc.LatencyWindowSize,
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
+	"dameng_exporter/metrics"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/duke-git/lancet/v2/fileutil"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )
@@ -55,6 +55,12 @@ func parseFlags() *config.CmdArgs {
 		BasicAuthUsername:       kingpin.Flag("basicAuthUsername", "Username for basic auth").Default(config.DefaultConfig.BasicAuthUsername).String(),
 		BasicAuthPassword:       kingpin.Flag("basicAuthPassword", "Password for basic auth").Default(config.DefaultConfig.BasicAuthPassword).String(),
 		EncryptBasicAuthPwd:     kingpin.Flag("encryptBasicAuthPwd", "Password to encrypt for basic auth and exit").Default("").String(),
+
+		// 全局超时控制参数
+		GlobalTimeoutSeconds: kingpin.Flag("globalTimeoutSeconds", "Global timeout for metrics collection (seconds)").Default(fmt.Sprint(config.DefaultConfig.GlobalTimeoutSeconds)).Int(),
+		P99LatencyTarget:     kingpin.Flag("p99LatencyTarget", "P99 latency target in seconds").Default(fmt.Sprintf("%.1f", config.DefaultConfig.P99LatencyTarget)).Float64(),
+		EnablePartialReturn:  kingpin.Flag("enablePartialReturn", "Enable partial result return on timeout").Default(strconv.FormatBool(config.DefaultConfig.EnablePartialReturn)).Bool(),
+		LatencyWindowSize:    kingpin.Flag("latencyWindowSize", "Sliding window size for P99 latency calculation").Default(fmt.Sprint(config.DefaultConfig.LatencyWindowSize)).Int(),
 	}
 	kingpin.Parse()
 	return args
@@ -88,7 +94,8 @@ func main() {
 	logger.Logger.Infof("The open source address of the project: https://github.com/gaoyuan98/dameng_exporter")
 
 	// 创建一个新的注册器，如果使用系统自带的,会多余出很多指标
-	reg := prometheus.NewRegistry()
+	// 使用TimedRegistry以支持每次scrape的耗时统计
+	reg := metrics.NewTimedRegistry()
 
 	// 获取主机名
 	hostname, host_err := os.Hostname()
@@ -131,7 +138,7 @@ func main() {
 	EncryptPasswordConfig(args.ConfigFile, args.EncodeConfigPwd)
 
 	//注册指标（统一使用多数据源架构）
-	collector.RegisterCollectorsWithPoolManager(reg, poolManager)
+	collector.RegisterCollectorsWithPoolManager(reg.Registry, poolManager)
 	logger.Logger.Info("Starting dmdb_exporter version " + Version)
 	logger.Logger.Info("Please visit: http://localhost" + config.GlobalConfig.ListenAddress + config.GlobalConfig.MetricPath)
 	//设置metric路径

@@ -38,6 +38,12 @@ type MultiSourceConfig struct {
 	MaxConcurrentGroups int             `toml:"maxConcurrentGroups"`
 	GroupTimeout        int             `toml:"groupTimeout"`
 
+	// 全局超时控制配置
+	GlobalTimeoutSeconds int     `toml:"globalTimeoutSeconds"` // 全局超时时间（秒）
+	P99LatencyTarget     float64 `toml:"p99LatencyTarget"`     // P99延迟目标（秒）
+	EnablePartialReturn  bool    `toml:"enablePartialReturn"`  // 是否启用部分结果返回
+	LatencyWindowSize    int     `toml:"latencyWindowSize"`    // P99延迟统计窗口大小（最近N次采集）
+
 	// 数据源列表
 	DataSources []DataSourceConfig `toml:"datasource"`
 }
@@ -97,6 +103,12 @@ var DefaultMultiSourceConfig = MultiSourceConfig{
 	CollectStrategy:     StrategyHybrid,
 	MaxConcurrentGroups: 3,
 	GroupTimeout:        60,
+
+	// 全局超时控制默认值
+	GlobalTimeoutSeconds: 5,    // 默认5秒全局超时
+	P99LatencyTarget:     2.0,  // 默认P99延迟目标2秒
+	EnablePartialReturn:  true, // 默认启用部分结果返回
+	LatencyWindowSize:    100,  // 默认统计最近100次采集
 }
 
 // DefaultDataSourceConfig 默认数据源配置
@@ -301,6 +313,18 @@ func (msc *MultiSourceConfig) ApplyAllDefaults() {
 	if msc.GroupTimeout == 0 {
 		msc.GroupTimeout = DefaultMultiSourceConfig.GroupTimeout
 	}
+
+	// 应用全局超时控制默认值
+	if msc.GlobalTimeoutSeconds == 0 {
+		msc.GlobalTimeoutSeconds = DefaultMultiSourceConfig.GlobalTimeoutSeconds
+	}
+	if msc.P99LatencyTarget == 0 {
+		msc.P99LatencyTarget = DefaultMultiSourceConfig.P99LatencyTarget
+	}
+	if msc.LatencyWindowSize == 0 {
+		msc.LatencyWindowSize = DefaultMultiSourceConfig.LatencyWindowSize
+	}
+	// EnablePartialReturn 是布尔类型，TOML解析会正确处理
 
 	// 为每个数据源应用默认值
 	for i := range msc.DataSources {

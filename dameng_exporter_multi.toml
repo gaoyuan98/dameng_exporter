@@ -18,6 +18,11 @@ collectStrategy = "hybrid"  # sequential/concurrent/hybrid
 maxConcurrentGroups = 3
 groupTimeout = 60
 
+# 全局超时控制设置
+globalTimeoutSeconds = 1
+p99LatencyTarget = 1.5
+enablePartialReturn = true
+latencyWindowSize = 50
 # 数据源配置示例1：主库
 [[datasource]]
 name = "master"
@@ -42,7 +47,8 @@ registerCustomMetrics = false
 priority = 1
 labels = "role=master"
 
-# 数据源配置示例2：备库（演示用，使用相同地址）
+
+## 数据源配置示例2：备库（演示用，使用相同地址）
 [[datasource]]
 name = "slave1"
 description = "备库1"

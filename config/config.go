@@ -71,6 +71,12 @@ type Config struct {
 	EnableBasicAuth   bool
 	BasicAuthUsername string
 	BasicAuthPassword string
+
+	// 全局超时控制配置
+	GlobalTimeoutSeconds int     // 全局超时时间（秒）
+	P99LatencyTarget     float64 // P99延迟目标（秒）
+	EnablePartialReturn  bool    // 是否启用部分结果返回
+	LatencyWindowSize    int     // P99延迟统计窗口大小（最近N次采集）
 }
 
 var DefaultConfig = Config{
@@ -104,6 +110,10 @@ var DefaultConfig = Config{
 	EnableBasicAuth:         false,
 	BasicAuthUsername:       "",
 	BasicAuthPassword:       "",
+	GlobalTimeoutSeconds:    5,    // 默认5秒全局超时
+	P99LatencyTarget:        2.0,  // 默认P99延迟目标2秒
+	EnablePartialReturn:     true, // 默认启用部分结果返回
+	LatencyWindowSize:       100,  // 默认统计最近100次采集
 }
 
 func LoadConfig(filePath string) (Config, error) {
@@ -235,6 +245,28 @@ func LoadConfig(filePath string) (Config, error) {
 				config.EnableBasicAuth = val
 			}
 		},
+
+		// 全局超时控制配置
+		"globaltimeoutseconds": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.GlobalTimeoutSeconds = val
+			}
+		},
+		"p99latencytarget": func(v string) {
+			if val, err := strconv.ParseFloat(v, 64); err == nil {
+				config.P99LatencyTarget = val
+			}
+		},
+		"enablepartialreturn": func(v string) {
+			if val, err := strconv.ParseBool(v); err == nil {
+				config.EnablePartialReturn = val
+			}
+		},
+		"latencywindowsize": func(v string) {
+			if val, err := strconv.Atoi(v); err == nil {
+				config.LatencyWindowSize = val
+			}
+		},
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -274,14 +306,15 @@ func (c *Config) StringCategorized() string {
 	}
 
 	return fmt.Sprintf(`Configuration loaded:
-  [Database] Host=%s, User=%s, Password=%s
-  [Server] Listen=%s, MetricPath=%s, BasicAuth=%v(user=%s,pwd=%s)
-  [Connection] MaxOpen=%d, MaxIdle=%d, Timeout=%ds, MaxLifetime=%dm
-  [Logging] Level=%s, MaxSize=%dMB, MaxBackups=%d, MaxAge=%dd
-  [Cache] BigKeyCache=%dm, AlarmKeyCache=%dm
-  [Features] HostMetrics=%v, DBMetrics=%v, DmhsMetrics=%v, CustomMetrics=%v
-  [SlowSQL] Enabled=%v, Threshold=%dms, MaxRows=%d
-  [Security] EncodeConfigPwd=%v`,
+  [Database] dbHost=%s, dbUser=%s, dbPwd=%s
+  [Server] listenAddress=%s, metricPath=%s, enableBasicAuth=%v(basicAuthUsername=%s,basicAuthPassword=%s)
+  [Connection] maxOpenConns=%d, maxIdleConns=%d, queryTimeout=%ds, connMaxLifetime=%dm
+  [Logging] logLevel=%s, logMaxSize=%dMB, logMaxBackups=%d, logMaxAge=%dd
+  [Cache] bigKeyDataCacheTime=%dm, alarmKeyCacheTime=%dm
+  [Features] registerHostMetrics=%v, registerDatabaseMetrics=%v, registerDmhsMetrics=%v, registerCustomMetrics=%v
+  [SlowSQL] checkSlowSQL=%v, slowSqlTime=%dms, slowSqlLimitRows=%d
+  [TimeoutControl] globalTimeoutSeconds=%ds, p99LatencyTarget=%.1fs, enablePartialReturn=%v, latencyWindowSize=%d
+  [Security] encodeConfigPwd=%v`,
 		c.DbHost, c.DbUser, maskedPwd,
 		c.ListenAddress, c.MetricPath, c.EnableBasicAuth, c.BasicAuthUsername, maskedBasicAuthPwd,
 		c.MaxOpenConns, c.MaxIdleConns, c.QueryTimeout, c.ConnMaxLifetime,
@@ -289,6 +322,7 @@ func (c *Config) StringCategorized() string {
 		c.BigKeyDataCacheTime, c.AlarmKeyCacheTime,
 		c.RegisterHostMetrics, c.RegisterDatabaseMetrics, c.RegisterDmhsMetrics, c.RegisterCustomMetrics,
 		c.CheckSlowSQL, c.SlowSqlTime, c.SlowSqlMaxRows,
+		c.GlobalTimeoutSeconds, c.P99LatencyTarget, c.EnablePartialReturn, c.LatencyWindowSize,
 		c.EncodeConfigPwd)
 }
 
