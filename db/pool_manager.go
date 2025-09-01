@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -36,7 +35,6 @@ type DataSourcePool struct {
 	DB        *sql.DB                  // 数据库连接
 	Config    *config.DataSourceConfig // 数据源配置
 	Labels    map[string]string        // 标签
-	Priority  int                      // 优先级
 	Health    HealthStatus             // 健康状态
 	LastCheck time.Time                // 最后检查时间
 	LastError error                    // 最后错误
@@ -46,7 +44,6 @@ type DataSourcePool struct {
 // DBPoolManager 连接池管理器
 type DBPoolManager struct {
 	pools    map[string]*DataSourcePool // 按名称索引的连接池
-	groups   map[int][]*DataSourcePool  // 按优先级分组的连接池
 	config   *config.MultiSourceConfig  // 多数据源配置
 	mu       sync.RWMutex               // 读写锁
 	logger   *zap.SugaredLogger         // 日志记录器
@@ -61,7 +58,6 @@ var GlobalPoolManager *DBPoolManager
 func NewDBPoolManager(config *config.MultiSourceConfig) *DBPoolManager {
 	return &DBPoolManager{
 		pools:    make(map[string]*DataSourcePool),
-		groups:   make(map[int][]*DataSourcePool),
 		config:   config,
 		logger:   logger.Logger,
 		stopChan: make(chan struct{}),
@@ -80,7 +76,6 @@ func (m *DBPoolManager) InitPools() error {
 		}
 	}
 	m.pools = make(map[string]*DataSourcePool)
-	m.groups = make(map[int][]*DataSourcePool)
 
 	// 创建新连接池
 	for _, dsConfig := range m.config.DataSources {
@@ -102,16 +97,9 @@ func (m *DBPoolManager) InitPools() error {
 		// 添加到索引
 		m.pools[dsConfig.Name] = pool
 
-		// 添加到优先级分组
-		if m.groups[dsConfig.Priority] == nil {
-			m.groups[dsConfig.Priority] = make([]*DataSourcePool, 0)
-		}
-		m.groups[dsConfig.Priority] = append(m.groups[dsConfig.Priority], pool)
-
 		m.logger.Info("Successfully created pool for datasource",
 			zap.String("datasource", dsConfig.Name),
-			zap.String("host", dsConfig.DbHost),
-			zap.Int("priority", dsConfig.Priority))
+			zap.String("host", dsConfig.DbHost))
 	}
 
 	if len(m.pools) == 0 {
@@ -155,7 +143,6 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 		DB:        db,
 		Config:    dsConfig,
 		Labels:    dsConfig.ParseLabels(),
-		Priority:  dsConfig.Priority,
 		Health:    HealthStatusHealthy,
 		LastCheck: time.Now(),
 	}
@@ -212,25 +199,6 @@ func (m *DBPoolManager) GetPools() []*DataSourcePool {
 		}
 	}
 
-	// 按优先级排序
-	sort.Slice(pools, func(i, j int) bool {
-		return pools[i].Priority < pools[j].Priority
-	})
-
-	return pools
-}
-
-// GetPoolsByPriority 获取指定优先级的连接池
-func (m *DBPoolManager) GetPoolsByPriority(priority int) []*DataSourcePool {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	pools := make([]*DataSourcePool, 0)
-	for _, pool := range m.groups[priority] {
-		if pool.Health != HealthStatusDisabled {
-			pools = append(pools, pool)
-		}
-	}
 	return pools
 }
 
@@ -246,11 +214,6 @@ func (m *DBPoolManager) GetHealthyPools() []*DataSourcePool {
 		}
 	}
 
-	// 按优先级排序
-	sort.Slice(pools, func(i, j int) bool {
-		return pools[i].Priority < pools[j].Priority
-	})
-
 	return pools
 }
 
@@ -264,8 +227,6 @@ func (m *DBPoolManager) UpdatePool(dsConfig *config.DataSourceConfig) error {
 		if oldPool.DB != nil {
 			oldPool.DB.Close()
 		}
-		// 从优先级分组中移除
-		m.removeFromGroup(oldPool)
 	}
 
 	// 创建新连接池
@@ -277,30 +238,12 @@ func (m *DBPoolManager) UpdatePool(dsConfig *config.DataSourceConfig) error {
 
 		// 更新索引
 		m.pools[dsConfig.Name] = pool
-
-		// 添加到优先级分组
-		if m.groups[dsConfig.Priority] == nil {
-			m.groups[dsConfig.Priority] = make([]*DataSourcePool, 0)
-		}
-		m.groups[dsConfig.Priority] = append(m.groups[dsConfig.Priority], pool)
 	} else {
 		// 如果禁用，只删除不创建
 		delete(m.pools, dsConfig.Name)
 	}
 
 	return nil
-}
-
-// removeFromGroup 从优先级分组中移除连接池
-func (m *DBPoolManager) removeFromGroup(pool *DataSourcePool) {
-	if group, exists := m.groups[pool.Priority]; exists {
-		for i, p := range group {
-			if p.Name == pool.Name {
-				m.groups[pool.Priority] = append(group[:i], group[i+1:]...)
-				break
-			}
-		}
-	}
 }
 
 // Close 关闭所有连接池
@@ -326,7 +269,6 @@ func (m *DBPoolManager) Close() {
 	}
 
 	m.pools = make(map[string]*DataSourcePool)
-	m.groups = make(map[int][]*DataSourcePool)
 }
 
 // GetStatus 获取连接池状态信息
@@ -341,7 +283,6 @@ func (m *DBPoolManager) GetStatus() map[string]interface{} {
 	for name, pool := range m.pools {
 		poolStatus := map[string]interface{}{
 			"name":       name,
-			"priority":   pool.Priority,
 			"health":     m.healthStatusString(pool.Health),
 			"last_check": pool.LastCheck.Format(time.RFC3339),
 		}

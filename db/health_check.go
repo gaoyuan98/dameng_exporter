@@ -221,7 +221,6 @@ func GetHealthReport(poolManager *DBPoolManager) map[string]interface{} {
 		poolReport := map[string]interface{}{
 			"name":       pool.Name,
 			"host":       pool.Config.DbHost,
-			"priority":   pool.Priority,
 			"health":     healthStatusToString(pool.Health),
 			"last_check": pool.LastCheck.Format(time.RFC3339),
 			"enabled":    pool.Config.Enabled,

@@ -66,7 +66,6 @@ type DataSourceConfig struct {
 	RegisterCustomMetrics   bool `toml:"registerCustomMetrics"`
 
 	// 采集配置
-	Priority          int    `toml:"priority"`          // 优先级: 1-高 2-中 3-低
 	Labels            string `toml:"labels"`            // 标签字符串，格式: "key1=val1,key2=val2"
 	CustomMetricsFile string `toml:"customMetricsFile"` // 数据源专用的自定义指标配置文件
 }
@@ -119,7 +118,6 @@ var DefaultDataSourceConfig = DataSourceConfig{
 	RegisterCustomMetrics:   true,
 
 	// 其他默认值
-	Priority:          2,
 	CustomMetricsFile: "./custom_metrics.toml",
 }
 
@@ -148,9 +146,6 @@ func (ds *DataSourceConfig) ApplyDefaults() {
 	}
 	if ds.SlowSqlMaxRows == 0 {
 		ds.SlowSqlMaxRows = DefaultDataSourceConfig.SlowSqlMaxRows
-	}
-	if ds.Priority == 0 {
-		ds.Priority = DefaultDataSourceConfig.Priority
 	}
 	if ds.CustomMetricsFile == "" {
 		ds.CustomMetricsFile = DefaultDataSourceConfig.CustomMetricsFile
@@ -182,9 +177,6 @@ func (ds *DataSourceConfig) Validate() error {
 	}
 	if ds.MaxOpenConns < 1 || ds.MaxOpenConns > 100 {
 		return fmt.Errorf("maxOpenConns must be between 1-100 for datasource: %s", ds.Name)
-	}
-	if ds.Priority < 1 || ds.Priority > 3 {
-		return fmt.Errorf("priority must be between 1-3 for datasource: %s", ds.Name)
 	}
 
 	return nil
@@ -219,17 +211,6 @@ func (msc *MultiSourceConfig) GetDataSourceByName(name string) *DataSourceConfig
 		}
 	}
 	return nil
-}
-
-// GetDataSourcesByPriority 根据优先级获取数据源配置
-func (msc *MultiSourceConfig) GetDataSourcesByPriority(priority int) []DataSourceConfig {
-	var result []DataSourceConfig
-	for _, ds := range msc.DataSources {
-		if ds.Priority == priority && ds.Enabled {
-			result = append(result, ds)
-		}
-	}
-	return result
 }
 
 // ValidateAll 验证所有配置
@@ -341,6 +322,48 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 	}
 	sb.WriteString(fmt.Sprintf("[DataSources] total=%d, enabled=%d (%s)\n",
 		len(msc.DataSources), enabledCount, strings.Join(dsNames, ", ")))
+
+	// 调试级别时输出每个数据源的详细配置
+	if strings.ToLower(msc.LogLevel) == "debug" {
+		sb.WriteString("\n---------- Debug: DataSource Details ----------\n")
+		for i, ds := range msc.DataSources {
+			sb.WriteString(fmt.Sprintf("[DS-%d] %s:\n", i+1, ds.Name))
+			// 基本信息
+			sb.WriteString(fmt.Sprintf("  Host: %s | User: %s | Enabled: %v\n",
+				ds.DbHost, ds.DbUser, ds.Enabled))
+
+			// 连接池配置
+			sb.WriteString(fmt.Sprintf("  Connection: maxOpen=%d, maxIdle=%d, lifetime=%dmin, queryTimeout=%ds\n",
+				ds.MaxOpenConns, ds.MaxIdleConns, ds.ConnMaxLifetime, ds.QueryTimeout))
+
+			// 缓存配置
+			sb.WriteString(fmt.Sprintf("  Cache: bigKeyData=%dmin, alarmKey=%dmin\n",
+				ds.BigKeyDataCacheTime, ds.AlarmKeyCacheTime))
+
+			// 指标功能开关
+			sb.WriteString(fmt.Sprintf("  Metrics: host=%v, database=%v, dmhs=%v, custom=%v\n",
+				ds.RegisterHostMetrics, ds.RegisterDatabaseMetrics, ds.RegisterDmhsMetrics, ds.RegisterCustomMetrics))
+
+			// 慢SQL配置
+			if ds.CheckSlowSQL {
+				sb.WriteString(fmt.Sprintf("  SlowSQL: enabled=%v, threshold=%dms, maxRows=%d\n",
+					ds.CheckSlowSQL, ds.SlowSqlTime, ds.SlowSqlMaxRows))
+			} else {
+				sb.WriteString(fmt.Sprintf("  SlowSQL: enabled=%v\n", ds.CheckSlowSQL))
+			}
+
+			// 显示标签信息（如果有）
+			if ds.Labels != "" {
+				sb.WriteString(fmt.Sprintf("  Labels: %s\n", ds.Labels))
+			}
+
+			// 显示自定义指标文件（如果有）
+			if ds.CustomMetricsFile != "" && ds.CustomMetricsFile != "./custom_metrics.toml" {
+				sb.WriteString(fmt.Sprintf("  CustomFile: %s\n", ds.CustomMetricsFile))
+			}
+		}
+		sb.WriteString("----------------------------------------------\n")
+	}
 
 	sb.WriteString("============================================")
 	return sb.String()
