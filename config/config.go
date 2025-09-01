@@ -1,11 +1,7 @@
 package config
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"strconv"
-	"strings"
 )
 
 var hostName string
@@ -80,7 +76,7 @@ type Config struct {
 }
 
 var DefaultConfig = Config{
-	ConfigFile:        "./dameng_exporter.config",
+	ConfigFile:        "./dameng_exporter.toml",
 	CustomMetricsFile: "./custom_metrics.toml",
 	ListenAddress:     ":9200",
 	MetricPath:        "/metrics",
@@ -116,182 +112,6 @@ var DefaultConfig = Config{
 	LatencyWindowSize:       100,  // 默认统计最近100次采集
 }
 
-func LoadConfig(filePath string) (Config, error) {
-	config := DefaultConfig
-	file, err := os.Open(filePath)
-	if err != nil {
-		return config, err
-	}
-	defer file.Close()
-
-	// 定义配置项解析器（所有key使用小写，实现大小写不敏感）
-	parsers := map[string]func(string){
-		// 字符串类型配置
-		"configfile":        func(v string) { config.ConfigFile = v },
-		"custommetricsfile": func(v string) { config.CustomMetricsFile = v },
-		"listenaddress":     func(v string) { config.ListenAddress = v },
-		"metricpath":        func(v string) { config.MetricPath = v },
-		"loglevel":          func(v string) { config.LogLevel = v },
-		"dbuser":            func(v string) { config.DbUser = v },
-		"dbpwd": func(v string) {
-			// 如果密码是加密的，自动解密
-			if decryptedPwd, err := DecryptPassword(v); err == nil {
-				config.DbPwd = decryptedPwd
-			} else {
-				config.DbPwd = v
-			}
-		},
-		"dbhost":            func(v string) { config.DbHost = v },
-		"basicauthusername": func(v string) { config.BasicAuthUsername = v },
-		"basicauthpassword": func(v string) {
-			// 如果Basic Auth密码是加密的，自动解密
-			if decryptedPwd, err := DecryptPassword(v); err == nil {
-				config.BasicAuthPassword = decryptedPwd
-			} else {
-				config.BasicAuthPassword = v
-			}
-		},
-
-		// 整数类型配置
-		"querytimeout": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.QueryTimeout = val
-			}
-		},
-		"maxidleconns": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.MaxIdleConns = val
-			}
-		},
-		"maxopenconns": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.MaxOpenConns = val
-			}
-		},
-		"connmaxlifetime": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.ConnMaxLifetime = val
-			}
-		},
-		"logmaxsize": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.LogMaxSize = val
-			}
-		},
-		"logmaxbackups": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.LogMaxBackups = val
-			}
-		},
-		"logmaxage": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.LogMaxAge = val
-			}
-		},
-		"bigkeydatacachetime": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.BigKeyDataCacheTime = val
-			}
-		},
-		"alarmkeycachetime": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.AlarmKeyCacheTime = val
-			}
-		},
-		"slowsqltime": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.SlowSqlTime = val
-			}
-		},
-		"slowsqllimitrows": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.SlowSqlMaxRows = val
-			}
-		},
-
-		// 布尔类型配置
-		"registerhostmetrics": func(v string) {
-			if val, err := strconv.ParseBool(v); err == nil {
-				config.RegisterHostMetrics = val
-			}
-		},
-		"registerdatabasemetrics": func(v string) {
-			if val, err := strconv.ParseBool(v); err == nil {
-				config.RegisterDatabaseMetrics = val
-			}
-		},
-		"registerdmhsmetrics": func(v string) {
-			if val, err := strconv.ParseBool(v); err == nil {
-				config.RegisterDmhsMetrics = val
-			}
-		},
-		"registercustommetrics": func(v string) {
-			if val, err := strconv.ParseBool(v); err == nil {
-				config.RegisterCustomMetrics = val
-			}
-		},
-		"encodeconfigpwd": func(v string) {
-			if val, err := strconv.ParseBool(v); err == nil {
-				config.EncodeConfigPwd = val
-			}
-		},
-		"checkslowsql": func(v string) {
-			if val, err := strconv.ParseBool(v); err == nil {
-				config.CheckSlowSQL = val
-			}
-		},
-		"enablebasicauth": func(v string) {
-			if val, err := strconv.ParseBool(v); err == nil {
-				config.EnableBasicAuth = val
-			}
-		},
-
-		// 全局超时控制配置
-		"globaltimeoutseconds": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.GlobalTimeoutSeconds = val
-			}
-		},
-		"p99latencytarget": func(v string) {
-			if val, err := strconv.ParseFloat(v, 64); err == nil {
-				config.P99LatencyTarget = val
-			}
-		},
-		"enablepartialreturn": func(v string) {
-			if val, err := strconv.ParseBool(v); err == nil {
-				config.EnablePartialReturn = val
-			}
-		},
-		"latencywindowsize": func(v string) {
-			if val, err := strconv.Atoi(v); err == nil {
-				config.LatencyWindowSize = val
-			}
-		},
-	}
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) != 2 {
-			continue
-		}
-		// 将key转换为小写，实现大小写不敏感
-		key := strings.ToLower(strings.TrimSpace(parts[0]))
-		value := strings.TrimSpace(parts[1])
-
-		// 使用解析器map处理配置项
-		if parser, exists := parsers[key]; exists {
-			parser(value)
-		}
-	}
-
-	return config, scanner.Err()
-}
-
 // StringCategorized 按类别输出，每个类别一行
 func (c *Config) StringCategorized() string {
 	maskedPwd := "***"
@@ -324,42 +144,4 @@ func (c *Config) StringCategorized() string {
 		c.CheckSlowSQL, c.SlowSqlTime, c.SlowSqlMaxRows,
 		c.GlobalTimeoutSeconds, c.P99LatencyTarget, c.EnablePartialReturn, c.LatencyWindowSize,
 		c.EncodeConfigPwd)
-}
-
-func UpdateConfigPassword(filePath, encryptedPwd string) error {
-	// Read the existing file
-	inputFile, err := os.Open(filePath)
-	if err != nil {
-		return err
-	}
-	defer inputFile.Close()
-
-	var fileLines []string
-	scanner := bufio.NewScanner(inputFile)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.HasPrefix(line, "dbPwd=") {
-			line = fmt.Sprintf("dbPwd=%s", encryptedPwd)
-		}
-		fileLines = append(fileLines, line)
-	}
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-	inputFile.Close()
-
-	// Write the updated lines to the same file
-	outputFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer outputFile.Close()
-
-	writer := bufio.NewWriter(outputFile)
-	for _, line := range fileLines {
-		fmt.Fprintln(writer, line)
-	}
-	writer.Flush()
-
-	return nil
 }

@@ -49,7 +49,7 @@ func LoadMultiSourceConfig(configFile string) (*MultiSourceConfig, error) {
 		return config, nil
 	}
 
-	// 如果TOML解析失败，尝试作为旧格式解析
+	// TOML解析失败
 	return nil, fmt.Errorf("failed to parse config file as TOML: %w", err)
 }
 
