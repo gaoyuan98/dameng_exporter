@@ -37,11 +37,11 @@ func InitLogger() {
 
 	// 配置日志切割器
 	lumberjackLogger := &lumberjack.Logger{
-		Filename:   logFileName,                       // 日志文件路径
-		MaxSize:    config.GlobalConfig.LogMaxSize,    // 使用配置的日志文件大小
-		MaxBackups: config.GlobalConfig.LogMaxBackups, // 使用配置的备份数量
-		MaxAge:     config.GlobalConfig.LogMaxAge,     // 使用配置的保留天数
-		Compress:   true,                              // 启用日志文件压缩
+		Filename:   logFileName,                      // 日志文件路径
+		MaxSize:    config.Global.GetLogMaxSize(),    // 使用配置的日志文件大小
+		MaxBackups: config.Global.GetLogMaxBackups(), // 使用配置的备份数量
+		MaxAge:     config.Global.GetLogMaxAge(),     // 使用配置的保留天数
+		Compress:   true,                             // 启用日志文件压缩
 	}
 
 	// 创建日志写入目标
@@ -68,7 +68,7 @@ func InitLogger() {
 	consoleEncoder := zapcore.NewConsoleEncoder(encoderConfig)
 
 	// 获取配置的日志级别
-	logLevel := getLogLevel(config.GlobalConfig.LogLevel)
+	logLevel := getLogLevel(config.Global.GetLogLevel())
 
 	// 创建 zap 核心
 	core := zapcore.NewTee(

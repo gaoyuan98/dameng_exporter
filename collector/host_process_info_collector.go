@@ -183,7 +183,7 @@ func checkProcess(installBinPath, pid, processName string) float64 {
 func getDbInstanceInfo(db *sql.DB) (DBInstanceInfo, error) {
 	var info DBInstanceInfo
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	query := `

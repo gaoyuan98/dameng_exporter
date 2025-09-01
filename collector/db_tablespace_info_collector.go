@@ -83,7 +83,7 @@ func (c *TableSpaceInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryTablespaceInfoSqlStr)
@@ -118,7 +118,7 @@ func (c *TableSpaceInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 	// 将查询结果存入缓存，重用之前定义的cacheKey
-	config.SetCache(cacheKey, string(valueJSON), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime)) // 设置缓存有效时间为5分钟
+	config.SetCache(cacheKey, string(valueJSON), time.Minute*time.Duration(config.Global.GetAlarmKeyCacheTime())) // 设置缓存有效时间为5分钟
 	//	logger.Logger.Infof("TablespaceFileInfo exec finish")
 
 }

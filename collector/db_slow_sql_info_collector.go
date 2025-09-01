@@ -50,7 +50,7 @@ func (c *SessionInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	if !config.GlobalConfig.CheckSlowSQL {
+	if !config.Global.GetCheckSlowSQL() {
 		logger.Logger.Debugf("[%s] CheckSlowSQL is false, skip collecting slow SQL info", c.dataSource)
 		return
 	}
@@ -60,10 +60,10 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, config.GlobalConfig.SlowSqlTime, config.GlobalConfig.SlowSqlMaxRows)
+	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, config.Global.GetSlowSqlTime(), config.Global.GetSlowSqlMaxRows())
 	if err != nil {
 		handleDbQueryError(err)
 		return

@@ -67,7 +67,7 @@ func (c *PurgeCollector) Collect(ch chan<- prometheus.Metric) {
 
 // getPurgeInfos 获取回滚段信息
 func (c *PurgeCollector) getPurgeInfos() ([]PurgeInfo, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.dbPool.QueryContext(ctx, config.QueryPurgeInfoSqlStr)

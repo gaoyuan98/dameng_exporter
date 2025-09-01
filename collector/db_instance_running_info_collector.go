@@ -120,7 +120,7 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDBInstanceRunningInfoSqlStr)
@@ -235,9 +235,9 @@ func (c *DBInstanceRunningInfoCollector) handleDatabaseModeSwitch(ch chan<- prom
 	case modeExists:
 		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual, config.GetHostName())
 		config.DeleteFromCache(switchStrKey)
-		config.SetCache(switchOccurKey, strconv.Itoa(AlarmStatus_Unusual), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime))
+		config.SetCache(switchOccurKey, strconv.Itoa(AlarmStatus_Unusual), time.Minute*time.Duration(config.Global.GetAlarmKeyCacheTime()))
 	default:
-		config.SetCache(switchStrKey, modeStr, time.Minute*time.Duration(config.GlobalConfig.BigKeyDataCacheTime))
+		config.SetCache(switchStrKey, modeStr, time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
 		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
 	}
 }

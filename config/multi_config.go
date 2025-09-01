@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// GlobalMultiConfig 全局多数据源配置实例
+var GlobalMultiConfig *MultiSourceConfig
+
 // MultiSourceConfig 多数据源配置结构
 type MultiSourceConfig struct {
 	// 全局系统级配置（不可下沉）
@@ -299,4 +302,46 @@ func (msc *MultiSourceConfig) ApplyAllDefaults() {
 	for i := range msc.DataSources {
 		msc.DataSources[i].ApplyDefaults()
 	}
+}
+
+// StringCategorized 返回分类格式的配置信息字符串（简洁版）
+func (msc *MultiSourceConfig) StringCategorized() string {
+	var sb strings.Builder
+
+	sb.WriteString("\n========== Configuration Summary ==========")
+
+	// 服务配置 - 一行
+	sb.WriteString(fmt.Sprintf("[Service] listenAddress=%s, metricPath=%s, version=%s\n",
+		msc.ListenAddress, msc.MetricPath, msc.Version))
+
+	// 日志配置 - 一行
+	sb.WriteString(fmt.Sprintf("[Logging] level=%s, maxSize=%dMB, maxBackups=%d, maxAge=%d days\n",
+		msc.LogLevel, msc.LogMaxSize, msc.LogMaxBackups, msc.LogMaxAge))
+
+	// 安全配置 - 一行
+	authInfo := fmt.Sprintf("basicAuth=%v", msc.EnableBasicAuth)
+	if msc.EnableBasicAuth {
+		authInfo += fmt.Sprintf(", user=%s", msc.BasicAuthUsername)
+	}
+	sb.WriteString(fmt.Sprintf("[Security] %s, encodeConfigPwd=%v\n",
+		authInfo, msc.EncodeConfigPwd))
+
+	// 性能配置 - 一行
+	sb.WriteString(fmt.Sprintf("[Performance] globalTimeout=%ds, p99Target=%.2fs, partialReturn=%v, latencyWindow=%d\n",
+		msc.GlobalTimeoutSeconds, msc.P99LatencyTarget, msc.EnablePartialReturn, msc.LatencyWindowSize))
+
+	// 数据源摘要 - 一行
+	enabledCount := 0
+	var dsNames []string
+	for _, ds := range msc.DataSources {
+		if ds.Enabled {
+			enabledCount++
+			dsNames = append(dsNames, ds.Name)
+		}
+	}
+	sb.WriteString(fmt.Sprintf("[DataSources] total=%d, enabled=%d (%s)\n",
+		len(msc.DataSources), enabledCount, strings.Join(dsNames, ", ")))
+
+	sb.WriteString("============================================\n")
+	return sb.String()
 }

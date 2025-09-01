@@ -46,7 +46,7 @@ func (c *DbSqlExecTypeCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QuerySqlExecuteCountSqlStr)

@@ -115,7 +115,7 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 			labelInjector := NewLabelInjectorFromPool(p)
 
 			// 简化超时控制 - 安全的实现方式
-			timeout := time.Duration(config.GlobalConfig.GlobalTimeoutSeconds) * time.Second
+			timeout := time.Duration(config.Global.GetGlobalTimeoutSeconds()) * time.Second
 
 			// 最终版：防goroutine泄露的安全超时控制
 			timedOut := false
@@ -209,13 +209,9 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 
 // AdaptCollector 适配单个采集器到多数据源
 func AdaptCollector(poolManager *db.DBPoolManager, createFunc func(*sql.DB) MetricCollector) MetricCollector {
-	// 如果poolManager为nil，返回兼容的单数据源采集器
+	// poolManager不能为nil
 	if poolManager == nil {
-		// 使用全局DBPool
-		if db.DBPool != nil {
-			return createFunc(db.DBPool)
-		}
-		logger.Logger.Error("No database pool available")
+		logger.Logger.Error("DBPoolManager is required")
 		return nil
 	}
 
