@@ -123,7 +123,7 @@ func main() {
 
 	//注册指标（统一使用多数据源架构）
 	collector.RegisterCollectorsWithPoolManager(reg, poolManager)
-	logger.Logger.Info("Starting dmdb_exporter version " + Version)
+	logger.Logger.Info("Starting dameng_exporter version " + Version)
 	logger.Logger.Info("Please visit: http://localhost" + config.Global.GetListenAddress() + config.Global.GetMetricPath())
 	//设置metric路径
 	http.Handle(config.Global.GetMetricPath(), auth.BasicAuthMiddleware(promhttp.HandlerFor(reg, promhttp.HandlerOpts{})))

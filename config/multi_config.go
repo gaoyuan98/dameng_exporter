@@ -118,7 +118,7 @@ var DefaultDataSourceConfig = DataSourceConfig{
 	RegisterCustomMetrics:   true,
 
 	// 其他默认值
-	CustomMetricsFile: "./custom_metrics.toml",
+	CustomMetricsFile: "./custom_queries.metrics",
 }
 
 // ApplyDefaults 应用默认值
@@ -378,7 +378,7 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 			}
 
 			// 显示自定义指标文件（如果有）
-			if ds.CustomMetricsFile != "" && ds.CustomMetricsFile != "./custom_metrics.toml" {
+			if ds.CustomMetricsFile != "" && ds.CustomMetricsFile != "./custom_queries.metrics" {
 				sb.WriteString(fmt.Sprintf("  CustomFile: %s\n", ds.CustomMetricsFile))
 			}
 		}
