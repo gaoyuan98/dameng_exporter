@@ -82,7 +82,7 @@ var DefaultConfig = Config{
 	MetricPath:        "/metrics",
 	Version:           "v1.1.6",
 	//QueryTimeout:    30 * time.Second,
-	QueryTimeout:            30, //秒
+	QueryTimeout:            5,  //秒
 	MaxIdleConns:            1,  //个数
 	MaxOpenConns:            10, //个数
 	ConnMaxLifetime:         30, //分钟

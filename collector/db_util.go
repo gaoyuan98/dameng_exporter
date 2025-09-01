@@ -1,10 +1,32 @@
 package collector
 
 import (
+	"context"
+	"dameng_exporter/logger"
 	"database/sql"
+	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"time"
 )
+
+// 封装数据库连接检查逻辑
+func checkDBConnection(db *sql.DB) error {
+	if err := db.Ping(); err != nil {
+		logger.Logger.Error("Database connection is not available", zap.Error(err))
+		return err
+	}
+	return nil
+}
+
+// 封装通用的错误处理逻辑
+func handleDbQueryError(err error) {
+	if errors.Is(err, context.DeadlineExceeded) {
+		logger.Logger.Error("Query timed out", zap.Error(err))
+	} else {
+		logger.Logger.Error("Error querying database", zap.Error(err))
+	}
+}
 
 func NullStringToString(ns sql.NullString) string {
 	if ns.Valid {

@@ -47,7 +47,6 @@ type DataSourcePool struct {
 type DBPoolManager struct {
 	pools    map[string]*DataSourcePool // 按名称索引的连接池
 	groups   map[int][]*DataSourcePool  // 按优先级分组的连接池
-	strategy config.CollectStrategy     // 采集策略
 	config   *config.MultiSourceConfig  // 多数据源配置
 	mu       sync.RWMutex               // 读写锁
 	logger   *zap.SugaredLogger         // 日志记录器
@@ -63,7 +62,6 @@ func NewDBPoolManager(config *config.MultiSourceConfig) *DBPoolManager {
 	return &DBPoolManager{
 		pools:    make(map[string]*DataSourcePool),
 		groups:   make(map[int][]*DataSourcePool),
-		strategy: config.CollectStrategy,
 		config:   config,
 		logger:   logger.Logger,
 		stopChan: make(chan struct{}),
@@ -338,7 +336,6 @@ func (m *DBPoolManager) GetStatus() map[string]interface{} {
 
 	status := make(map[string]interface{})
 	status["total_pools"] = len(m.pools)
-	status["strategy"] = string(m.strategy)
 
 	poolStatuses := make([]map[string]interface{}, 0)
 	for name, pool := range m.pools {

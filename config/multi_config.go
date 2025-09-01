@@ -5,18 +5,6 @@ import (
 	"strings"
 )
 
-// CollectStrategy 采集策略
-type CollectStrategy string
-
-const (
-	// StrategySequential 串行采集
-	StrategySequential CollectStrategy = "sequential"
-	// StrategyConcurrent 并发采集
-	StrategyConcurrent CollectStrategy = "concurrent"
-	// StrategyHybrid 混合采集（推荐）
-	StrategyHybrid CollectStrategy = "hybrid"
-)
-
 // MultiSourceConfig 多数据源配置结构
 type MultiSourceConfig struct {
 	// 全局系统级配置（不可下沉）
@@ -32,11 +20,6 @@ type MultiSourceConfig struct {
 	EnableBasicAuth   bool   `toml:"enableBasicAuth"`
 	BasicAuthUsername string `toml:"basicAuthUsername"`
 	BasicAuthPassword string `toml:"basicAuthPassword"`
-
-	// 采集策略全局配置
-	CollectStrategy     CollectStrategy `toml:"collectStrategy"`
-	MaxConcurrentGroups int             `toml:"maxConcurrentGroups"`
-	GroupTimeout        int             `toml:"groupTimeout"`
 
 	// 全局超时控制配置
 	GlobalTimeoutSeconds int     `toml:"globalTimeoutSeconds"` // 全局超时时间（秒）
@@ -98,11 +81,6 @@ var DefaultMultiSourceConfig = MultiSourceConfig{
 	EnableBasicAuth:   false,
 	BasicAuthUsername: "",
 	BasicAuthPassword: "",
-
-	// 采集策略默认值
-	CollectStrategy:     StrategyHybrid,
-	MaxConcurrentGroups: 3,
-	GroupTimeout:        60,
 
 	// 全局超时控制默认值
 	GlobalTimeoutSeconds: 5,    // 默认5秒全局超时
@@ -303,15 +281,6 @@ func (msc *MultiSourceConfig) ApplyAllDefaults() {
 	}
 	if msc.LogLevel == "" {
 		msc.LogLevel = DefaultMultiSourceConfig.LogLevel
-	}
-	if msc.CollectStrategy == "" {
-		msc.CollectStrategy = DefaultMultiSourceConfig.CollectStrategy
-	}
-	if msc.MaxConcurrentGroups == 0 {
-		msc.MaxConcurrentGroups = DefaultMultiSourceConfig.MaxConcurrentGroups
-	}
-	if msc.GroupTimeout == 0 {
-		msc.GroupTimeout = DefaultMultiSourceConfig.GroupTimeout
 	}
 
 	// 应用全局超时控制默认值
