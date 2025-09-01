@@ -4,7 +4,6 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
-	"dameng_exporter/metrics"
 	"database/sql"
 	"fmt"
 	"reflect"
@@ -192,14 +191,13 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 
 			// 记录结果
 			collectorDuration := time.Since(startTime)
-			elapsedTime := metrics.GetElapsedTime()
 
 			if timedOut {
-				logger.Logger.Warnf("[%s] %s TIMED OUT | Collector: %vms | Elapsed: %vms | Metrics: %d",
-					p.Name, a.collectorName, collectorDuration.Milliseconds(), elapsedTime.Milliseconds(), metricCount)
+				logger.Logger.Warnf("[%s] %s TIMED OUT | Collector Cost: %vms | Metrics: %d",
+					p.Name, a.collectorName, collectorDuration.Milliseconds(), metricCount)
 			} else {
-				logger.Logger.Infof("[%s] %s completed | Collector: %vms | Elapsed: %vms | Metrics: %d",
-					p.Name, a.collectorName, collectorDuration.Milliseconds(), elapsedTime.Milliseconds(), metricCount)
+				logger.Logger.Infof("[%s] %s completed | Collector Cost: %vms | Metrics: %d",
+					p.Name, a.collectorName, collectorDuration.Milliseconds(), metricCount)
 			}
 		}(pool)
 	}

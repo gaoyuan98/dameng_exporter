@@ -6,7 +6,6 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
-	"dameng_exporter/metrics"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,6 +15,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/duke-git/lancet/v2/fileutil"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )
@@ -94,8 +94,7 @@ func main() {
 	logger.Logger.Infof("The open source address of the project: https://github.com/gaoyuan98/dameng_exporter")
 
 	// 创建一个新的注册器，如果使用系统自带的,会多余出很多指标
-	// 使用TimedRegistry以支持每次scrape的耗时统计
-	reg := metrics.NewTimedRegistry()
+	reg := prometheus.NewRegistry()
 
 	// 获取主机名
 	hostname, host_err := os.Hostname()
@@ -133,7 +132,7 @@ func main() {
 	db.DBPool = poolManager.GetLegacyPool()
 
 	//注册指标（统一使用多数据源架构）
-	collector.RegisterCollectorsWithPoolManager(reg.Registry, poolManager)
+	collector.RegisterCollectorsWithPoolManager(reg, poolManager)
 	logger.Logger.Info("Starting dmdb_exporter version " + Version)
 	logger.Logger.Info("Please visit: http://localhost" + config.GlobalConfig.ListenAddress + config.GlobalConfig.MetricPath)
 	//设置metric路径
