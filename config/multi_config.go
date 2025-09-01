@@ -50,16 +50,16 @@ type DataSourceConfig struct {
 	MaxIdleConns    int    `toml:"maxIdleConns"`
 	ConnMaxLifetime int    `toml:"connMaxLifetime"`
 
-	// 缓存配置（从全局下沉）
+	// 缓存配置
 	BigKeyDataCacheTime int `toml:"bigKeyDataCacheTime"`
 	AlarmKeyCacheTime   int `toml:"alarmKeyCacheTime"`
 
-	// 慢SQL配置（从全局下沉）
+	// 慢SQL配置
 	CheckSlowSQL   bool `toml:"checkSlowSQL"`
 	SlowSqlTime    int  `toml:"slowSqlTime"`
 	SlowSqlMaxRows int  `toml:"slowSqlMaxRows"`
 
-	// 指标注册配置（从全局下沉）
+	// 指标注册配置
 	RegisterHostMetrics     bool `toml:"registerHostMetrics"`
 	RegisterDatabaseMetrics bool `toml:"registerDatabaseMetrics"`
 	RegisterDmhsMetrics     bool `toml:"registerDmhsMetrics"`
@@ -230,11 +230,31 @@ func (msc *MultiSourceConfig) ValidateAll() error {
 
 	// 检查数据源名称唯一性
 	nameMap := make(map[string]bool)
+	// 检查数据源地址唯一性
+	hostMap := make(map[string]string) // host -> name mapping
+
 	for _, ds := range msc.DataSources {
+		// 检查名称重复
 		if nameMap[ds.Name] {
 			return fmt.Errorf("duplicate datasource name: %s", ds.Name)
 		}
 		nameMap[ds.Name] = true
+
+		// 检查地址重复（仅对启用的数据源进行检查）
+		if ds.Enabled {
+			// 标准化主机地址（去除可能的查询参数）
+			hostAddr := ds.DbHost
+			if idx := strings.Index(hostAddr, "?"); idx != -1 {
+				hostAddr = hostAddr[:idx]
+			}
+
+			// 检查是否已存在相同的主机地址
+			if existingName, exists := hostMap[hostAddr]; exists {
+				return fmt.Errorf("duplicate datasource host: %s (used by both '%s' and '%s')",
+					hostAddr, existingName, ds.Name)
+			}
+			hostMap[hostAddr] = ds.Name
+		}
 
 		// 验证每个数据源
 		if err := ds.Validate(); err != nil {

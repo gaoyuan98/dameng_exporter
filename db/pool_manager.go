@@ -34,7 +34,7 @@ type DBPoolManager struct {
 	wg       sync.WaitGroup             // 等待组
 }
 
-// 全局DBPoolManager实例（用于兼容旧代码）
+// 全局DBPoolManager实例
 var GlobalPoolManager *DBPoolManager
 
 // NewDBPoolManager 创建连接池管理器
@@ -60,6 +60,10 @@ func (m *DBPoolManager) InitPools() error {
 	}
 	m.pools = make(map[string]*DataSourcePool)
 
+	// 运行时重复检测
+	nameMap := make(map[string]bool)
+	hostMap := make(map[string]string) // host -> name mapping
+
 	// 创建新连接池
 	for _, dsConfig := range m.config.DataSources {
 		if !dsConfig.Enabled {
@@ -67,6 +71,30 @@ func (m *DBPoolManager) InitPools() error {
 				zap.String("datasource", dsConfig.Name))
 			continue
 		}
+
+		// 检查名称重复（运行时二次检查）
+		if nameMap[dsConfig.Name] {
+			m.logger.Error("Duplicate datasource name detected, skipping",
+				zap.String("datasource", dsConfig.Name))
+			return fmt.Errorf("duplicate datasource name: %s", dsConfig.Name)
+		}
+		nameMap[dsConfig.Name] = true
+
+		// 检查地址重复（运行时二次检查）
+		hostAddr := dsConfig.DbHost
+		if idx := strings.Index(hostAddr, "?"); idx != -1 {
+			hostAddr = hostAddr[:idx]
+		}
+
+		if existingName, exists := hostMap[hostAddr]; exists {
+			m.logger.Error("Duplicate datasource host detected",
+				zap.String("host", hostAddr),
+				zap.String("existing_datasource", existingName),
+				zap.String("duplicate_datasource", dsConfig.Name))
+			return fmt.Errorf("duplicate datasource host: %s (used by both '%s' and '%s')",
+				hostAddr, existingName, dsConfig.Name)
+		}
+		hostMap[hostAddr] = dsConfig.Name
 
 		pool, err := m.createPool(&dsConfig)
 		if err != nil {
@@ -198,35 +226,6 @@ func (m *DBPoolManager) GetHealthyPools() []*DataSourcePool {
 	return pools
 }
 
-// UpdatePool 更新单个连接池
-func (m *DBPoolManager) UpdatePool(dsConfig *config.DataSourceConfig) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	// 关闭旧连接池
-	if oldPool, exists := m.pools[dsConfig.Name]; exists {
-		if oldPool.DB != nil {
-			oldPool.DB.Close()
-		}
-	}
-
-	// 创建新连接池
-	if dsConfig.Enabled {
-		pool, err := m.createPool(dsConfig)
-		if err != nil {
-			return err
-		}
-
-		// 更新索引
-		m.pools[dsConfig.Name] = pool
-	} else {
-		// 如果禁用，只删除不创建
-		delete(m.pools, dsConfig.Name)
-	}
-
-	return nil
-}
-
 // Close 关闭所有连接池
 func (m *DBPoolManager) Close() {
 	m.mu.Lock()
@@ -250,38 +249,4 @@ func (m *DBPoolManager) Close() {
 	}
 
 	m.pools = make(map[string]*DataSourcePool)
-}
-
-// GetStatus 获取连接池状态信息
-func (m *DBPoolManager) GetStatus() map[string]interface{} {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	status := make(map[string]interface{})
-	status["total_pools"] = len(m.pools)
-
-	poolStatuses := make([]map[string]interface{}, 0)
-	for name, pool := range m.pools {
-		poolStatus := map[string]interface{}{
-			"name":    name,
-			"enabled": pool.Config.Enabled,
-		}
-		poolStatuses = append(poolStatuses, poolStatus)
-	}
-	status["pools"] = poolStatuses
-
-	return status
-}
-
-// GetLegacyPool 获取默认连接池（用于向后兼容）
-func (m *DBPoolManager) GetLegacyPool() *sql.DB {
-	if pool := m.GetPool("default"); pool != nil {
-		return pool.DB
-	}
-	// 如果没有default，返回第一个可用的
-	pools := m.GetHealthyPools()
-	if len(pools) > 0 {
-		return pools[0].DB
-	}
-	return nil
 }

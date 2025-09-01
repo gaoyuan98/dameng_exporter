@@ -122,7 +122,7 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 			var metricCount int32 = 0 // 使用原子操作避免竞态
 
 			// 创建安全的收集channel
-			safeChan := make(chan prometheus.Metric, 1000) // 大缓冲防止阻塞
+			safeChan := make(chan prometheus.Metric, 500) // 大缓冲防止阻塞
 			stopForward := make(chan struct{})
 			forwardDone := make(chan struct{})
 

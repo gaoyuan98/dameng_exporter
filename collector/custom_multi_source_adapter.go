@@ -108,7 +108,7 @@ func (a *CustomMetricsMultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 			labelInjector := NewLabelInjectorFromPool(p)
 
 			// 创建临时channel收集指标
-			tempCh := make(chan prometheus.Metric, 1000)
+			tempCh := make(chan prometheus.Metric, 500)
 			done := make(chan struct{})
 
 			// 异步收集指标
