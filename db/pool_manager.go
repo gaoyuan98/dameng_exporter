@@ -15,30 +15,13 @@ import (
 	"go.uber.org/zap"
 )
 
-// HealthStatus 健康状态
-type HealthStatus int
-
-const (
-	// HealthStatusUnknown 未知状态
-	HealthStatusUnknown HealthStatus = iota
-	// HealthStatusHealthy 健康
-	HealthStatusHealthy
-	// HealthStatusUnhealthy 不健康
-	HealthStatusUnhealthy
-	// HealthStatusDisabled 已禁用
-	HealthStatusDisabled
-)
-
 // DataSourcePool 数据源连接池
 type DataSourcePool struct {
-	Name      string                   // 数据源名称
-	DB        *sql.DB                  // 数据库连接
-	Config    *config.DataSourceConfig // 数据源配置
-	Labels    map[string]string        // 标签
-	Health    HealthStatus             // 健康状态
-	LastCheck time.Time                // 最后检查时间
-	LastError error                    // 最后错误
-	mu        sync.RWMutex             // 读写锁
+	Name   string                   // 数据源名称
+	DB     *sql.DB                  // 数据库连接
+	Config *config.DataSourceConfig // 数据源配置
+	Labels map[string]string        // 标签
+	mu     sync.RWMutex             // 读写锁
 }
 
 // DBPoolManager 连接池管理器
@@ -139,12 +122,10 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 
 	// 创建连接池对象
 	pool := &DataSourcePool{
-		Name:      dsConfig.Name,
-		DB:        db,
-		Config:    dsConfig,
-		Labels:    dsConfig.ParseLabels(),
-		Health:    HealthStatusHealthy,
-		LastCheck: time.Now(),
+		Name:   dsConfig.Name,
+		DB:     db,
+		Config: dsConfig,
+		Labels: dsConfig.ParseLabels(),
 	}
 
 	// 添加datasource标签
@@ -194,7 +175,7 @@ func (m *DBPoolManager) GetPools() []*DataSourcePool {
 
 	pools := make([]*DataSourcePool, 0, len(m.pools))
 	for _, pool := range m.pools {
-		if pool.Health != HealthStatusDisabled {
+		if pool.Config.Enabled {
 			pools = append(pools, pool)
 		}
 	}
@@ -202,14 +183,14 @@ func (m *DBPoolManager) GetPools() []*DataSourcePool {
 	return pools
 }
 
-// GetHealthyPools 获取所有健康的连接池
+// GetHealthyPools 获取所有启用的连接池
 func (m *DBPoolManager) GetHealthyPools() []*DataSourcePool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	pools := make([]*DataSourcePool, 0)
 	for _, pool := range m.pools {
-		if pool.Health == HealthStatusHealthy {
+		if pool.Config.Enabled {
 			pools = append(pools, pool)
 		}
 	}
@@ -282,46 +263,14 @@ func (m *DBPoolManager) GetStatus() map[string]interface{} {
 	poolStatuses := make([]map[string]interface{}, 0)
 	for name, pool := range m.pools {
 		poolStatus := map[string]interface{}{
-			"name":       name,
-			"health":     m.healthStatusString(pool.Health),
-			"last_check": pool.LastCheck.Format(time.RFC3339),
-		}
-		if pool.LastError != nil {
-			poolStatus["last_error"] = pool.LastError.Error()
+			"name":    name,
+			"enabled": pool.Config.Enabled,
 		}
 		poolStatuses = append(poolStatuses, poolStatus)
 	}
 	status["pools"] = poolStatuses
 
 	return status
-}
-
-// healthStatusString 健康状态转字符串
-func (m *DBPoolManager) healthStatusString(status HealthStatus) string {
-	switch status {
-	case HealthStatusHealthy:
-		return "healthy"
-	case HealthStatusUnhealthy:
-		return "unhealthy"
-	case HealthStatusDisabled:
-		return "disabled"
-	default:
-		return "unknown"
-	}
-}
-
-// SetPoolHealth 设置连接池健康状态
-func (m *DBPoolManager) SetPoolHealth(name string, status HealthStatus, err error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if pool, exists := m.pools[name]; exists {
-		pool.mu.Lock()
-		pool.Health = status
-		pool.LastCheck = time.Now()
-		pool.LastError = err
-		pool.mu.Unlock()
-	}
 }
 
 // GetLegacyPool 获取默认连接池（用于向后兼容）

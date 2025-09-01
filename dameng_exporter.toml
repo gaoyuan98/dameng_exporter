@@ -21,7 +21,7 @@ latencyWindowSize = 50
   dbHost = "81.70.105.201:5236"
   dbUser = "SYSDBA"
   dbPwd = "ENC(zsvHz8TN9c/S2sXY3s/Y7svHz8TNm5iZhA==)"
-  queryTimeout = 30
+  queryTimeout = 3
   maxOpenConns = 10
   maxIdleConns = 2
   connMaxLifetime = 30
@@ -45,7 +45,7 @@ latencyWindowSize = 50
   dbHost = "10.77.18.91:5236"
   dbUser = "SYSDBA"
   dbPwd = "ENC(zsvHz8TN9c/S2sXY3s/Y7svHz8TNm5iZhA==)"
-  queryTimeout = 20
+  queryTimeout = 3
   maxOpenConns = 5
   maxIdleConns = 1
   connMaxLifetime = 20
