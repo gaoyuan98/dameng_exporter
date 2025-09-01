@@ -62,9 +62,10 @@ func NewCustomMetrics(db *sql.DB, sqlConfig config.CustomConfig) *CustomMetrics 
 		}
 	}
 	return &CustomMetrics{
-		metrics:   metrics,
-		db:        db,
-		sqlConfig: sqlConfig,
+		metrics:    metrics,
+		db:         db,
+		sqlConfig:  sqlConfig,
+		dataSource: "default", // 设置默认数据源名称，避免空值
 	}
 }
 
@@ -77,20 +78,17 @@ func (cm *CustomMetrics) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect 方法，用于实现 prometheus.Collector 接口
 func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
-	if cm.dataSource != "" {
-		logger.Logger.Debugf("[%s] Collecting custom metrics...", cm.dataSource)
-	} else {
-		logger.Logger.Debugf("Collecting custom metrics...")
+	// 始终使用数据源名称，如果为空则使用"default"
+	dsName := cm.dataSource
+	if dsName == "" {
+		dsName = "default"
 	}
+	logger.Logger.Debugf("[%s] Collecting custom metrics...", dsName)
 
 	if err := cm.db.Ping(); err != nil {
-		if cm.dataSource != "" {
-			logger.Logger.Error("Database connection is not available",
-				zap.String("datasource", cm.dataSource),
-				zap.Error(err))
-		} else {
-			logger.Logger.Error("Database connection is not available", zap.Error(err))
-		}
+		logger.Logger.Error("Database connection is not available",
+			zap.String("datasource", dsName),
+			zap.Error(err))
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
@@ -100,16 +98,10 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 	for _, metric := range cm.sqlConfig.Metrics {
 		results, err := queryDynamicDatabase(ctx, cm.db, metric.Request)
 		if err != nil {
-			if cm.dataSource != "" {
-				logger.Logger.Error("查询数据库错误",
-					zap.String("datasource", cm.dataSource),
-					zap.String("context", metric.Context),
-					zap.Error(err))
-			} else {
-				logger.Logger.Error("查询数据库错误",
-					zap.String("context", metric.Context),
-					zap.Error(err))
-			}
+			logger.Logger.Error("查询数据库错误",
+				zap.String("datasource", dsName),
+				zap.String("context", metric.Context),
+				zap.Error(err))
 			continue
 		}
 
