@@ -308,7 +308,7 @@ func (msc *MultiSourceConfig) ApplyAllDefaults() {
 func (msc *MultiSourceConfig) StringCategorized() string {
 	var sb strings.Builder
 
-	sb.WriteString("\n========== Configuration Summary ==========")
+	sb.WriteString("\n========== Configuration Summary ==========\n")
 
 	// 服务配置 - 一行
 	sb.WriteString(fmt.Sprintf("[Service] listenAddress=%s, metricPath=%s, version=%s\n",
@@ -342,6 +342,6 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 	sb.WriteString(fmt.Sprintf("[DataSources] total=%d, enabled=%d (%s)\n",
 		len(msc.DataSources), enabledCount, strings.Join(dsNames, ", ")))
 
-	sb.WriteString("============================================\n")
+	sb.WriteString("============================================")
 	return sb.String()
 }

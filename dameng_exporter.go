@@ -10,9 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
-	"github.com/BurntSushi/toml"
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -159,41 +157,13 @@ func mergeConfigParam(args *config.CmdArgs) {
 
 	fmt.Printf("Successfully loaded TOML config with %d datasources\n", len(multiConfig.DataSources))
 
-	// 检查是否需要加密密码
-	if multiConfig.EncodeConfigPwd {
-		// 读取原始配置文件内容以检查密码格式
-		rawContent, err := os.ReadFile(*args.ConfigFile)
-		if err == nil {
-			rawConfig := &config.MultiSourceConfig{}
-			if _, err := toml.Decode(string(rawContent), rawConfig); err == nil {
-				needUpdate := false
-				// 检查每个数据源的密码是否需要加密
-				for i := range rawConfig.DataSources {
-					// 如果密码不是以 ENC( 开头，说明需要加密
-					if rawConfig.DataSources[i].DbPwd != "" &&
-						!strings.HasPrefix(rawConfig.DataSources[i].DbPwd, "ENC(") {
-						// 加密密码（EncryptPassword 返回 ENC(...) 格式）
-						encPwd := config.EncryptPassword(rawConfig.DataSources[i].DbPwd)
-						rawConfig.DataSources[i].DbPwd = encPwd
-						needUpdate = true
-						fmt.Printf("Encrypted password for datasource: %s\n", rawConfig.DataSources[i].Name)
-					}
-				}
-				// 如果有密码被加密，更新配置文件
-				if needUpdate {
-					if err := config.SaveMultiSourceConfig(rawConfig, *args.ConfigFile); err != nil {
-						fmt.Printf("Failed to update config file with encrypted passwords: %v\n", err)
-					} else {
-						fmt.Println("Config file updated with encrypted passwords successfully")
-						// 重新加载配置以使用加密后的密码
-						multiConfig, err = config.LoadMultiSourceConfig(*args.ConfigFile)
-						if err != nil {
-							fmt.Printf("Failed to reload config after encryption: %v\n", err)
-						}
-					}
-				}
-			}
-		}
+	// 检查并加密配置文件中的密码
+	updatedConfig, err := config.CheckAndEncryptConfigPasswords(multiConfig, *args.ConfigFile)
+	if err != nil {
+		fmt.Printf("Error: Failed to check/encrypt passwords: %v\n", err)
+		os.Exit(1)
+	} else {
+		multiConfig = updatedConfig
 	}
 
 	// 设置版本号到配置中
