@@ -13,7 +13,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
+	"github.com/BurntSushi/toml"
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/duke-git/lancet/v2/fileutil"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -194,6 +196,44 @@ func mergeConfigParam(args *config.CmdArgs) {
 				}
 			} else {
 				fmt.Printf("Successfully loaded TOML config with %d datasources\n", len(multiConfig.DataSources))
+
+				// 检查是否需要加密密码
+				if multiConfig.EncodeConfigPwd {
+					// 读取原始配置文件内容以检查密码格式
+					rawContent, err := os.ReadFile(*args.ConfigFile)
+					if err == nil {
+						rawConfig := &config.MultiSourceConfig{}
+						if _, err := toml.Decode(string(rawContent), rawConfig); err == nil {
+							needUpdate := false
+							// 检查每个数据源的密码是否需要加密
+							for i := range rawConfig.DataSources {
+								// 如果密码不是以 ENC( 开头，说明需要加密
+								if rawConfig.DataSources[i].DbPwd != "" &&
+									!strings.HasPrefix(rawConfig.DataSources[i].DbPwd, "ENC(") {
+									// 加密密码（EncryptPassword 返回 ENC(...) 格式）
+									encPwd := config.EncryptPassword(rawConfig.DataSources[i].DbPwd)
+									rawConfig.DataSources[i].DbPwd = encPwd
+									needUpdate = true
+									fmt.Printf("Encrypted password for datasource: %s\n", rawConfig.DataSources[i].Name)
+								}
+							}
+							// 如果有密码被加密，更新配置文件
+							if needUpdate {
+								if err := config.SaveMultiSourceConfig(rawConfig, *args.ConfigFile); err != nil {
+									fmt.Printf("Failed to update config file with encrypted passwords: %v\n", err)
+								} else {
+									fmt.Println("Config file updated with encrypted passwords successfully")
+									// 重新加载配置以使用加密后的密码
+									multiConfig, err = config.LoadMultiSourceConfig(*args.ConfigFile)
+									if err != nil {
+										fmt.Printf("Failed to reload config after encryption: %v\n", err)
+									}
+								}
+							}
+						}
+					}
+				}
+
 				// 转换多数据源配置为全局配置（用于兼容）
 				glocal_config = config.ConvertMultiToGlobal(multiConfig)
 				// 保存多数据源配置
@@ -205,6 +245,21 @@ func mergeConfigParam(args *config.CmdArgs) {
 			glocal_config, err = config.LoadConfig(*args.ConfigFile)
 			if err != nil {
 				fmt.Printf("no loading default config file\n")
+			} else {
+				// 检查是否需要加密密码（旧格式配置）
+				if glocal_config.EncodeConfigPwd {
+					if glocal_config.DbPwd != "" && !strings.HasPrefix(glocal_config.DbPwd, "ENC(") {
+						// 对明文密码进行加密（EncryptPassword已经包含ENC()格式）
+						encDbPwd := config.EncryptPassword(glocal_config.DbPwd)
+						// 更新配置文件
+						if err := config.UpdateConfigPassword(*args.ConfigFile, encDbPwd); err != nil {
+							fmt.Printf("Failed to update config file with encrypted password: %v\n", err)
+						} else {
+							fmt.Println("Config file updated with encrypted password successfully")
+							glocal_config.DbPwd = encDbPwd
+						}
+					}
+				}
 			}
 		}
 	} else {

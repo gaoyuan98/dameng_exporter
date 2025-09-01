@@ -70,28 +70,16 @@ func SaveMultiSourceConfig(config *MultiSourceConfig, configFile string) error {
 		}
 	}
 
-	// 创建临时配置用于保存（避免保存已解密的密码）
-	saveConfig := *config
-	if config.EncodeConfigPwd {
-		// 加密密码
-		for i := range saveConfig.DataSources {
-			if !strings.HasPrefix(saveConfig.DataSources[i].DbPwd, "ENC(") {
-				saveConfig.DataSources[i].DbPwd = fmt.Sprintf("ENC(%s)", EncryptPassword(saveConfig.DataSources[i].DbPwd))
-			}
-		}
-		if saveConfig.EnableBasicAuth && saveConfig.BasicAuthPassword != "" {
-			if !strings.HasPrefix(saveConfig.BasicAuthPassword, "ENC(") {
-				saveConfig.BasicAuthPassword = fmt.Sprintf("ENC(%s)", EncryptPassword(saveConfig.BasicAuthPassword))
-			}
-		}
-	}
-
-	// 打开文件
+	// 保存配置（直接保存传入的配置，不做任何修改）
 	file, err := os.Create(configFile)
 	if err != nil {
 		return fmt.Errorf("failed to create config file: %w", err)
 	}
 	defer file.Close()
+
+	// 应用默认值（但不修改已加密的密码）
+	saveConfig := *config
+	saveConfig.ApplyAllDefaults()
 
 	// 编码为TOML
 	encoder := toml.NewEncoder(file)
@@ -107,8 +95,8 @@ func (msc *MultiSourceConfig) DecryptPasswords() error {
 	// 解密数据源密码
 	for i := range msc.DataSources {
 		if strings.HasPrefix(msc.DataSources[i].DbPwd, "ENC(") && strings.HasSuffix(msc.DataSources[i].DbPwd, ")") {
-			encPwd := msc.DataSources[i].DbPwd[4 : len(msc.DataSources[i].DbPwd)-1]
-			decPwd, err := DecryptPassword(encPwd)
+			// 传递完整的 ENC(...) 字符串给 DecryptPassword
+			decPwd, err := DecryptPassword(msc.DataSources[i].DbPwd)
 			if err != nil {
 				return fmt.Errorf("failed to decrypt password for datasource %s: %w", msc.DataSources[i].Name, err)
 			}
@@ -118,8 +106,8 @@ func (msc *MultiSourceConfig) DecryptPasswords() error {
 
 	// 解密Basic Auth密码
 	if msc.EnableBasicAuth && strings.HasPrefix(msc.BasicAuthPassword, "ENC(") && strings.HasSuffix(msc.BasicAuthPassword, ")") {
-		encPwd := msc.BasicAuthPassword[4 : len(msc.BasicAuthPassword)-1]
-		decPwd, err := DecryptPassword(encPwd)
+		// 传递完整的 ENC(...) 字符串给 DecryptPassword
+		decPwd, err := DecryptPassword(msc.BasicAuthPassword)
 		if err != nil {
 			return fmt.Errorf("failed to decrypt basic auth password: %w", err)
 		}
