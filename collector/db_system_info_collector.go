@@ -16,6 +16,12 @@ type DBSystemInfoCollector struct {
 	db         *sql.DB
 	cpuDesc    *prometheus.Desc
 	memoryDesc *prometheus.Desc
+	dataSource string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DBSystemInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // DBSystemInfo 结构体
@@ -52,8 +58,7 @@ func (c *DBSystemInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect 方法
 func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -62,7 +67,7 @@ func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QuerySystemInfoSqlStr)
 	if err != nil {
-		handleDbQueryError(err)
+		handleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()

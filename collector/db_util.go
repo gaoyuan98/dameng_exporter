@@ -10,16 +10,25 @@ import (
 	"time"
 )
 
-// 封装数据库连接检查逻辑
-func checkDBConnection(db *sql.DB) error {
+// 统一的数据库连接检查（带数据源标识）
+func checkDBConnectionWithSource(db *sql.DB, dataSource string) error {
 	if err := db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available", zap.Error(err))
+		logger.Logger.Errorf("[%s] Database connection is not available: %v", dataSource, err)
 		return err
 	}
 	return nil
 }
 
-// 封装通用的错误处理逻辑
+// 封装通用的错误处理逻辑（带数据源标识）
+func handleDbQueryErrorWithSource(err error, dataSource string) {
+	if errors.Is(err, context.DeadlineExceeded) {
+		logger.Logger.Errorf("[%s] Query timed out: %v", dataSource, err)
+	} else {
+		logger.Logger.Errorf("[%s] Error querying database: %v", dataSource, err)
+	}
+}
+
+// 封装通用的错误处理逻辑（保留以向后兼容，后续将逐步废弃）
 func handleDbQueryError(err error) {
 	if errors.Is(err, context.DeadlineExceeded) {
 		logger.Logger.Error("Query timed out", zap.Error(err))

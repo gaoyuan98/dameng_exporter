@@ -5,6 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"time"
@@ -20,6 +21,12 @@ type IniParameterInfo struct {
 type IniParameterCollector struct {
 	db                *sql.DB
 	parameterInfoDesc *prometheus.Desc
+	dataSource        string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *IniParameterCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewIniParameterCollector(db *sql.DB) MetricCollector {
@@ -41,8 +48,7 @@ func (c *IniParameterCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -51,7 +57,7 @@ func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryParameterInfoSql)
 	if err != nil {
-		handleDbQueryError(err)
+		handleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -60,13 +66,13 @@ func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info IniParameterInfo
 		if err := rows.Scan(&info.ParaName, &info.ParaValue); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		iniParameterInfos = append(iniParameterInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 

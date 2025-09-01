@@ -15,12 +15,18 @@ type DBSessionsStatusCollector struct {
 	db                    *sql.DB
 	sessionTypeDesc       *prometheus.Desc
 	sessionPercentageDesc *prometheus.Desc
+	dataSource            string // 数据源名称
 }
 
 // DBSessionsStatusInfo 结构体
 type DBSessionsStatusInfo struct {
 	stateType sql.NullString
 	countVal  sql.NullFloat64
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DBSessionsStatusCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // NewDBSessionsStatusCollector 函数
@@ -53,8 +59,7 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	//保存全局结果对象
 	var sessionsStatusInfos []DBSessionsStatusInfo
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -63,7 +68,7 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDBSessionsStatusSqlStr)
 	if err != nil {
-		handleDbQueryError(err)
+		handleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()

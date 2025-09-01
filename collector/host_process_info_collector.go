@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"os"
 	"os/exec"
 	"strconv"
@@ -32,6 +31,12 @@ type DmapProcessCollector struct {
 	localInstallBinPath  string
 	lastPID              string
 	//mutex                sync.Mutex
+	dataSource string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DmapProcessCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // 初始化收集器
@@ -83,8 +88,7 @@ func (c *DmapProcessCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect 方法
 func (c *DmapProcessCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 

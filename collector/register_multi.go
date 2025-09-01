@@ -30,11 +30,7 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 		return
 	}
 
-	// 注意：理想情况下，RegisterHostMetrics、RegisterDatabaseMetrics等应该是全局配置
-	// 而不是每个数据源单独配置。但为了保持向后兼容，我们检查是否有任何数据源需要这些指标
-
 	// 检查是否有任何数据源需要各类指标
-	// 这里使用 OR 逻辑：只要有任何一个数据源需要，就注册相应的采集器
 	needHostMetrics := false
 	needDatabaseMetrics := false
 	needDmhsMetrics := false
@@ -70,7 +66,6 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 		// 使用适配器包装所有采集器
 		collectors = append(collectors, AdaptCollector(poolManager, NewTableSpaceDateFileInfoCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewTableSpaceInfoCollector))
-		// 继续使用适配器包装其他采集器
 		collectors = append(collectors, AdaptCollector(poolManager, NewDBInstanceRunningInfoCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbMemoryPoolInfoCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDBSessionsStatusCollector))
@@ -85,9 +80,7 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbArchStatusCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbRapplySysCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbRapplyTimeDiffCollector))
-		collectors = append(collectors, AdaptCollector(poolManager, func(db *sql.DB) MetricCollector {
-			return NewPurgeCollector(db)
-		}))
+		collectors = append(collectors, AdaptCollector(poolManager, NewPurgeCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewCkptCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbBufferPoolCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbDualCollector))
@@ -115,10 +108,4 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 	}
 
 	logger.Logger.Infof("Registered %d collectors in multi-source mode", len(collectors))
-}
-
-// RegisterCollectorsWithPoolManager 使用连接池管理器注册收集器
-func RegisterCollectorsWithPoolManager(reg *prometheus.Registry, poolManager *db.DBPoolManager) {
-	// 统一使用多数据源架构
-	RegisterMultiSourceCollectors(reg, poolManager)
 }

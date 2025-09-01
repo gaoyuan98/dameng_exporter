@@ -5,6 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"time"
@@ -14,6 +15,7 @@ type DbMemoryPoolInfoCollector struct {
 	db            *sql.DB
 	totalPoolDesc *prometheus.Desc
 	currPoolDesc  *prometheus.Desc
+	dataSource    string // 数据源名称
 }
 
 type MemoryPoolInfo struct {
@@ -21,6 +23,11 @@ type MemoryPoolInfo struct {
 	CurrVal  sql.NullFloat64
 	ResVal   sql.NullFloat64
 	TotalVal sql.NullFloat64
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbMemoryPoolInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbMemoryPoolInfoCollector(db *sql.DB) MetricCollector {
@@ -51,8 +58,7 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	//保存全局结果对象
 	var memoryPoolInfos []MemoryPoolInfo
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -61,7 +67,7 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryMemoryPoolInfoSqlStr)
 	if err != nil {
-		handleDbQueryError(err)
+		handleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -69,13 +75,13 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info MemoryPoolInfo
 		if err := rows.Scan(&info.ZoneType, &info.CurrVal, &info.ResVal, &info.TotalVal); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		memoryPoolInfos = append(memoryPoolInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 	for _, info := range memoryPoolInfos {

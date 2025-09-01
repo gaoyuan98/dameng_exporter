@@ -20,6 +20,12 @@ type RapplyTimeDiff struct {
 type DbRapplyTimeDiffCollector struct {
 	db           *sql.DB
 	timeDiffDesc *prometheus.Desc
+	dataSource   string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbRapplyTimeDiffCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbRapplyTimeDiffCollector(db *sql.DB) MetricCollector {
@@ -40,8 +46,7 @@ func (c *DbRapplyTimeDiffCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available", zap.Error(err))
+	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -51,7 +56,7 @@ func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 	// 执行查询
 	rows, err := c.db.QueryContext(ctx, config.QueryRapplyTimeDiffSql)
 	if err != nil {
-		handleDbQueryError(err)
+		handleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()

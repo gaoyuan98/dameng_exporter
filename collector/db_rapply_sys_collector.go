@@ -5,6 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"time"
@@ -21,6 +22,12 @@ type DbRapplySysCollector struct {
 	db              *sql.DB
 	taskMemUsedDesc *prometheus.Desc
 	taskNumDesc     *prometheus.Desc
+	dataSource      string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbRapplySysCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbRapplySysCollector(db *sql.DB) MetricCollector {
@@ -48,8 +55,7 @@ func (c *DbRapplySysCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available", zap.Error(err))
+	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -59,7 +65,7 @@ func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 	// 执行查询
 	rows, err := c.db.QueryContext(ctx, config.QueryStandbyInfoSql)
 	if err != nil {
-		handleDbQueryError(err)
+		handleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -68,13 +74,13 @@ func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info RapplySysInfo
 		if err := rows.Scan(&info.TaskMemUsed, &info.TaskNum); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		rapplySysInfos = append(rapplySysInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 

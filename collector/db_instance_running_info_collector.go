@@ -116,7 +116,7 @@ func (c *DBInstanceRunningInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnection(c.db); err != nil {
+	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -125,7 +125,7 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDBInstanceRunningInfoSqlStr)
 	if err != nil {
-		handleDbQueryError(err)
+		handleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()

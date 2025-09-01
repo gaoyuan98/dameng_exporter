@@ -26,6 +26,12 @@ type UserInfo struct {
 type DbUserCollector struct {
 	db               *sql.DB
 	userListInfoDesc *prometheus.Desc
+	dataSource       string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbUserCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbUserCollector(db *sql.DB) MetricCollector {
@@ -46,8 +52,7 @@ func (c *DbUserCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -56,7 +61,7 @@ func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryUserInfoSqlStr)
 	if err != nil {
-		handleDbQueryError(err)
+		handleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()

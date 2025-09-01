@@ -8,12 +8,17 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 )
 
 type PurgeCollector struct {
 	dbPool       *sql.DB
 	purgeObjects *prometheus.Desc
+	dataSource   string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *PurgeCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // PurgeInfo 存储回滚段信息
@@ -23,13 +28,13 @@ type PurgeInfo struct {
 	PurgeForTs string
 }
 
-func NewPurgeCollector(dbPool *sql.DB) *PurgeCollector {
+func NewPurgeCollector(dbPool *sql.DB) MetricCollector {
 	return &PurgeCollector{
 		dbPool: dbPool,
 		purgeObjects: prometheus.NewDesc(
 			dmdbms_purge_objects_info,
 			"Number of purge objects",
-			[]string{"host_name", "is_running", "purge_for_ts"},
+			[]string{"host_name", "is_running", "purge_for_ts", "data_source"},
 			nil,
 		),
 	}
@@ -41,8 +46,7 @@ func (c *PurgeCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *PurgeCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := c.dbPool.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := checkDBConnectionWithSource(c.dbPool, c.dataSource); err != nil {
 		return
 	}
 
@@ -61,6 +65,7 @@ func (c *PurgeCollector) Collect(ch chan<- prometheus.Metric) {
 			hostname,
 			info.IsRunning,
 			info.PurgeForTs,
+			c.dataSource,
 		)
 	}
 }
@@ -72,7 +77,7 @@ func (c *PurgeCollector) getPurgeInfos() ([]PurgeInfo, error) {
 
 	rows, err := c.dbPool.QueryContext(ctx, config.QueryPurgeInfoSqlStr)
 	if err != nil {
-		handleDbQueryError(err)
+		handleDbQueryErrorWithSource(err, c.dataSource)
 		return nil, err
 	}
 	defer rows.Close()
@@ -82,14 +87,14 @@ func (c *PurgeCollector) getPurgeInfos() ([]PurgeInfo, error) {
 		var info PurgeInfo
 		err := rows.Scan(&info.ObjNum, &info.IsRunning, &info.PurgeForTs)
 		if err != nil {
-			logger.Logger.Error("Error scanning purge row", zap.Error(err))
+			logger.Logger.Errorf("[%s] Error scanning purge row: %v", c.dataSource, err)
 			continue
 		}
 		purgeInfos = append(purgeInfos, info)
 	}
 
 	if err = rows.Err(); err != nil {
-		logger.Logger.Error("Error iterating purge rows", zap.Error(err))
+		logger.Logger.Errorf("[%s] Error iterating purge rows: %v", c.dataSource, err)
 		return nil, err
 	}
 

@@ -23,6 +23,12 @@ type InstanceLogInfo struct {
 type DbInstanceLogInfoCollector struct {
 	db                  *sql.DB
 	instanceLogInfoDesc *prometheus.Desc
+	dataSource          string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbInstanceLogInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbInstanceLogErrorCollector(db *sql.DB) MetricCollector {
@@ -43,8 +49,7 @@ func (c *DbInstanceLogInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -53,7 +58,7 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryInstanceErrorLogSql)
 	if err != nil {
-		handleDbQueryError(err)
+		handleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
