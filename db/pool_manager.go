@@ -74,9 +74,9 @@ func (m *DBPoolManager) InitPools() error {
 
 		// 检查名称重复（运行时二次检查）
 		if nameMap[dsConfig.Name] {
-			m.logger.Error("Duplicate datasource name detected, skipping",
+			m.logger.Error("检测到重复的数据源名称",
 				zap.String("datasource", dsConfig.Name))
-			return fmt.Errorf("duplicate datasource name: %s", dsConfig.Name)
+			return fmt.Errorf("数据源名称重复: %s", dsConfig.Name)
 		}
 		nameMap[dsConfig.Name] = true
 
@@ -87,11 +87,11 @@ func (m *DBPoolManager) InitPools() error {
 		}
 
 		if existingName, exists := hostMap[hostAddr]; exists {
-			m.logger.Error("Duplicate datasource host detected",
+			m.logger.Error("检测到重复的数据源地址",
 				zap.String("host", hostAddr),
 				zap.String("existing_datasource", existingName),
 				zap.String("duplicate_datasource", dsConfig.Name))
-			return fmt.Errorf("duplicate datasource host: %s (used by both '%s' and '%s')",
+			return fmt.Errorf("数据源地址重复: %s (被 '%s' 和 '%s' 同时使用)",
 				hostAddr, existingName, dsConfig.Name)
 		}
 		hostMap[hostAddr] = dsConfig.Name
@@ -114,7 +114,7 @@ func (m *DBPoolManager) InitPools() error {
 	}
 
 	if len(m.pools) == 0 {
-		return fmt.Errorf("no valid datasource pools created")
+		return fmt.Errorf("没有成功创建任何数据源连接池")
 	}
 
 	// 设置全局实例（用于兼容）
@@ -131,7 +131,7 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 	// 创建数据库连接
 	db, err := sql.Open("dm", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		return nil, fmt.Errorf("打开数据库连接失败: %w", err)
 	}
 
 	// 设置连接池参数
@@ -145,7 +145,7 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 
 	if err := db.PingContext(ctx); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+		return nil, fmt.Errorf("测试数据库连接失败: %w", err)
 	}
 
 	// 创建连接池对象

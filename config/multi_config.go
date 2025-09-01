@@ -162,21 +162,21 @@ func (ds *DataSourceConfig) ApplyDefaults() {
 func (ds *DataSourceConfig) Validate() error {
 	// 必填字段检查
 	if ds.Name == "" {
-		return fmt.Errorf("datasource name is required")
+		return fmt.Errorf("数据源名称不能为空")
 	}
 	if ds.DbHost == "" {
-		return fmt.Errorf("dbHost is required for datasource: %s", ds.Name)
+		return fmt.Errorf("数据源 %s: 数据库地址不能为空 (dbHost)", ds.Name)
 	}
 	if ds.DbUser == "" {
-		return fmt.Errorf("dbUser is required for datasource: %s", ds.Name)
+		return fmt.Errorf("数据源 %s: 数据库用户名不能为空 (dbUser)", ds.Name)
 	}
 
 	// 数值范围验证
 	if ds.QueryTimeout < 1 || ds.QueryTimeout > 300 {
-		return fmt.Errorf("queryTimeout must be between 1-300 seconds for datasource: %s", ds.Name)
+		return fmt.Errorf("数据源 %s: 查询超时时间必须在 1-300 秒之间 (queryTimeout)", ds.Name)
 	}
 	if ds.MaxOpenConns < 1 || ds.MaxOpenConns > 100 {
-		return fmt.Errorf("maxOpenConns must be between 1-100 for datasource: %s", ds.Name)
+		return fmt.Errorf("数据源 %s: 最大打开连接数必须在 1-100 之间 (maxOpenConns)", ds.Name)
 	}
 
 	return nil
@@ -217,15 +217,15 @@ func (msc *MultiSourceConfig) GetDataSourceByName(name string) *DataSourceConfig
 func (msc *MultiSourceConfig) ValidateAll() error {
 	// 验证全局配置
 	if msc.ListenAddress == "" {
-		return fmt.Errorf("listenAddress is required")
+		return fmt.Errorf("监听地址不能为空 (listenAddress)")
 	}
 	if msc.MetricPath == "" {
-		return fmt.Errorf("metricPath is required")
+		return fmt.Errorf("指标路径不能为空 (metricPath)")
 	}
 
 	// 验证数据源配置
 	if len(msc.DataSources) == 0 {
-		return fmt.Errorf("at least one datasource is required")
+		return fmt.Errorf("至少需要配置一个数据源")
 	}
 
 	// 检查数据源名称唯一性
@@ -236,7 +236,7 @@ func (msc *MultiSourceConfig) ValidateAll() error {
 	for _, ds := range msc.DataSources {
 		// 检查名称重复
 		if nameMap[ds.Name] {
-			return fmt.Errorf("duplicate datasource name: %s", ds.Name)
+			return fmt.Errorf("数据源名称重复: %s", ds.Name)
 		}
 		nameMap[ds.Name] = true
 
@@ -250,7 +250,7 @@ func (msc *MultiSourceConfig) ValidateAll() error {
 
 			// 检查是否已存在相同的主机地址
 			if existingName, exists := hostMap[hostAddr]; exists {
-				return fmt.Errorf("duplicate datasource host: %s (used by both '%s' and '%s')",
+				return fmt.Errorf("数据源地址重复: %s (被 '%s' 和 '%s' 同时使用)",
 					hostAddr, existingName, ds.Name)
 			}
 			hostMap[hostAddr] = ds.Name
