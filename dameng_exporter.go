@@ -29,6 +29,7 @@ func parseFlags() *config.CmdArgs {
 		DbHost:                  kingpin.Flag("dbHost", "Database Host").Default("127.0.0.1:5236").String(),
 		DbUser:                  kingpin.Flag("dbUser", "Database user").Default("SYSDBA").String(),
 		DbPwd:                   kingpin.Flag("dbPwd", "Database password").Default("SYSDBA").String(),
+		DbName:                  kingpin.Flag("dbName", "Name for the database (optional, defaults to generated name)").String(),
 		QueryTimeout:            kingpin.Flag("queryTimeout", "Timeout for queries (Second)").Default(fmt.Sprint(config.DefaultDataSourceConfig.QueryTimeout)).Int(),
 		MaxOpenConns:            kingpin.Flag("maxOpenConns", "Maximum open connections (number)").Default(fmt.Sprint(config.DefaultDataSourceConfig.MaxOpenConns)).Int(),
 		MaxIdleConns:            kingpin.Flag("maxIdleConns", "Maximum idle connections (number)").Default(fmt.Sprint(config.DefaultDataSourceConfig.MaxIdleConns)).Int(),

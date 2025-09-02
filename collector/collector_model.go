@@ -13,7 +13,6 @@ var (
 
 const (
 	dameng_exporter_build_info        string = "dameng_exporter_build_info"
-	dmdbms_node_uname_info            string = "dmdbms_node_uname_info"
 	dmdbms_tablespace_file_total_info string = "dmdbms_tablespace_file_total_info"
 	dmdbms_tablespace_file_free_info  string = "dmdbms_tablespace_file_free_info"
 	dmdbms_tablespace_size_total_info string = "dmdbms_tablespace_size_total_info"

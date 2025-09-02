@@ -8,6 +8,7 @@ type CmdArgs struct {
 	DbHost                  *string
 	DbUser                  *string
 	DbPwd                   *string
+	DbName                  *string
 	QueryTimeout            *int
 	MaxOpenConns            *int
 	MaxIdleConns            *int

@@ -22,7 +22,6 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 	collectors = []prometheus.Collector{}
 
 	// 系统级收集器（不依赖数据库）
-	collectors = append(collectors, NewSystemInfoCollector())
 	collectors = append(collectors, NewBuildInfoCollector())
 
 	// 如果poolManager为nil，报错

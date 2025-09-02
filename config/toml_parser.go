@@ -117,19 +117,28 @@ func (msc *MultiSourceConfig) DecryptPasswords() error {
 	return nil
 }
 
-// UpdateMultiSourceConfigPasswords 更新多数据源配置文件中的密码为加密格式
-func UpdateMultiSourceConfigPasswords(configFile string) error {
-	// 加载配置
-	config, err := LoadMultiSourceConfig(configFile)
-	if err != nil {
-		return err
+// generateDataSourceName 根据命令行参数生成数据源名称
+func generateDataSourceName(args *CmdArgs) string {
+	// 如果用户指定了数据库名称，直接使用
+	if args.DbName != nil && strings.TrimSpace(*args.DbName) != "" {
+		return strings.TrimSpace(*args.DbName)
 	}
 
-	// 设置加密标志
-	config.EncodeConfigPwd = true
+	// 如果没有指定，根据数据库主机地址生成名称
+	if args.DbHost != nil && *args.DbHost != "" {
+		host := strings.TrimSpace(*args.DbHost)
+		// 移除端口号，只保留主机名或IP
+		if strings.Contains(host, ":") {
+			host = strings.Split(host, ":")[0]
+		}
+		// 如果是IP地址，使用完整IP；如果是主机名，使用主机名
+		if host != "" {
+			return fmt.Sprintf("cmdline_%s", host)
+		}
+	}
 
-	// 保存配置（SaveMultiSourceConfig会自动加密密码）
-	return SaveMultiSourceConfig(config, configFile)
+	// 默认名称
+	return "cmdline_datasource"
 }
 
 // MergeMultiSourceConfigFromCmdArgs 合并命令行参数到多数据源配置
@@ -142,11 +151,14 @@ func MergeMultiSourceConfigFromCmdArgs(config *MultiSourceConfig, args *CmdArgs)
 	// 如果指定了数据库连接参数，则必须同时指定 DbHost、DbUser、DbPwd
 	if hasDbHost || hasDbUser || hasDbPwd {
 		if hasDbHost && hasDbUser && hasDbPwd {
+			// 生成数据源名称
+			dataSourceName := generateDataSourceName(args)
+
 			// 清空配置文件中的数据源，使用命令行参数创建新的数据源
 			config.DataSources = []DataSourceConfig{
 				{
-					Name:                    "cmdline_datasource",
-					Description:             "DataSource from command line",
+					Name:                    dataSourceName,
+					Description:             fmt.Sprintf("DataSource from command line (Host: %s)", *args.DbHost),
 					Enabled:                 true,
 					DbHost:                  *args.DbHost,
 					DbUser:                  *args.DbUser,
