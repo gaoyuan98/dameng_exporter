@@ -102,13 +102,6 @@ func main() {
 	// 创建一个新的注册器，如果使用系统自带的,会多余出很多指标
 	reg := prometheus.NewRegistry()
 
-	// 获取主机名
-	hostname, host_err := os.Hostname()
-	if host_err != nil {
-		logger.Logger.Fatalf("Failed to get hostname", zap.Error(host_err))
-	}
-	config.SetHostName(hostname)
-
 	// 初始化数据库连接池（统一使用多数据源架构）
 	if config.GlobalMultiConfig == nil {
 		logger.Logger.Fatalf("No multi-datasource config loaded, please check config file")

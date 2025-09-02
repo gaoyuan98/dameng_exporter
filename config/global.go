@@ -6,19 +6,8 @@ import (
 
 // 全局变量
 var (
-	hostName string
-	version  string
+	version string
 )
-
-// SetHostName 设置主机名
-func SetHostName(hn string) {
-	hostName = hn
-}
-
-// GetHostName 获取主机名
-func GetHostName() string {
-	return hostName
-}
 
 // SetVersion 设置版本号
 func SetVersion(v string) {
