@@ -27,6 +27,11 @@ type MultiSourceConfig struct {
 	// 全局超时控制配置
 	GlobalTimeoutSeconds int `toml:"globalTimeoutSeconds"` // 全局超时时间（秒）
 
+	// 采集模式配置
+	// "blocking": 默认模式，阻塞写入，不丢失任何指标（适合正常采集）
+	// "fast": 快速模式，超时返回部分数据（适合要求快速响应的场景）
+	CollectionMode string `toml:"collectionMode"`
+
 	// 数据源列表
 	DataSources []DataSourceConfig `toml:"datasource"`
 }
@@ -83,6 +88,9 @@ var DefaultMultiSourceConfig = MultiSourceConfig{
 
 	// 全局超时控制默认值
 	GlobalTimeoutSeconds: 5, // 默认5秒全局超时
+
+	// 采集模式默认值
+	CollectionMode: "blocking", // 默认使用阻塞模式，不丢失指标
 }
 
 // DefaultDataSourceConfig 默认数据源配置
@@ -217,6 +225,11 @@ func (msc *MultiSourceConfig) ValidateAll() error {
 		return fmt.Errorf("指标路径不能为空 (metricPath)")
 	}
 
+	// 验证采集模式
+	if msc.CollectionMode != "" && msc.CollectionMode != "blocking" && msc.CollectionMode != "fast" {
+		return fmt.Errorf("无效的采集模式: %s (必须是 'blocking' 或 'fast')", msc.CollectionMode)
+	}
+
 	// 验证数据源配置
 	if len(msc.DataSources) == 0 {
 		return fmt.Errorf("至少需要配置一个数据源")
@@ -286,6 +299,11 @@ func (msc *MultiSourceConfig) ApplyAllDefaults() {
 		msc.GlobalTimeoutSeconds = DefaultMultiSourceConfig.GlobalTimeoutSeconds
 	}
 
+	// 应用采集模式默认值
+	if msc.CollectionMode == "" {
+		msc.CollectionMode = DefaultMultiSourceConfig.CollectionMode
+	}
+
 	// 为每个数据源应用默认值
 	for i := range msc.DataSources {
 		msc.DataSources[i].ApplyDefaults()
@@ -315,8 +333,8 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 		authInfo, msc.EncodeConfigPwd))
 
 	// 性能配置 - 一行
-	sb.WriteString(fmt.Sprintf("[Performance] globalTimeout=%ds\n",
-		msc.GlobalTimeoutSeconds))
+	sb.WriteString(fmt.Sprintf("[Performance] globalTimeout=%ds, collectionMode=%s\n",
+		msc.GlobalTimeoutSeconds, msc.CollectionMode))
 
 	// 数据源摘要 - 一行
 	enabledCount := 0
@@ -374,4 +392,22 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 
 	sb.WriteString("============================================")
 	return sb.String()
+}
+
+// GetCollectionMode 获取采集模式，确保返回有效值
+func (msc *MultiSourceConfig) GetCollectionMode() string {
+	if msc.CollectionMode == "" {
+		return "blocking" // 默认阻塞模式
+	}
+	return msc.CollectionMode
+}
+
+// IsBlockingMode 判断是否为阻塞模式
+func (msc *MultiSourceConfig) IsBlockingMode() bool {
+	return msc.GetCollectionMode() == "blocking"
+}
+
+// IsFastMode 判断是否为快速模式
+func (msc *MultiSourceConfig) IsFastMode() bool {
+	return msc.GetCollectionMode() == "fast"
 }

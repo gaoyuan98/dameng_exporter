@@ -85,7 +85,7 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 	// 获取所有健康的连接池
 	pools := a.poolManager.GetHealthyPools()
 
-	// 为每个数据源采集指标 - 使用流式处理，不等待所有数据源完成
+	// 为每个数据源采集指标
 	var wg sync.WaitGroup
 
 	for _, pool := range pools {
@@ -110,101 +110,165 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 			// 创建标签注入器
 			labelInjector := NewLabelInjectorFromPool(p)
 
-			// 简化超时控制 - 安全的实现方式
-			timeout := time.Duration(config.Global.GetGlobalTimeoutSeconds()) * time.Second
-
-			// 最终版：防goroutine泄露的安全超时控制
-			timedOut := false
-			var metricCount int32 = 0 // 使用原子操作避免竞态
-
-			// 创建安全的收集channel
-			safeChan := make(chan prometheus.Metric, 500) // 大缓冲防止阻塞
-			stopForward := make(chan struct{})
-			forwardDone := make(chan struct{})
-
-			// 转发goroutine - 可以被安全终止
-			go func() {
-				defer close(forwardDone)
-				for {
-					select {
-					case <-stopForward:
-						//不再向 Prometheus 输出，但继续读 safeChan 直到它被关闭 → 生产者永远写得进去 → 采集结束自行 close(safeChan) → 转发协程排水完毕自然退出
-						for range safeChan {
-							// drain and drop
-						}
-						return
-					case metric, ok := <-safeChan:
-						if !ok {
-							// channel关闭，正常退出
-							return
-						}
-						// 转发指标
-						wrappedMetric := NewMetricWrapper(metric, labelInjector)
-						select {
-						case ch <- wrappedMetric:
-							atomic.AddInt32(&metricCount, 1)
-						default:
-							// 主channel满了，丢弃
-						}
-					}
-				}
-			}()
-
-			// 采集goroutine - 可以在后台继续运行
-			collectDone := make(chan struct{})
-			go func() {
-				defer func() {
-					if r := recover(); r != nil {
-						// panic是严重问题，使用Error级别并打印堆栈
-						logger.Logger.Errorf("[%s] Collector panic recovered: %v\nStack trace:\n%s",
-							p.Name, r, debug.Stack())
-					}
-					close(safeChan) // 安全关闭channel
-					close(collectDone)
-				}()
-
-				// 执行采集 - 即使超时也能继续完成
-				collector.Collect(safeChan)
-			}()
-
-			// 超时控制逻辑
-			if timeout <= 0 {
-				// 无超时限制
-				<-collectDone
-				<-forwardDone
-				timedOut = false
+			// 根据配置选择采集模式
+			if config.GlobalMultiConfig != nil && config.GlobalMultiConfig.IsFastMode() {
+				// 快速模式：超时返回部分数据
+				a.collectInFastMode(ch, p, collector, labelInjector, startTime)
 			} else {
-				// 带超时控制
-				select {
-				case <-collectDone:
-					// 采集正常完成
-					<-forwardDone // 等待转发完成
-					timedOut = false
-				case <-time.After(timeout):
-					// 超时 - 停止转发但让采集器继续
-					timedOut = true
-					close(stopForward) // 发送停止信号
-					<-forwardDone      // 等待转发goroutine退出
-				}
-			}
-
-			// 记录结果
-			collectorDuration := time.Since(startTime)
-
-			if timedOut {
-				// 统一的超时日志，包含完整信息
-				logger.Logger.Warnf("[%s] %s TIMEOUT | Cost: %vms | Timeout: %v | Metrics collected: %d (partial)",
-					p.Name, a.collectorName, collectorDuration.Milliseconds(), timeout, metricCount)
-			} else {
-				logger.Logger.Infof("[%s] %s completed | Cost: %vms | Metrics: %d",
-					p.Name, a.collectorName, collectorDuration.Milliseconds(), metricCount)
+				// 默认阻塞模式：不丢失任何指标
+				a.collectInBlockingMode(ch, p, collector, labelInjector, startTime)
 			}
 		}(pool)
 	}
 
 	// 等待所有goroutine完成
-	// 注意：由于直接写入ch，快速的数据源会立即返回结果，不会被慢的数据源阻塞
 	wg.Wait()
+}
+
+// collectInBlockingMode 阻塞模式采集 - 不丢失任何指标
+func (a *MultiSourceAdapter) collectInBlockingMode(ch chan<- prometheus.Metric, p *db.DataSourcePool, collector MetricCollector, labelInjector *LabelInjector, startTime time.Time) {
+	var metricCount int32 = 0
+	timeout := time.Duration(config.Global.GetGlobalTimeoutSeconds()) * time.Second
+
+	// 小缓冲通道，仅用于解耦采集和标签注入
+	safeChan := make(chan prometheus.Metric, 10)
+
+	// 转发goroutine - 阻塞写入，不丢弃任何指标
+	forwardDone := make(chan struct{})
+	go func() {
+		defer close(forwardDone)
+		for metric := range safeChan {
+			wrappedMetric := NewMetricWrapper(metric, labelInjector)
+			ch <- wrappedMetric // 阻塞写入，确保所有指标都被接收
+			atomic.AddInt32(&metricCount, 1)
+		}
+	}()
+
+	// 采集goroutine
+	collectDone := make(chan struct{})
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Logger.Errorf("[%s] Collector panic recovered: %v\nStack trace:\n%s",
+					p.Name, r, debug.Stack())
+			}
+			close(safeChan)
+			close(collectDone)
+		}()
+		collector.Collect(safeChan)
+	}()
+
+	// 超时仅用于日志记录，不中断采集
+	slowCollector := false
+	if timeout > 0 {
+		select {
+		case <-collectDone:
+			slowCollector = false
+		case <-time.After(timeout):
+			slowCollector = true
+			//logger.Logger.Warnf("[%s] %s SLOW (blocking mode) | Exceeded timeout %v, still collecting...",
+			//	p.Name, a.collectorName, timeout)
+		}
+	}
+
+	// 如果是慢采集器，继续等待它完成
+	if slowCollector {
+		<-collectDone
+	}
+	<-forwardDone
+
+	// 记录结果
+	collectorDuration := time.Since(startTime)
+	finalCount := atomic.LoadInt32(&metricCount)
+
+	if slowCollector {
+		logger.Logger.Warnf("[%s] %s completed (slow, blocking mode) | Cost: %vms | Metrics: %d",
+			p.Name, a.collectorName, collectorDuration.Milliseconds(), finalCount)
+	} else {
+		logger.Logger.Infof("[%s] %s completed (blocking mode) | Cost: %vms | Metrics: %d",
+			p.Name, a.collectorName, collectorDuration.Milliseconds(), finalCount)
+	}
+}
+
+// collectInFastMode 快速模式采集 - 超时返回部分数据
+func (a *MultiSourceAdapter) collectInFastMode(ch chan<- prometheus.Metric, p *db.DataSourcePool, collector MetricCollector, labelInjector *LabelInjector, startTime time.Time) {
+	var metricCount int32 = 0
+	timeout := time.Duration(config.Global.GetGlobalTimeoutSeconds()) * time.Second
+
+	// 大缓冲防止阻塞
+	safeChan := make(chan prometheus.Metric, 500)
+	stopForward := make(chan struct{})
+	forwardDone := make(chan struct{})
+	timedOut := false
+
+	// 转发goroutine - 可以被安全终止
+	go func() {
+		defer close(forwardDone)
+		for {
+			select {
+			case <-stopForward:
+				// 排水阶段：继续读取但不转发
+				for range safeChan {
+					// drain and drop
+				}
+				return
+			case metric, ok := <-safeChan:
+				if !ok {
+					return
+				}
+				wrappedMetric := NewMetricWrapper(metric, labelInjector)
+				select {
+				case ch <- wrappedMetric:
+					atomic.AddInt32(&metricCount, 1)
+				default:
+					// 主channel满了，丢弃
+				}
+			}
+		}
+	}()
+
+	// 采集goroutine
+	collectDone := make(chan struct{})
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Logger.Errorf("[%s] Collector panic recovered: %v\nStack trace:\n%s",
+					p.Name, r, debug.Stack())
+			}
+			close(safeChan)
+			close(collectDone)
+		}()
+		collector.Collect(safeChan)
+	}()
+
+	// 超时控制 - 会真正中断数据转发
+	if timeout <= 0 {
+		<-collectDone
+		<-forwardDone
+		timedOut = false
+	} else {
+		select {
+		case <-collectDone:
+			<-forwardDone
+			timedOut = false
+		case <-time.After(timeout):
+			timedOut = true
+			close(stopForward) // 停止转发
+			// 快速模式：不等待清理，让转发goroutine在后台自行完成
+		}
+	}
+
+	// 记录结果
+	collectorDuration := time.Since(startTime)
+	finalCount := atomic.LoadInt32(&metricCount)
+
+	if timedOut {
+		logger.Logger.Warnf("[%s] %s TIMEOUT (fast mode) | Cost: %vms | Timeout: %v | Metrics: %d (partial)",
+			p.Name, a.collectorName, collectorDuration.Milliseconds(), timeout, finalCount)
+	} else {
+		logger.Logger.Infof("[%s] %s completed (fast mode) | Cost: %vms | Metrics: %d",
+			p.Name, a.collectorName, collectorDuration.Milliseconds(), finalCount)
+	}
 }
 
 // AdaptCollector 适配单个采集器到多数据源

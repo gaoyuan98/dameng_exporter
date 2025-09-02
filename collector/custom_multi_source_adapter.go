@@ -73,23 +73,43 @@ func (a *CustomMetricsMultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 			// 创建标签注入器
 			labelInjector := NewLabelInjectorFromPool(p)
 
-			// 创建临时channel收集指标
-			tempCh := make(chan prometheus.Metric, 500)
-			done := make(chan struct{})
+			// 根据配置选择采集模式
+			var tempCh chan prometheus.Metric
+			if config.GlobalMultiConfig != nil && config.GlobalMultiConfig.IsFastMode() {
+				// 快速模式：大缓冲
+				tempCh = make(chan prometheus.Metric, 500)
+			} else {
+				// 阻塞模式：小缓冲
+				tempCh = make(chan prometheus.Metric, 10)
+			}
 
-			// 异步收集指标
+			// 转发goroutine - 简单的标签注入和转发，不丢弃任何指标
+			forwardDone := make(chan struct{})
 			go func() {
-				defer close(done)
-				collector.Collect(tempCh)
-				close(tempCh)
+				defer close(forwardDone)
+				for metric := range tempCh {
+					// 包装指标（注入数据源标签）
+					wrappedMetric := NewMetricWrapper(metric, labelInjector)
+					// 阻塞写入，确保所有指标都被Prometheus接收
+					// 这里没有default分支，不会丢失任何指标
+					ch <- wrappedMetric
+				}
 			}()
 
-			// 转发指标并注入标签
-			for metric := range tempCh {
-				// 使用 MetricWrapper 注入标签
-				ch <- NewMetricWrapper(metric, labelInjector)
-			}
-			<-done
+			// 采集goroutine
+			collectDone := make(chan struct{})
+			go func() {
+				defer func() {
+					close(tempCh) // 关闭channel，触发转发goroutine退出
+					close(collectDone)
+				}()
+				collector.Collect(tempCh)
+			}()
+
+			// 等待采集完成
+			<-collectDone
+			// 等待转发完成
+			<-forwardDone
 		}(pool, customConfig)
 	}
 
@@ -109,7 +129,6 @@ func RegisterCustomMetricsForMultiSource(reg *prometheus.Registry, poolManager *
 	for _, ds := range config.GlobalMultiConfig.DataSources {
 		if ds.Enabled && ds.RegisterCustomMetrics {
 			needCustomMetrics = true
-
 			// 预加载并验证配置文件
 			if fileutil.IsExist(ds.CustomMetricsFile) {
 				customConfig, err := config.ParseCustomConfig(ds.CustomMetricsFile)
