@@ -10,9 +10,6 @@ enableBasicAuth = false
 basicAuthUsername = ""
 basicAuthPassword = ""
 globalTimeoutSeconds = 3
-p99LatencyTarget = 1.5
-enablePartialReturn = true
-latencyWindowSize = 50
 
 [[datasource]]
   name = "master"
@@ -35,7 +32,7 @@ latencyWindowSize = 50
   registerDmhsMetrics = false
   registerCustomMetrics = true
   priority = 1
-  #labels = "role=master"
+  labels = "role=master"
   customMetricsFile = "./custom_queries.metrics"
 
 [[datasource]]

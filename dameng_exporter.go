@@ -55,9 +55,6 @@ func parseFlags() *config.CmdArgs {
 
 		// 全局超时控制参数
 		GlobalTimeoutSeconds: kingpin.Flag("globalTimeoutSeconds", "Global timeout for metrics collection (seconds)").Default(fmt.Sprint(config.DefaultMultiSourceConfig.GlobalTimeoutSeconds)).Int(),
-		P99LatencyTarget:     kingpin.Flag("p99LatencyTarget", "P99 latency target in seconds").Default(fmt.Sprintf("%.1f", config.DefaultMultiSourceConfig.P99LatencyTarget)).Float64(),
-		EnablePartialReturn:  kingpin.Flag("enablePartialReturn", "Enable partial result return on timeout").Default(strconv.FormatBool(config.DefaultMultiSourceConfig.EnablePartialReturn)).Bool(),
-		LatencyWindowSize:    kingpin.Flag("latencyWindowSize", "Sliding window size for P99 latency calculation").Default(fmt.Sprint(config.DefaultMultiSourceConfig.LatencyWindowSize)).Int(),
 	}
 	kingpin.Parse()
 	return args

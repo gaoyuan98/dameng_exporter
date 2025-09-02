@@ -25,10 +25,7 @@ type MultiSourceConfig struct {
 	BasicAuthPassword string `toml:"basicAuthPassword"`
 
 	// 全局超时控制配置
-	GlobalTimeoutSeconds int     `toml:"globalTimeoutSeconds"` // 全局超时时间（秒）
-	P99LatencyTarget     float64 `toml:"p99LatencyTarget"`     // P99延迟目标（秒）
-	EnablePartialReturn  bool    `toml:"enablePartialReturn"`  // 是否启用部分结果返回
-	LatencyWindowSize    int     `toml:"latencyWindowSize"`    // P99延迟统计窗口大小（最近N次采集）
+	GlobalTimeoutSeconds int `toml:"globalTimeoutSeconds"` // 全局超时时间（秒）
 
 	// 数据源列表
 	DataSources []DataSourceConfig `toml:"datasource"`
@@ -85,10 +82,7 @@ var DefaultMultiSourceConfig = MultiSourceConfig{
 	BasicAuthPassword: "",
 
 	// 全局超时控制默认值
-	GlobalTimeoutSeconds: 5,    // 默认5秒全局超时
-	P99LatencyTarget:     2.0,  // 默认P99延迟目标2秒
-	EnablePartialReturn:  true, // 默认启用部分结果返回
-	LatencyWindowSize:    100,  // 默认统计最近100次采集
+	GlobalTimeoutSeconds: 5, // 默认5秒全局超时
 }
 
 // DefaultDataSourceConfig 默认数据源配置
@@ -291,13 +285,6 @@ func (msc *MultiSourceConfig) ApplyAllDefaults() {
 	if msc.GlobalTimeoutSeconds == 0 {
 		msc.GlobalTimeoutSeconds = DefaultMultiSourceConfig.GlobalTimeoutSeconds
 	}
-	if msc.P99LatencyTarget == 0 {
-		msc.P99LatencyTarget = DefaultMultiSourceConfig.P99LatencyTarget
-	}
-	if msc.LatencyWindowSize == 0 {
-		msc.LatencyWindowSize = DefaultMultiSourceConfig.LatencyWindowSize
-	}
-	// EnablePartialReturn 是布尔类型，TOML解析会正确处理
 
 	// 为每个数据源应用默认值
 	for i := range msc.DataSources {
@@ -328,8 +315,8 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 		authInfo, msc.EncodeConfigPwd))
 
 	// 性能配置 - 一行
-	sb.WriteString(fmt.Sprintf("[Performance] globalTimeout=%ds, p99Target=%.2fs, partialReturn=%v, latencyWindow=%d\n",
-		msc.GlobalTimeoutSeconds, msc.P99LatencyTarget, msc.EnablePartialReturn, msc.LatencyWindowSize))
+	sb.WriteString(fmt.Sprintf("[Performance] globalTimeout=%ds\n",
+		msc.GlobalTimeoutSeconds))
 
 	// 数据源摘要 - 一行
 	enabledCount := 0

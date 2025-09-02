@@ -132,7 +132,10 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 				for {
 					select {
 					case <-stopForward:
-						// 收到停止信号，退出
+						//不再向 Prometheus 输出，但继续读 safeChan 直到它被关闭 → 生产者永远写得进去 → 采集结束自行 close(safeChan) → 转发协程排水完毕自然退出
+						for range safeChan {
+							// drain and drop
+						}
 						return
 					case metric, ok := <-safeChan:
 						if !ok {

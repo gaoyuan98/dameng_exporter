@@ -34,9 +34,6 @@ type CmdArgs struct {
 
 	// 全局超时控制参数
 	GlobalTimeoutSeconds *int
-	P99LatencyTarget     *float64
-	EnablePartialReturn  *bool
-	LatencyWindowSize    *int
 }
 
 // MergeConfig 函数已移除，使用 MergeMultiSourceConfig 代替
