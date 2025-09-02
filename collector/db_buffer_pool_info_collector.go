@@ -35,7 +35,7 @@ func NewDbBufferPoolCollector(db *sql.DB) MetricCollector {
 		bufferPoolInfoDesc: prometheus.NewDesc(
 			dmdbms_bufferpool_info,
 			"Information about DM database bufferpool return hitRate",
-			[]string{"host_name", "buffer_name"},
+			[]string{"buffer_name"},
 			nil,
 		),
 	}
@@ -75,7 +75,6 @@ func (c *DbBufferPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	for _, info := range bufferPoolInfos {
 
@@ -85,7 +84,7 @@ func (c *DbBufferPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			c.bufferPoolInfoDesc,
 			prometheus.GaugeValue,
 			hitRate,
-			hostname, bufferName,
+			bufferName,
 		)
 	}
 }

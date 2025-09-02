@@ -37,7 +37,7 @@ func NewDbDwWatcherInfoCollector(db *sql.DB) MetricCollector {
 		dwWatcherInfoDesc: prometheus.NewDesc(
 			dmdbms_dw_watcher_info,
 			"Information about DM database Instance Watcher info, dw_status value info:  open = 1,mount = 2,suspend = 3 ,other = 4",
-			[]string{"host_name", "dw_mode", "dw_status", "auto_restart"},
+			[]string{"dw_mode", "dw_status", "auto_restart"},
 			nil,
 		),
 	}
@@ -77,10 +77,9 @@ func (c *DbDwWatcherInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		logger.Logger.Error("Error with rows", zap.Error(err))
 	}
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	for _, info := range dbDwWatcherInfos {
-		//[]string{"host_name", "pid", "level", "log_time", "txt"}
+		//[]string{"dw_mode", "dw_status", "auto_restart"}
 
 		dwMode := NullStringToString(info.DwMode)
 		dwStatus := NullStringToString(info.DwStatus)
@@ -91,7 +90,7 @@ func (c *DbDwWatcherInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			c.dwWatcherInfoDesc,
 			prometheus.GaugeValue,
 			dwStatusToNum,
-			hostname, dwMode, dwStatus, autoRestart,
+			dwMode, dwStatus, autoRestart,
 		)
 	}
 }

@@ -36,13 +36,13 @@ func NewTableSpaceInfoCollector(db *sql.DB) MetricCollector {
 		totalDesc: prometheus.NewDesc(
 			dmdbms_tablespace_size_total_info,
 			"Tablespace info information",
-			[]string{"host_name", "tablespace_name"}, // 添加标签
+			[]string{"tablespace_name"}, // 添加标签
 			nil,
 		),
 		freeDesc: prometheus.NewDesc(
 			dmdbms_tablespace_size_free_info,
 			"Tablespace info information",
-			[]string{"host_name", "tablespace_name"}, // 添加标签
+			[]string{"tablespace_name"}, // 添加标签
 			nil,
 		),
 	}
@@ -71,8 +71,8 @@ func (c *TableSpaceInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			logger.Logger.Infof("[%s] Use cache TablespaceInfo data", c.dataSource)
 			// 使用缓存的数据
 			for _, info := range tablespaceInfos {
-				ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, config.GetHostName(), info.TablespaceName)
-				ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, config.GetHostName(), info.TablespaceName)
+				ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.TablespaceName)
+				ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, info.TablespaceName)
 			}
 			return
 		}
@@ -105,8 +105,8 @@ func (c *TableSpaceInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range tablespaceInfos {
-		ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, config.GetHostName(), info.TablespaceName)
-		ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, config.GetHostName(), info.TablespaceName)
+		ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.TablespaceName)
+		ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, info.TablespaceName)
 	}
 
 	// 将 TablespaceInfo 切片序列化为 JSON 字符串

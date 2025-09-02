@@ -36,13 +36,13 @@ func NewDbMemoryPoolInfoCollector(db *sql.DB) MetricCollector {
 		totalPoolDesc: prometheus.NewDesc(
 			dmdbms_memory_total_pool_info,
 			"mem total pool info information",
-			[]string{"host_name", "pool_type"}, // 添加标签
+			[]string{"pool_type"}, // 添加标签
 			nil,
 		),
 		currPoolDesc: prometheus.NewDesc(
 			dmdbms_memory_curr_pool_info,
 			"mem curr pool info information",
-			[]string{"host_name", "pool_type"}, // 添加标签
+			[]string{"pool_type"}, // 添加标签
 			nil,
 		),
 	}
@@ -85,8 +85,8 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range memoryPoolInfos {
-		ch <- prometheus.MustNewConstMetric(c.totalPoolDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.TotalVal), config.GetHostName(), NullStringToString(info.ZoneType))
-		ch <- prometheus.MustNewConstMetric(c.currPoolDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.CurrVal), config.GetHostName(), NullStringToString(info.ZoneType))
+		ch <- prometheus.MustNewConstMetric(c.totalPoolDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.TotalVal), NullStringToString(info.ZoneType))
+		ch <- prometheus.MustNewConstMetric(c.currPoolDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.CurrVal), NullStringToString(info.ZoneType))
 	}
 
 	//	logger.Logger.Infof("MemoryPoolInfo exec finish")

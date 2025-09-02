@@ -34,7 +34,7 @@ func NewDbJobRunningInfoCollector(db *sql.DB) MetricCollector {
 		jobErrorNumDesc: prometheus.NewDesc(
 			dmdbms_joblog_error_num,
 			"dmdbms_joblog_error_num info information",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 添加标签
 			nil,
 		),
 	}
@@ -79,6 +79,6 @@ func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 
-	ch <- prometheus.MustNewConstMetric(c.jobErrorNumDesc, prometheus.GaugeValue, NullInt64ToFloat64(errorCountInfo.ErrorNum), config.GetHostName())
+	ch <- prometheus.MustNewConstMetric(c.jobErrorNumDesc, prometheus.GaugeValue, NullInt64ToFloat64(errorCountInfo.ErrorNum))
 
 }

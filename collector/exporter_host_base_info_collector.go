@@ -31,7 +31,7 @@ func NewSystemInfoCollector() *SystemInfoCollector {
 		systemInfoDesc: prometheus.NewDesc(
 			dmdbms_node_uname_info,
 			"System information",
-			[]string{"host_name", "osName", "osVersion", "coreNum", "memSize", "architecture"},
+			[]string{"osName", "osVersion", "coreNum", "memSize", "architecture"},
 			nil,
 		),
 	}
@@ -51,7 +51,6 @@ func (c *SystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		c.systemInfoDesc,
 		prometheus.GaugeValue,
 		1,
-		systemInfo.Hostname,
 		systemInfo.OSName,
 		systemInfo.OSVersion,
 		systemInfo.CoreNum,

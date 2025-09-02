@@ -33,7 +33,7 @@ func NewDbDualCollector(db *sql.DB) MetricCollector {
 		dualInfoDesc: prometheus.NewDesc(
 			dmdbms_dual_info,
 			"Information about DM database query dual table info,return false is 0, true is 1",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 	}
@@ -54,13 +54,11 @@ func (c *DbDualInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	dualValue := c.QueryDualInfo(ctx)
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	ch <- prometheus.MustNewConstMetric(
 		c.dualInfoDesc,
 		prometheus.GaugeValue,
 		dualValue,
-		hostname,
 	)
 
 }

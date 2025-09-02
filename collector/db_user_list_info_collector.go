@@ -40,7 +40,7 @@ func NewDbUserCollector(db *sql.DB) MetricCollector {
 		userListInfoDesc: prometheus.NewDesc(
 			dmdbms_user_list_info,
 			"Information about DM database users",
-			[]string{"host_name", "username", "read_only", "expiry_date", "expiry_date_day", "default_tablespace", "profile", "create_time"},
+			[]string{"username", "read_only", "expiry_date", "expiry_date_day", "default_tablespace", "profile", "create_time"},
 			nil,
 		),
 	}
@@ -81,7 +81,6 @@ func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	for _, info := range userInfos {
 		username := NullStringToString(info.Username)
@@ -102,7 +101,7 @@ func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 			c.userListInfoDesc,
 			prometheus.GaugeValue,
 			accountStatusValue,
-			hostname, username, readOnly, expiryDate, expiryDateDay, defaultTablespace, profile, createTime,
+			username, readOnly, expiryDate, expiryDateDay, defaultTablespace, profile, createTime,
 		)
 	}
 }

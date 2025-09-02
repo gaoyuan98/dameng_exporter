@@ -35,7 +35,7 @@ func NewIniParameterCollector(db *sql.DB) MetricCollector {
 		parameterInfoDesc: prometheus.NewDesc(
 			dmdbms_parameter_info,
 			"Information about DM database parameters",
-			[]string{"host_name", "param_name"},
+			[]string{"param_name"},
 			nil,
 		),
 	}
@@ -77,14 +77,13 @@ func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// 发送数据到 Prometheus
-	hostname := config.GetHostName()
 	for _, info := range iniParameterInfos {
 		paramName := NullStringToString(info.ParaName)
 		ch <- prometheus.MustNewConstMetric(
 			c.parameterInfoDesc,
 			prometheus.GaugeValue,
 			NullFloat64ToFloat64(info.ParaValue),
-			hostname, paramName,
+			paramName,
 		)
 	}
 }

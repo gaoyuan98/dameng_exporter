@@ -39,13 +39,13 @@ func NewTableSpaceDateFileInfoCollector(db *sql.DB) MetricCollector {
 		totalDesc: prometheus.NewDesc(
 			dmdbms_tablespace_file_total_info,
 			"Tablespace file information",
-			[]string{"host_name", "tablespace_name", "auto_extend", "next_size", "max_size"}, // 添加标签
+			[]string{"tablespace_name", "auto_extend", "next_size", "max_size"}, // 添加标签
 			nil,
 		),
 		freeDesc: prometheus.NewDesc(
 			dmdbms_tablespace_file_free_info,
 			"Tablespace file information",
-			[]string{"host_name", "tablespace_name", "auto_extend", "next_size", "max_size"}, // 添加标签
+			[]string{"tablespace_name", "auto_extend", "next_size", "max_size"}, // 添加标签
 			nil,
 		),
 	}
@@ -74,8 +74,8 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			logger.Logger.Infof("[%s] Use cache TablespaceDateFile data", c.dataSource)
 			// 使用缓存的数据
 			for _, info := range tablespaceInfos {
-				ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, config.GetHostName(), info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
-				ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, config.GetHostName(), info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
+				ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
+				ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
 			}
 			return
 		}
@@ -108,8 +108,8 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range tablespaceInfos {
-		ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, config.GetHostName(), info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
-		ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, config.GetHostName(), info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
+		ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
+		ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
 	}
 
 	// 将 TablespaceInfo 切片序列化为 JSON 字符串

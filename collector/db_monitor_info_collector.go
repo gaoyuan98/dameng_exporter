@@ -70,7 +70,7 @@ func NewMonitorInfoCollector(db *sql.DB) MetricCollector {
 		monitorInfoDesc: prometheus.NewDesc(
 			dmdbms_monitor_info,
 			"Information about DM monitor",
-			[]string{"host_name", "dw_conn_time", "mon_confirm", "mon_id", "mon_ip", "mon_version"},
+			[]string{"dw_conn_time", "mon_confirm", "mon_id", "mon_ip", "mon_version"},
 			nil,
 		),
 		viewExists: true,
@@ -117,7 +117,6 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range monitorInfos {
-		hostName := config.GetHostName()
 		dwConnTime := NullStringToString(info.DwConnTime)
 		monConfirm := NullStringToString(info.MonConfirm)
 		monId := NullStringToString(info.MonId)
@@ -128,7 +127,7 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			c.monitorInfoDesc,
 			prometheus.GaugeValue,
 			NullFloat64ToFloat64(info.Mid),
-			hostName, dwConnTime, monConfirm, monId, monIp, monVersion,
+			dwConnTime, monConfirm, monId, monIp, monVersion,
 		)
 	}
 }

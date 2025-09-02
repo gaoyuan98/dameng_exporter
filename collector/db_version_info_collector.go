@@ -39,7 +39,7 @@ func NewDbVersionCollector(db *sql.DB) MetricCollector {
 		versionInfoDesc: prometheus.NewDesc(
 			dmdbms_version,
 			"Information about DM database version",
-			[]string{"host_name", "db_version_str", "build_type", "inner_ver"},
+			[]string{"db_version_str", "build_type", "inner_ver"},
 			nil,
 		),
 	}
@@ -73,7 +73,6 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 			c.versionInfoDesc,
 			prometheus.GaugeValue,
 			1,
-			config.GetHostName(),
 			dbVersion,
 			"", // build_type为空
 			"", // inner_ver为空
@@ -86,7 +85,6 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 		c.versionInfoDesc,
 		prometheus.GaugeValue,
 		1,
-		config.GetHostName(),
 		NullStringToString(versionInfo.idCode),
 		NullStringToString(versionInfo.buildType),
 		NullStringToString(versionInfo.innerVer),

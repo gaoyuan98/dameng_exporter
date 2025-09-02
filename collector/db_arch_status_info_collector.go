@@ -83,39 +83,39 @@ func NewDbArchStatusCollector(db *sql.DB) MetricCollector {
 		archStatusDesc: prometheus.NewDesc(
 			dmdbms_arch_status,
 			"Information about DM database archive status, value info: vaild = 1,invaild = 2,no_enable= -1",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 		archSwitchRateDesc: prometheus.NewDesc(
 			dmdbms_arch_switch_rate,
 			"Information about DM database archive switch rate，Always output the most recent piece of data",
-			[]string{"host_name" /*, "status", "createTime", "path", "clsn", "srcDbMagic"*/},
+			[]string{}, /*, "status", "createTime", "path", "clsn", "srcDbMagic"*/
 			nil,
 		),
 		archSwitchRateDetailInfo: prometheus.NewDesc(
 			dmdbms_arch_switch_rate_detail_info,
 			"Information about DM database archive switch rate info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
-			[]string{"host_name", "status", "createTime", "path", "clsn", "srcDbMagic"},
+			[]string{"status", "createTime", "path", "clsn", "srcDbMagic"},
 			nil,
 		),
 
 		archStatusInfo: prometheus.NewDesc(
 			dmdbms_arch_status_info,
 			"Information about DM database archive status, value info: vaild = 1,invaild = 0",
-			[]string{"host_name", "arch_type", "arch_dest", "arch_src"},
+			[]string{"arch_type", "arch_dest", "arch_src"},
 			nil,
 		),
 
 		archSendDetailInfo: prometheus.NewDesc(
 			dmdbms_arch_send_detail_info,
 			"Information about DM database archive send detail info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
-			[]string{"host_name", "arch_type", "arch_dest", "last_send_code", "last_send_desc", "last_start_time", "last_end_time", "last_send_time"},
+			[]string{"arch_type", "arch_dest", "last_send_code", "last_send_desc", "last_start_time", "last_end_time", "last_send_time"},
 			nil,
 		),
 		archSendDiffValue: prometheus.NewDesc(
 			dmdbms_arch_send_diff_value,
 			"Information about DM database archive send detail info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
-			[]string{"host_name", "arch_type", "arch_dest"},
+			[]string{"arch_type", "arch_dest"},
 			nil,
 		),
 	}
@@ -162,20 +162,18 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		path := NullStringToString(dbArchSwitchRateInfo.path)
 		createTime := NullStringToString(dbArchSwitchRateInfo.createTime)
 		minusDiff := NullFloat64ToFloat64(dbArchSwitchRateInfo.minusDiff)
-		hostname := config.GetHostName()
 		//做折线图
 		ch <- prometheus.MustNewConstMetric(
 			c.archSwitchRateDesc,
 			prometheus.GaugeValue,
 			minusDiff,
-			hostname,
 		)
 		//归档切换的详细信息
 		ch <- prometheus.MustNewConstMetric(
 			c.archSwitchRateDetailInfo,
 			prometheus.GaugeValue,
 			minusDiff,
-			hostname, status, createTime, path, clsn, srcDbMagic,
+			status, createTime, path, clsn, srcDbMagic,
 		)
 
 		//查询所有归档的状态信息
@@ -193,7 +191,7 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 				c.archStatusInfo,
 				prometheus.GaugeValue,
 				archStatus,
-				hostname, archType, archDest, archSrc,
+				archType, archDest, archSrc,
 			)
 		}
 
@@ -216,14 +214,14 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 				c.archSendDetailInfo,
 				prometheus.GaugeValue,
 				lsnDiff,
-				hostname, archType, archDest, lastSendCode, lastSendDesc, lastStartTime, lastEndTime, lastSendTime,
+				archType, archDest, lastSendCode, lastSendDesc, lastStartTime, lastEndTime, lastSendTime,
 			)
 			//20250605 存放diff差值
 			ch <- prometheus.MustNewConstMetric(
 				c.archSendDiffValue,
 				prometheus.GaugeValue,
 				lsnDiff,
-				hostname, archType, archDest,
+				archType, archDest,
 			)
 
 		}
@@ -233,12 +231,10 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func setArchMetric(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int) {
-	hostname := config.GetHostName()
 	ch <- prometheus.MustNewConstMetric(
 		desc,
 		prometheus.GaugeValue,
 		float64(value),
-		hostname,
 	)
 
 }

@@ -35,7 +35,7 @@ func NewDbLicenseCollector(db *sql.DB) MetricCollector {
 		licenseDateDesc: prometheus.NewDesc(
 			dmdbms_license_date,
 			"Information about DM database license expiration date",
-			[]string{"host_name", "date_day_str"},
+			[]string{"date_day_str"},
 			nil,
 		),
 	}
@@ -75,7 +75,6 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	hostname := config.GetHostName()
 	for _, info := range licenseInfos {
 		expiredDateStr := NullStringToString(info.ExpiredDate)
 		var returnDateStr string
@@ -100,7 +99,7 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 			c.licenseDateDesc,
 			prometheus.GaugeValue,
 			parseToFloat64(returnDateStr),
-			hostname, licenseStatus,
+			licenseStatus,
 		)
 	}
 

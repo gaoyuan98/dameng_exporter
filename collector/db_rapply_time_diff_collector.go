@@ -34,7 +34,7 @@ func NewDbRapplyTimeDiffCollector(db *sql.DB) MetricCollector {
 		timeDiffDesc: prometheus.NewDesc(
 			dmdbms_rapply_time_diff,
 			"Time difference in seconds between APPLY_CMT_TIME and LAST_CMT_TIME from V$RAPPLY_STAT",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 	}
@@ -75,13 +75,11 @@ func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	hostname := config.GetHostName()
 	for _, info := range rapplyTimeDiffs {
 		ch <- prometheus.MustNewConstMetric(
 			c.timeDiffDesc,
 			prometheus.GaugeValue,
 			NullFloat64ToFloat64(info.TimeDiff),
-			hostname,
 		)
 	}
 }

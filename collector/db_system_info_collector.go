@@ -37,13 +37,13 @@ func NewDBSystemInfoCollector(db *sql.DB) MetricCollector {
 		cpuDesc: prometheus.NewDesc(
 			dmdbms_system_cpu_info,
 			"Number of CPU cores",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 		memoryDesc: prometheus.NewDesc(
 			dmdbms_system_memory_info,
 			"Total physical memory size in bytes",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 	}
@@ -90,7 +90,6 @@ func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		c.cpuDesc,
 		prometheus.GaugeValue,
 		NullFloat64ToFloat64(info.cpuCount),
-		config.GetHostName(),
 	)
 
 	// 发送内存信息到Prometheus
@@ -98,6 +97,5 @@ func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		c.memoryDesc,
 		prometheus.GaugeValue,
 		NullFloat64ToFloat64(info.memorySize),
-		config.GetHostName(),
 	)
 }

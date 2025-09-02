@@ -36,13 +36,13 @@ func NewDbRapplySysCollector(db *sql.DB) MetricCollector {
 		taskMemUsedDesc: prometheus.NewDesc(
 			dmdbms_rapply_sys_task_mem_used,
 			"Information about DM database apply system task memory used",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 		taskNumDesc: prometheus.NewDesc(
 			dmdbms_rapply_sys_task_num,
 			"Information about DM database apply system task number",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 	}
@@ -84,19 +84,16 @@ func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	hostname := config.GetHostName()
 	for _, info := range rapplySysInfos {
 		ch <- prometheus.MustNewConstMetric(
 			c.taskMemUsedDesc,
 			prometheus.GaugeValue,
 			NullFloat64ToFloat64(info.TaskMemUsed),
-			hostname,
 		)
 		ch <- prometheus.MustNewConstMetric(
 			c.taskNumDesc,
 			prometheus.GaugeValue,
 			NullFloat64ToFloat64(info.TaskNum),
-			hostname,
 		)
 	}
 }

@@ -36,13 +36,13 @@ func NewDBSessionsStatusCollector(db *sql.DB) MetricCollector {
 		sessionTypeDesc: prometheus.NewDesc(
 			dmdbms_session_type_Info,
 			"Number of database sessions type status",
-			[]string{"host_name", "session_type"},
+			[]string{"session_type"},
 			nil,
 		),
 		sessionPercentageDesc: prometheus.NewDesc(
 			dmdbms_session_percentage,
 			"Number of database sessions type percentage,method: total/max_session * 100%",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 	}
@@ -94,7 +94,7 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		} else if info.stateType.Valid && info.stateType.String == "TOTAL" {
 			totalSession = NullFloat64ToFloat64(info.countVal)
 		}
-		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.countVal), config.GetHostName(), NullStringToString(info.stateType))
+		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.countVal), NullStringToString(info.stateType))
 	}
 
 	div := float64(0)
@@ -105,6 +105,6 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		div = 0
 	}
 	//eg：计算百分比，此处没有计算百分比
-	ch <- prometheus.MustNewConstMetric(c.sessionPercentageDesc, prometheus.GaugeValue, div, "")
+	ch <- prometheus.MustNewConstMetric(c.sessionPercentageDesc, prometheus.GaugeValue, div)
 
 }

@@ -37,7 +37,7 @@ func NewDbInstanceLogErrorCollector(db *sql.DB) MetricCollector {
 		instanceLogInfoDesc: prometheus.NewDesc(
 			dmdbms_instance_log_error_info,
 			"Information about DM database Instance error log info",
-			[]string{"host_name", "pid", "level", "log_time", "txt"},
+			[]string{"pid", "level", "log_time", "txt"},
 			nil,
 		),
 	}
@@ -81,10 +81,9 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	// 对instanceLogInfos进行去重处理
 	instanceLogInfos = removeDuplicateLogInfos(instanceLogInfos)
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	for _, info := range instanceLogInfos {
-		//[]string{"host_name", "pid", "level", "log_time", "txt"}
+		//[]string{"pid", "level", "log_time", "txt"}
 
 		pid := NullStringToString(info.Pid)
 		level := NullStringToString(info.Level)
@@ -98,7 +97,7 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			c.instanceLogInfoDesc,
 			prometheus.GaugeValue,
 			float64(logStatusValue),
-			hostname, pid, level, logTime, txt,
+			pid, level, logTime, txt,
 		)
 	}
 }

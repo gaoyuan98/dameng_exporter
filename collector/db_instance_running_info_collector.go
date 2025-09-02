@@ -48,55 +48,55 @@ func NewDBInstanceRunningInfoCollector(db *sql.DB) MetricCollector {
 		startTimeDesc: prometheus.NewDesc(
 			dmdbms_start_time_info,
 			"Database status time",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		statusDesc: prometheus.NewDesc(
 			dmdbms_status_info,
 			"Database status, value info: open = 1,mount = 2,suspend = 3 ,other = 4",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		modeDesc: prometheus.NewDesc(
 			dmdbms_mode_info,
 			"Database mode, value info: primary = 1,normal = 2,standby = 3 ,other = 4",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		trxNumDesc: prometheus.NewDesc(
 			dmdbms_trx_info,
 			"Number of transactions",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		deadlockDesc: prometheus.NewDesc(
 			dmdbms_dead_lock_num_info,
 			"Number of deadlocks",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		threadNumDesc: prometheus.NewDesc(
 			dmdbms_thread_num_info,
 			"Number of threads",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		statusOccursDesc: prometheus.NewDesc( //这个是数据库状态切换的标识  OPEN
 			dmdbms_db_status_occurs,
 			"status changes status, value info: false is 0 , true is 1",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		switchingOccursDesc: prometheus.NewDesc(
 			dmdbms_switching_occurs,
 			"Database instance switching occurs， value info:  error is 0 , true is 1  ",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 		dbStartDayDesc: prometheus.NewDesc(
 			dmdbms_start_day,
 			"Database instance start_day ",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 	}
@@ -200,14 +200,14 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (c *DBInstanceRunningInfoCollector) collectMetrics(ch chan<- prometheus.Metric, data map[string]float64) {
-	ch <- prometheus.MustNewConstMetric(c.startTimeDesc, prometheus.GaugeValue, data["startTime"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.statusDesc, prometheus.GaugeValue, data["status"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.modeDesc, prometheus.GaugeValue, data["mode"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.trxNumDesc, prometheus.GaugeValue, data["trxNum"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.deadlockDesc, prometheus.GaugeValue, data["deadlockNum"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.threadNumDesc, prometheus.GaugeValue, data["threadNum"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.statusOccursDesc, prometheus.GaugeValue, data["status"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.dbStartDayDesc, prometheus.GaugeValue, data["dbStartDay"], config.GetHostName())
+	ch <- prometheus.MustNewConstMetric(c.startTimeDesc, prometheus.GaugeValue, data["startTime"])
+	ch <- prometheus.MustNewConstMetric(c.statusDesc, prometheus.GaugeValue, data["status"])
+	ch <- prometheus.MustNewConstMetric(c.modeDesc, prometheus.GaugeValue, data["mode"])
+	ch <- prometheus.MustNewConstMetric(c.trxNumDesc, prometheus.GaugeValue, data["trxNum"])
+	ch <- prometheus.MustNewConstMetric(c.deadlockDesc, prometheus.GaugeValue, data["deadlockNum"])
+	ch <- prometheus.MustNewConstMetric(c.threadNumDesc, prometheus.GaugeValue, data["threadNum"])
+	ch <- prometheus.MustNewConstMetric(c.statusOccursDesc, prometheus.GaugeValue, data["status"])
+	ch <- prometheus.MustNewConstMetric(c.dbStartDayDesc, prometheus.GaugeValue, data["dbStartDay"])
 }
 
 /*
@@ -229,15 +229,15 @@ func (c *DBInstanceRunningInfoCollector) handleDatabaseModeSwitch(ch chan<- prom
 
 	switch {
 	case switchOccurExists:
-		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual, config.GetHostName())
+		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual)
 	case modeExists && cachedModeValue == modeStr:
-		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
+		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal)
 	case modeExists:
-		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual, config.GetHostName())
+		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual)
 		config.DeleteFromCache(switchStrKey)
 		config.SetCache(switchOccurKey, strconv.Itoa(AlarmStatus_Unusual), time.Minute*time.Duration(config.Global.GetAlarmKeyCacheTime()))
 	default:
 		config.SetCache(switchStrKey, modeStr, time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
-		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
+		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal)
 	}
 }

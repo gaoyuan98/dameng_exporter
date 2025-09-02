@@ -39,7 +39,7 @@ func NewSlowSessionInfoCollector(db *sql.DB) MetricCollector {
 		slowSQLInfoDesc: prometheus.NewDesc(
 			dmdbms_slow_sql_info,
 			"Information about slow SQL statements",
-			[]string{"host_name", "sess_id", "curr_sch", "thrd_id", "last_recv_time", "conn_ip", "slow_sql"},
+			[]string{"sess_id", "curr_sch", "thrd_id", "last_recv_time", "conn_ip", "slow_sql"},
 			nil,
 		),
 	}
@@ -84,7 +84,6 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range sessionInfos {
-		hostName := config.GetHostName()
 		sessionID := NullStringToString(info.SessID)
 		currentSchema := NullStringToString(info.CurrSch)
 		threadID := NullStringToString(info.ThrdID)
@@ -96,7 +95,7 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			c.slowSQLInfoDesc,
 			prometheus.GaugeValue,
 			NullFloat64ToFloat64(info.ExecTime),
-			hostName, sessionID, currentSchema, threadID, lastRecvTime, connIP, slowSQL,
+			sessionID, currentSchema, threadID, lastRecvTime, connIP, slowSQL,
 		)
 	}
 }

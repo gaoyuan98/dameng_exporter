@@ -34,7 +34,7 @@ func NewDbSqlExecTypeCollector(db *sql.DB) MetricCollector {
 		statementTypeDesc: prometheus.NewDesc(
 			dmdbms_statement_type_info,
 			"Information about different types of statements",
-			[]string{"host_name", "statement_name"},
+			[]string{"statement_name"},
 			nil,
 		),
 	}
@@ -75,7 +75,6 @@ func (c *DbSqlExecTypeCollector) Collect(ch chan<- prometheus.Metric) {
 		logger.Logger.Error("Error with rows", zap.Error(err))
 	}
 	// 发送数据到 Prometheus
-	hostname := config.GetHostName()
 	for _, info := range sysstatInfos {
 		statementName := NullStringToString(info.Name)
 
@@ -83,7 +82,7 @@ func (c *DbSqlExecTypeCollector) Collect(ch chan<- prometheus.Metric) {
 			c.statementTypeDesc,
 			prometheus.CounterValue,
 			NullFloat64ToFloat64(info.StatVal),
-			hostname, statementName,
+			statementName,
 		)
 	}
 }

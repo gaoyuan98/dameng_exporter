@@ -39,7 +39,7 @@ func NewCkptCollector(db *sql.DB) MetricCollector {
 		ckptTimeInfoDesc: prometheus.NewDesc(
 			dmdbms_ckpttime_info,
 			"Information about DM checkpoint times",
-			[]string{"host_name" /*, "ckpt_total_count", "ckpt_reserve_count", "ckpt_flushed_pages"*/},
+			[]string{}, /*, "ckpt_total_count", "ckpt_reserve_count", "ckpt_flushed_pages"*/
 			nil,
 		),
 		viewExists: true,
@@ -90,7 +90,6 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	for _, info := range ckptInfos {
 		//ckptTotalCount := NullFloat64ToString(info.CkptTotalCount)
@@ -100,8 +99,7 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(
 			c.ckptTimeInfoDesc,
 			prometheus.CounterValue,
-			NullFloat64ToFloat64(info.CkptTimeUsed),
-			hostname, /*, ckptTotalCount, ckptReserveCount, ckptFlushedPages*/
+			NullFloat64ToFloat64(info.CkptTimeUsed), /*, ckptTotalCount, ckptReserveCount, ckptFlushedPages*/
 		)
 	}
 }
