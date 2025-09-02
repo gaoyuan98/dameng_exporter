@@ -15,12 +15,7 @@ import (
 
 // DbArchSwitchRateInfo 归档切换频率信息
 type DbArchSwitchRateInfo struct {
-	status     sql.NullString
-	createTime sql.NullString
-	path       sql.NullString
-	clsn       sql.NullString
-	srcDbMagic sql.NullString
-	minusDiff  sql.NullFloat64
+	minusDiff sql.NullFloat64
 }
 
 // DbArchSwitchCollector 归档切换监控采集器
@@ -49,7 +44,7 @@ func NewDbArchSwitchCollector(db *sql.DB) MetricCollector {
 		archSwitchRateDetailInfo: prometheus.NewDesc(
 			dmdbms_arch_switch_rate_detail_info,
 			"Information about DM database archive switch rate info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
-			[]string{"status", "createTime", "path", "clsn", "srcDbMagic"},
+			[]string{},
 			nil,
 		),
 	}
@@ -86,11 +81,6 @@ func (c *DbArchSwitchCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	clsn := utils.NullStringToString(dbArchSwitchRateInfo.clsn)
-	srcDbMagic := utils.NullStringToString(dbArchSwitchRateInfo.srcDbMagic)
-	status := utils.NullStringToString(dbArchSwitchRateInfo.status)
-	path := utils.NullStringToString(dbArchSwitchRateInfo.path)
-	createTime := utils.NullStringToString(dbArchSwitchRateInfo.createTime)
 	minusDiff := utils.NullFloat64ToFloat64(dbArchSwitchRateInfo.minusDiff)
 
 	// 归档切换频率指标（用于折线图）
@@ -100,12 +90,11 @@ func (c *DbArchSwitchCollector) Collect(ch chan<- prometheus.Metric) {
 		minusDiff,
 	)
 
-	// 归档切换详细信息
+	// 归档切换详细信息（优化后：不包含额外标签）
 	ch <- prometheus.MustNewConstMetric(
 		c.archSwitchRateDetailInfo,
 		prometheus.GaugeValue,
 		minusDiff,
-		status, createTime, path, clsn, srcDbMagic,
 	)
 }
 
@@ -147,9 +136,9 @@ func (c *DbArchSwitchCollector) getDbArchSwitchRate(ctx context.Context, db *sql
 	defer rows.Close()
 
 	if rows.Next() {
-		if err := rows.Scan(&dbArchSwitchRateInfo.status, &dbArchSwitchRateInfo.createTime,
-			&dbArchSwitchRateInfo.path, &dbArchSwitchRateInfo.clsn,
-			&dbArchSwitchRateInfo.srcDbMagic, &dbArchSwitchRateInfo.minusDiff); err != nil {
+		// 跳过不需要的字段，只扫描最后的 minusDiff
+		var status, createTime, path, clsn, srcDbMagic sql.NullString
+		if err := rows.Scan(&status, &createTime, &path, &clsn, &srcDbMagic, &dbArchSwitchRateInfo.minusDiff); err != nil {
 			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			return dbArchSwitchRateInfo, err
 		}

@@ -17,14 +17,9 @@ import (
 
 // DbArchSendDetailInfo 归档发送详情信息
 type DbArchSendDetailInfo struct {
-	archDest      sql.NullString
-	archType      sql.NullString
-	lsnDiff       sql.NullFloat64
-	lastSendCode  sql.NullString
-	lastSendDesc  sql.NullString
-	lastStartTime sql.NullString
-	lastEndTime   sql.NullString
-	lastSendTime  sql.NullString
+	archDest sql.NullString
+	archType sql.NullString
+	lsnDiff  sql.NullFloat64
 }
 
 // DbArchSendCollector 归档发送监控采集器
@@ -53,7 +48,7 @@ func NewDbArchSendCollector(db *sql.DB) MetricCollector {
 		archSendDetailInfo: prometheus.NewDesc(
 			dmdbms_arch_send_detail_info,
 			"Information about DM database archive send detail info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
-			[]string{"arch_type", "arch_dest", "last_send_code", "last_send_desc", "last_start_time", "last_end_time", "last_send_time"},
+			[]string{"arch_type", "arch_dest"},
 			nil,
 		),
 		archSendDiffValue: prometheus.NewDesc(
@@ -95,18 +90,13 @@ func (c *DbArchSendCollector) Collect(ch chan<- prometheus.Metric) {
 		archType := utils.NullStringToString(dbArchSendInfo.archType)
 		archDest := utils.NullStringToString(dbArchSendInfo.archDest)
 		lsnDiff := utils.NullFloat64ToFloat64(dbArchSendInfo.lsnDiff)
-		lastSendCode := utils.NullStringToString(dbArchSendInfo.lastSendCode)
-		lastSendDesc := utils.NullStringToString(dbArchSendInfo.lastSendDesc)
-		lastStartTime := utils.NullStringToString(dbArchSendInfo.lastStartTime)
-		lastEndTime := utils.NullStringToString(dbArchSendInfo.lastEndTime)
-		lastSendTime := utils.NullStringToString(dbArchSendInfo.lastSendTime)
 
-		// 发送详情指标
+		// 发送详情指标（优化后：仅保留arch_type和arch_dest标签）
 		ch <- prometheus.MustNewConstMetric(
 			c.archSendDetailInfo,
 			prometheus.GaugeValue,
 			lsnDiff,
-			archType, archDest, lastSendCode, lastSendDesc, lastStartTime, lastEndTime, lastSendTime,
+			archType, archDest,
 		)
 
 		// LSN差值指标（简化版，用于监控延迟）
@@ -203,10 +193,12 @@ func (c *DbArchSendCollector) getDbArchSendDetailInfo(ctx context.Context, db *s
 
 	for rows.Next() {
 		var dbArchSendDetailInfo DbArchSendDetailInfo
+		// 跳过不需要的字段
+		var lastSendCode, lastSendDesc, lastStartTime, lastEndTime, lastSendTime sql.NullString
 		if err := rows.Scan(&dbArchSendDetailInfo.archDest, &dbArchSendDetailInfo.archType,
-			&dbArchSendDetailInfo.lsnDiff, &dbArchSendDetailInfo.lastSendCode,
-			&dbArchSendDetailInfo.lastSendDesc, &dbArchSendDetailInfo.lastStartTime,
-			&dbArchSendDetailInfo.lastEndTime, &dbArchSendDetailInfo.lastSendTime); err != nil {
+			&dbArchSendDetailInfo.lsnDiff, &lastSendCode,
+			&lastSendDesc, &lastStartTime,
+			&lastEndTime, &lastSendTime); err != nil {
 			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}

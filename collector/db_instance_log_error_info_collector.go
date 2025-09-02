@@ -6,6 +6,7 @@ import (
 	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -69,14 +70,14 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		var info InstanceLogInfo
 		//LOG_TIME,PID,LEVEL$,TXT
 		if err := rows.Scan(&info.LogTime, &info.Pid, &info.Level, &info.Txt); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		instanceLogInfos = append(instanceLogInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 
 	// 对instanceLogInfos进行去重处理

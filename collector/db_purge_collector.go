@@ -24,9 +24,7 @@ func (c *PurgeCollector) SetDataSource(name string) {
 
 // PurgeInfo 存储回滚段信息
 type PurgeInfo struct {
-	ObjNum     int64
-	IsRunning  string
-	PurgeForTs string
+	ObjNum int64
 }
 
 func NewPurgeCollector(dbPool *sql.DB) MetricCollector {
@@ -35,7 +33,7 @@ func NewPurgeCollector(dbPool *sql.DB) MetricCollector {
 		purgeObjects: prometheus.NewDesc(
 			dmdbms_purge_objects_info,
 			"Number of purge objects",
-			[]string{"is_running", "purge_for_ts"},
+			[]string{},
 			nil,
 		),
 	}
@@ -56,14 +54,12 @@ func (c *PurgeCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		return
 	}
-	// 创建指标
+	// 创建指标（优化后：不包含额外标签）
 	for _, info := range purgeInfos {
 		ch <- prometheus.MustNewConstMetric(
 			c.purgeObjects,
 			prometheus.GaugeValue,
 			float64(info.ObjNum),
-			info.IsRunning,
-			info.PurgeForTs,
 		)
 	}
 }
@@ -83,7 +79,9 @@ func (c *PurgeCollector) getPurgeInfos() ([]PurgeInfo, error) {
 	var purgeInfos []PurgeInfo
 	for rows.Next() {
 		var info PurgeInfo
-		err := rows.Scan(&info.ObjNum, &info.IsRunning, &info.PurgeForTs)
+		// 跳过不需要的字段，只扫描 ObjNum
+		var isRunning, purgeForTs sql.NullString
+		err := rows.Scan(&info.ObjNum, &isRunning, &purgeForTs)
 		if err != nil {
 			logger.Logger.Errorf("[%s] Error scanning purge row: %v", c.dataSource, err)
 			continue
