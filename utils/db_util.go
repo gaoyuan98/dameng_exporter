@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -25,15 +24,6 @@ func HandleDbQueryErrorWithSource(err error, dataSource string) {
 		logger.Logger.Errorf("[%s] Query timed out: %v", dataSource, err)
 	} else {
 		logger.Logger.Errorf("[%s] Error querying database: %v", dataSource, err)
-	}
-}
-
-// 封装通用的错误处理逻辑（保留以向后兼容，后续将逐步废弃）
-func HandleDbQueryError(err error) {
-	if errors.Is(err, context.DeadlineExceeded) {
-		logger.Logger.Error("Query timed out", zap.Error(err))
-	} else {
-		logger.Logger.Error("Error querying database", zap.Error(err))
 	}
 }
 

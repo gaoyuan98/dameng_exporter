@@ -34,6 +34,9 @@ type CmdArgs struct {
 
 	// 全局超时控制参数
 	GlobalTimeoutSeconds *int
+
+	// 采集模式参数
+	CollectionMode *string
 }
 
 // MergeConfig 函数已移除，使用 MergeMultiSourceConfig 代替

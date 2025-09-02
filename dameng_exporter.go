@@ -55,6 +55,9 @@ func parseFlags() *config.CmdArgs {
 
 		// 全局超时控制参数
 		GlobalTimeoutSeconds: kingpin.Flag("globalTimeoutSeconds", "Global timeout for metrics collection (seconds)").Default(fmt.Sprint(config.DefaultMultiSourceConfig.GlobalTimeoutSeconds)).Int(),
+
+		// 采集模式参数
+		CollectionMode: kingpin.Flag("collectionMode", "Collection mode: blocking (default) or fast").Default(config.DefaultMultiSourceConfig.CollectionMode).String(),
 	}
 	kingpin.Parse()
 	return args
@@ -165,6 +168,9 @@ func mergeConfigParam(args *config.CmdArgs) {
 
 	// 设置版本号到配置中
 	multiConfig.Version = Version
+
+	// 合并命令行参数到配置
+	config.MergeMultiSourceConfigFromCmdArgs(multiConfig, args)
 
 	// 保存多数据源配置
 	config.GlobalMultiConfig = multiConfig
