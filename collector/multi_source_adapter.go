@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -159,7 +160,9 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
-						logger.Logger.Debugf("[%s] Collector panic recovered: %v", p.Name, r)
+						// panic是严重问题，使用Error级别并打印堆栈
+						logger.Logger.Errorf("[%s] Collector panic recovered: %v\nStack trace:\n%s",
+							p.Name, r, debug.Stack())
 					}
 					close(safeChan) // 安全关闭channel
 					close(collectDone)
@@ -185,8 +188,6 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 				case <-time.After(timeout):
 					// 超时 - 停止转发但让采集器继续
 					timedOut = true
-					logger.Logger.Warnf("[%s] FORCE TERMINATING %s after %v (timeout=%v)",
-						p.Name, a.collectorName, time.Since(startTime), timeout)
 					close(stopForward) // 发送停止信号
 					<-forwardDone      // 等待转发goroutine退出
 				}
@@ -196,10 +197,11 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 			collectorDuration := time.Since(startTime)
 
 			if timedOut {
-				logger.Logger.Warnf("[%s] %s TIMED OUT | Collector Cost: %vms | Metrics: %d",
-					p.Name, a.collectorName, collectorDuration.Milliseconds(), metricCount)
+				// 统一的超时日志，包含完整信息
+				logger.Logger.Warnf("[%s] %s TIMEOUT | Cost: %vms | Timeout: %v | Metrics collected: %d (partial)",
+					p.Name, a.collectorName, collectorDuration.Milliseconds(), timeout, metricCount)
 			} else {
-				logger.Logger.Infof("[%s] %s completed | Collector Cost: %vms | Metrics: %d",
+				logger.Logger.Infof("[%s] %s completed | Cost: %vms | Metrics: %d",
 					p.Name, a.collectorName, collectorDuration.Milliseconds(), metricCount)
 			}
 		}(pool)
