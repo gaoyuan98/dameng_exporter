@@ -118,7 +118,7 @@ func (c *TableSpaceInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 	// 将查询结果存入缓存，重用之前定义的cacheKey
-	config.SetCache(cacheKey, string(valueJSON), time.Minute*time.Duration(config.Global.GetAlarmKeyCacheTime())) // 设置缓存有效时间为5分钟
+	config.SetCache(cacheKey, string(valueJSON), time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
 	//	logger.Logger.Infof("TablespaceFileInfo exec finish")
 
 }

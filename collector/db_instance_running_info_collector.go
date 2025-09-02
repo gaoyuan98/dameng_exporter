@@ -238,7 +238,7 @@ func (c *DBInstanceRunningInfoCollector) handleDatabaseModeSwitch(ch chan<- prom
 		config.DeleteFromCache(switchStrKey)
 		config.SetCache(switchOccurKey, strconv.Itoa(AlarmStatus_Unusual), time.Minute*time.Duration(config.Global.GetAlarmKeyCacheTime()))
 	default:
-		config.SetCache(switchStrKey, modeStr, time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
+		config.SetCache(switchStrKey, modeStr, time.Minute*time.Duration(config.Global.GetAlarmKeyCacheTime()*2))
 		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal)
 	}
 }
