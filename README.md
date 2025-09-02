@@ -326,7 +326,7 @@ scrape_configs:
 1. 修复当密码包含特殊字符时，连接失败的问题
 ## v1.1.1
 1. 新增指标,展示所有归档信息的指标(dmdbms_arch_status_info),不在是仅展示LOCAL类型数据
-2. 新增指标,指标dmdbms_statement_type_info原基础的TPS、QPS基础上,新增DB time、逻辑读、物理读等指标项
+2. 新增指标,指标dmdbms_statement_type_total原基础的TPS、QPS基础上,新增DB time、逻辑读、物理读等指标项
 3. 新增指标,指标(dmdbms_arch_send_detail_info)显示当前集群主库节点上往其他节点发送的LSN号差值，一定程度可反映主备同步延迟
 4. 新增指标,指标(dmdbms_bufferpool_info),显示当前节点中的缓冲池信息，value为命中率，目前仅限fastpool
 5. 新增指标,指标(dmdbms_dual_info),查看dual表的状态,return false is 0, true is 1
@@ -351,7 +351,7 @@ scrape_configs:
 1. 修复custom_metrics.toml不支持多个自定义指标的问题
 ## 20241119
 1. docker介质新增amd64以及arm64的版本
-2. 修正文档中的tps qps指标，实际使用的是dmdbms_statement_type_info指标
+2. 修正文档中的tps qps指标，实际使用的是dmdbms_statement_type_total指标
 ## 20241117
 1. 新增docker镜像(阿里云+docker Hub)
    https://hub.docker.com/r/gaoyuan98/dameng_exporter

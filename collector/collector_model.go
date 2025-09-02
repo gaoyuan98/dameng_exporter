@@ -31,13 +31,13 @@ const (
 
 	dmdbms_session_percentage string = "dmdbms_session_percentage"
 	dmdbms_session_type_Info  string = "dmdbms_session_type_info"
-	dmdbms_ckpttime_info      string = "dmdbms_ckpttime_info"
+	dmdbms_ckpttime_total     string = "dmdbms_ckpttime_total"
 
 	dmdbms_joblog_error_num string = "dmdbms_joblog_error_num"
 
 	dmdbms_slow_sql_info                string = "dmdbms_slow_sql_info"
 	dmdbms_monitor_info                 string = "dmdbms_monitor_info"
-	dmdbms_statement_type_info          string = "dmdbms_statement_type_info"
+	dmdbms_statement_type_total         string = "dmdbms_statement_type_total"
 	dmdbms_parameter_info               string = "dmdbms_parameter_info"
 	dmdbms_user_list_info               string = "dmdbms_user_list_info"
 	dmdbms_license_date                 string = "dmdbms_license_date"

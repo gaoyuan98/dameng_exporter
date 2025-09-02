@@ -38,7 +38,7 @@ func NewCkptCollector(db *sql.DB) MetricCollector {
 	return &CkptCollector{
 		db: db,
 		ckptTimeInfoDesc: prometheus.NewDesc(
-			dmdbms_ckpttime_info,
+			dmdbms_ckpttime_total,
 			"Information about DM checkpoint times",
 			[]string{}, /*, "ckpt_total_count", "ckpt_reserve_count", "ckpt_flushed_pages"*/
 			nil,

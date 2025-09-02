@@ -35,7 +35,7 @@ func NewPurgeCollector(dbPool *sql.DB) MetricCollector {
 		purgeObjects: prometheus.NewDesc(
 			dmdbms_purge_objects_info,
 			"Number of purge objects",
-			[]string{"is_running", "purge_for_ts", "data_source"},
+			[]string{"is_running", "purge_for_ts"},
 			nil,
 		),
 	}
@@ -64,7 +64,6 @@ func (c *PurgeCollector) Collect(ch chan<- prometheus.Metric) {
 			float64(info.ObjNum),
 			info.IsRunning,
 			info.PurgeForTs,
-			c.dataSource,
 		)
 	}
 }

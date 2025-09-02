@@ -33,7 +33,7 @@ func NewDbSqlExecTypeCollector(db *sql.DB) MetricCollector {
 	return &DbSqlExecTypeCollector{
 		db: db,
 		statementTypeDesc: prometheus.NewDesc(
-			dmdbms_statement_type_info,
+			dmdbms_statement_type_total,
 			"Information about different types of statements",
 			[]string{"statement_name"},
 			nil,
