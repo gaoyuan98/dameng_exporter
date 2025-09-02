@@ -72,6 +72,7 @@ const (
 	// 系统信息指标
 	dmdbms_system_cpu_info    string = "dmdbms_system_cpu_info"
 	dmdbms_system_memory_info string = "dmdbms_system_memory_info"
+	dmdbms_system_base_info   string = "dmdbms_system_base_info"
 )
 
 // MetricCollector 接口
