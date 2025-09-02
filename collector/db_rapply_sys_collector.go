@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -55,7 +56,7 @@ func (c *DbRapplySysCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -65,7 +66,7 @@ func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 	// 执行查询
 	rows, err := c.db.QueryContext(ctx, config.QueryStandbyInfoSql)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -88,12 +89,12 @@ func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(
 			c.taskMemUsedDesc,
 			prometheus.GaugeValue,
-			NullFloat64ToFloat64(info.TaskMemUsed),
+			utils.NullFloat64ToFloat64(info.TaskMemUsed),
 		)
 		ch <- prometheus.MustNewConstMetric(
 			c.taskNumDesc,
 			prometheus.GaugeValue,
-			NullFloat64ToFloat64(info.TaskNum),
+			utils.NullFloat64ToFloat64(info.TaskNum),
 		)
 	}
 }

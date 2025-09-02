@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -52,7 +53,7 @@ func (c *CkptCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 	//不存在则直接返回
@@ -71,7 +72,7 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 			c.viewExists = false
 			return
 		}
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -92,14 +93,14 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 
 	// 发送数据到 Prometheus
 	for _, info := range ckptInfos {
-		//ckptTotalCount := NullFloat64ToString(info.CkptTotalCount)
-		//ckptReserveCount := NullFloat64ToString(info.CkptReserveCount)
-		//ckptFlushedPages := NullFloat64ToString(info.CkptFlushedPages)
+		//ckptTotalCount := utils.NullFloat64ToString(info.CkptTotalCount)
+		//ckptReserveCount := utils.NullFloat64ToString(info.CkptReserveCount)
+		//ckptFlushedPages := utils.NullFloat64ToString(info.CkptFlushedPages)
 
 		ch <- prometheus.MustNewConstMetric(
 			c.ckptTimeInfoDesc,
 			prometheus.CounterValue,
-			NullFloat64ToFloat64(info.CkptTimeUsed), /*, ckptTotalCount, ckptReserveCount, ckptFlushedPages*/
+			utils.NullFloat64ToFloat64(info.CkptTimeUsed), /*, ckptTotalCount, ckptReserveCount, ckptFlushedPages*/
 		)
 	}
 }

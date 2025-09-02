@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"time"
 
@@ -58,7 +59,7 @@ func (c *DBSystemInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect 方法
 func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -67,7 +68,7 @@ func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QuerySystemInfoSqlStr)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -89,13 +90,13 @@ func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(
 		c.cpuDesc,
 		prometheus.GaugeValue,
-		NullFloat64ToFloat64(info.cpuCount),
+		utils.NullFloat64ToFloat64(info.cpuCount),
 	)
 
 	// 发送内存信息到Prometheus
 	ch <- prometheus.MustNewConstMetric(
 		c.memoryDesc,
 		prometheus.GaugeValue,
-		NullFloat64ToFloat64(info.memorySize),
+		utils.NullFloat64ToFloat64(info.memorySize),
 	)
 }

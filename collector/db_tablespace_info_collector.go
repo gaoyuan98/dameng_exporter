@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -78,7 +79,7 @@ func (c *TableSpaceInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 	}
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -87,7 +88,7 @@ func (c *TableSpaceInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryTablespaceInfoSqlStr)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()

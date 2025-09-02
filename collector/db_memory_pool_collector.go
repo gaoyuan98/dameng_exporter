@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -58,7 +59,7 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	//保存全局结果对象
 	var memoryPoolInfos []MemoryPoolInfo
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -67,7 +68,7 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryMemoryPoolInfoSqlStr)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -85,8 +86,8 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range memoryPoolInfos {
-		ch <- prometheus.MustNewConstMetric(c.totalPoolDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.TotalVal), NullStringToString(info.ZoneType))
-		ch <- prometheus.MustNewConstMetric(c.currPoolDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.CurrVal), NullStringToString(info.ZoneType))
+		ch <- prometheus.MustNewConstMetric(c.totalPoolDesc, prometheus.GaugeValue, utils.NullFloat64ToFloat64(info.TotalVal), utils.NullStringToString(info.ZoneType))
+		ch <- prometheus.MustNewConstMetric(c.currPoolDesc, prometheus.GaugeValue, utils.NullFloat64ToFloat64(info.CurrVal), utils.NullStringToString(info.ZoneType))
 	}
 
 	//	logger.Logger.Infof("MemoryPoolInfo exec finish")

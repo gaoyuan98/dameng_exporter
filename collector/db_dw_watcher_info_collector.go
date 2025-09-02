@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -49,7 +50,7 @@ func (c *DbDwWatcherInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbDwWatcherInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -58,7 +59,7 @@ func (c *DbDwWatcherInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDwWatcherInfoSql)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -81,10 +82,10 @@ func (c *DbDwWatcherInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for _, info := range dbDwWatcherInfos {
 		//[]string{"dw_mode", "dw_status", "auto_restart"}
 
-		dwMode := NullStringToString(info.DwMode)
-		dwStatus := NullStringToString(info.DwStatus)
-		autoRestart := NullStringToString(info.AutoRestart)
-		dwStatusToNum := NullFloat64ToFloat64(info.DwStatusToNum)
+		dwMode := utils.NullStringToString(info.DwMode)
+		dwStatus := utils.NullStringToString(info.DwStatus)
+		autoRestart := utils.NullStringToString(info.AutoRestart)
+		dwStatusToNum := utils.NullFloat64ToFloat64(info.DwStatusToNum)
 
 		ch <- prometheus.MustNewConstMetric(
 			c.dwWatcherInfoDesc,

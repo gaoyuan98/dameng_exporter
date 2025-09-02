@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -47,7 +48,7 @@ func (c *DbSqlExecTypeCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbSqlExecTypeCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -56,7 +57,7 @@ func (c *DbSqlExecTypeCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QuerySqlExecuteCountSqlStr)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -76,12 +77,12 @@ func (c *DbSqlExecTypeCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range sysstatInfos {
-		statementName := NullStringToString(info.Name)
+		statementName := utils.NullStringToString(info.Name)
 
 		ch <- prometheus.MustNewConstMetric(
 			c.statementTypeDesc,
 			prometheus.CounterValue,
-			NullFloat64ToFloat64(info.StatVal),
+			utils.NullFloat64ToFloat64(info.StatVal),
 			statementName,
 		)
 	}

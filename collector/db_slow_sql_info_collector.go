@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -55,7 +56,7 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -64,7 +65,7 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, config.Global.GetSlowSqlTime(), config.Global.GetSlowSqlMaxRows())
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -84,17 +85,17 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range sessionInfos {
-		sessionID := NullStringToString(info.SessID)
-		currentSchema := NullStringToString(info.CurrSch)
-		threadID := NullStringToString(info.ThrdID)
-		lastRecvTime := NullTimeToString(info.LastRecvTime)
-		connIP := NullStringToString(info.ConnIP)
-		slowSQL := NullStringToString(info.SlowSQL)
+		sessionID := utils.NullStringToString(info.SessID)
+		currentSchema := utils.NullStringToString(info.CurrSch)
+		threadID := utils.NullStringToString(info.ThrdID)
+		lastRecvTime := utils.NullTimeToString(info.LastRecvTime)
+		connIP := utils.NullStringToString(info.ConnIP)
+		slowSQL := utils.NullStringToString(info.SlowSQL)
 
 		ch <- prometheus.MustNewConstMetric(
 			c.slowSQLInfoDesc,
 			prometheus.GaugeValue,
-			NullFloat64ToFloat64(info.ExecTime),
+			utils.NullFloat64ToFloat64(info.ExecTime),
 			sessionID, currentSchema, threadID, lastRecvTime, connIP, slowSQL,
 		)
 	}

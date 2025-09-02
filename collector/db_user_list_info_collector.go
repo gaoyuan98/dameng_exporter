@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -52,7 +53,7 @@ func (c *DbUserCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -61,7 +62,7 @@ func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryUserInfoSqlStr)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -83,17 +84,17 @@ func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 
 	// 发送数据到 Prometheus
 	for _, info := range userInfos {
-		username := NullStringToString(info.Username)
-		readOnly := NullStringToString(info.ReadOnly)
-		expiryDate := NullStringToString(info.ExpiryDate)
-		expiryDateDay := NullStringToString(info.ExpiryDateDay)
-		defaultTablespace := NullStringToString(info.DefaultTablespace)
-		profile := NullStringToString(info.Profile)
-		createTime := NullStringToString(info.CreateTime)
+		username := utils.NullStringToString(info.Username)
+		readOnly := utils.NullStringToString(info.ReadOnly)
+		expiryDate := utils.NullStringToString(info.ExpiryDate)
+		expiryDateDay := utils.NullStringToString(info.ExpiryDateDay)
+		defaultTablespace := utils.NullStringToString(info.DefaultTablespace)
+		profile := utils.NullStringToString(info.Profile)
+		createTime := utils.NullStringToString(info.CreateTime)
 
 		// 判断 AccountStatus 的值
 		accountStatusValue := 0.0
-		if NullStringToString(info.AccountStatus) == "锁定" {
+		if utils.NullStringToString(info.AccountStatus) == "锁定" {
 			accountStatusValue = 1.0
 		}
 

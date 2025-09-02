@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -132,7 +133,7 @@ func (c *DbArchStatusCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -156,12 +157,12 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 			//logger.Logger.Error("exec getDbArchSwitchRate func error", zap.Error(err))
 			return
 		}
-		clsn := NullStringToString(dbArchSwitchRateInfo.clsn)
-		srcDbMagic := NullStringToString(dbArchSwitchRateInfo.srcDbMagic)
-		status := NullStringToString(dbArchSwitchRateInfo.status)
-		path := NullStringToString(dbArchSwitchRateInfo.path)
-		createTime := NullStringToString(dbArchSwitchRateInfo.createTime)
-		minusDiff := NullFloat64ToFloat64(dbArchSwitchRateInfo.minusDiff)
+		clsn := utils.NullStringToString(dbArchSwitchRateInfo.clsn)
+		srcDbMagic := utils.NullStringToString(dbArchSwitchRateInfo.srcDbMagic)
+		status := utils.NullStringToString(dbArchSwitchRateInfo.status)
+		path := utils.NullStringToString(dbArchSwitchRateInfo.path)
+		createTime := utils.NullStringToString(dbArchSwitchRateInfo.createTime)
+		minusDiff := utils.NullFloat64ToFloat64(dbArchSwitchRateInfo.minusDiff)
 		//做折线图
 		ch <- prometheus.MustNewConstMetric(
 			c.archSwitchRateDesc,
@@ -183,10 +184,10 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 			return
 		}
 		for _, dbArchStatusInfo := range dbArchStatusInfos {
-			archType := NullStringToString(dbArchStatusInfo.archType)
-			archDest := NullStringToString(dbArchStatusInfo.archDest)
-			archSrc := NullStringToString(dbArchStatusInfo.archSrc)
-			archStatus := NullFloat64ToFloat64(dbArchStatusInfo.archStatus)
+			archType := utils.NullStringToString(dbArchStatusInfo.archType)
+			archDest := utils.NullStringToString(dbArchStatusInfo.archDest)
+			archSrc := utils.NullStringToString(dbArchStatusInfo.archSrc)
+			archStatus := utils.NullFloat64ToFloat64(dbArchStatusInfo.archStatus)
 			ch <- prometheus.MustNewConstMetric(
 				c.archStatusInfo,
 				prometheus.GaugeValue,
@@ -202,14 +203,14 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 			return
 		}
 		for _, dbArchSendInfo := range dbArchSendInfos {
-			archType := NullStringToString(dbArchSendInfo.archType)
-			archDest := NullStringToString(dbArchSendInfo.archDest)
-			lsnDiff := NullFloat64ToFloat64(dbArchSendInfo.lsnDiff)
-			lastSendCode := NullStringToString(dbArchSendInfo.lastSendCode)
-			lastSendDesc := NullStringToString(dbArchSendInfo.lastSendDesc)
-			lastStartTime := NullStringToString(dbArchSendInfo.lastStartTime)
-			lastEndTime := NullStringToString(dbArchSendInfo.lastEndTime)
-			lastSendTime := NullStringToString(dbArchSendInfo.lastSendTime)
+			archType := utils.NullStringToString(dbArchSendInfo.archType)
+			archDest := utils.NullStringToString(dbArchSendInfo.archDest)
+			lsnDiff := utils.NullFloat64ToFloat64(dbArchSendInfo.lsnDiff)
+			lastSendCode := utils.NullStringToString(dbArchSendInfo.lastSendCode)
+			lastSendDesc := utils.NullStringToString(dbArchSendInfo.lastSendDesc)
+			lastStartTime := utils.NullStringToString(dbArchSendInfo.lastStartTime)
+			lastEndTime := utils.NullStringToString(dbArchSendInfo.lastEndTime)
+			lastSendTime := utils.NullStringToString(dbArchSendInfo.lastSendTime)
 			ch <- prometheus.MustNewConstMetric(
 				c.archSendDetailInfo,
 				prometheus.GaugeValue,
@@ -279,7 +280,7 @@ func (c *DbArchStatusCollector) getDbArchSwitchRate(ctx context.Context, db *sql
 
 	rows, err := db.QueryContext(ctx, config.QueryArchiveSwitchRateSql)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return dbArchSwitchRateInfo, err
 	}
 	defer rows.Close()
@@ -296,7 +297,7 @@ func (c *DbArchStatusCollector) getDbArchStatusInfo(ctx context.Context, db *sql
 	var dbArchStatusInfos []DbArchStatusInfo
 	rows, err := db.QueryContext(ctx, config.QueryArchiveSendStatusSql)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return dbArchStatusInfos, err
 	}
 	defer rows.Close()
@@ -352,7 +353,7 @@ func (c *DbArchStatusCollector) getDbArchSendDetailInfo(ctx context.Context, db 
 	var dbArchSendDetailInfos []DbArchSendDetailInfo
 	rows, err := db.QueryContext(ctx, querySql)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return dbArchSendDetailInfos, err
 	}
 	defer rows.Close()

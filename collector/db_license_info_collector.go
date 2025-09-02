@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -47,7 +48,7 @@ func (c *DbLicenseCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -56,7 +57,7 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDbGrantInfoSql)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -76,7 +77,7 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	for _, info := range licenseInfos {
-		expiredDateStr := NullStringToString(info.ExpiredDate)
+		expiredDateStr := utils.NullStringToString(info.ExpiredDate)
 		var returnDateStr string
 		var licenseStatus string
 		if expiredDateStr != "" {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -48,7 +49,7 @@ func (c *IniParameterCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -57,7 +58,7 @@ func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryParameterInfoSql)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -78,11 +79,11 @@ func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
 
 	// 发送数据到 Prometheus
 	for _, info := range iniParameterInfos {
-		paramName := NullStringToString(info.ParaName)
+		paramName := utils.NullStringToString(info.ParaName)
 		ch <- prometheus.MustNewConstMetric(
 			c.parameterInfoDesc,
 			prometheus.GaugeValue,
-			NullFloat64ToFloat64(info.ParaValue),
+			utils.NullFloat64ToFloat64(info.ParaValue),
 			paramName,
 		)
 	}

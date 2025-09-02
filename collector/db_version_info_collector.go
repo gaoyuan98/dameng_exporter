@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -51,7 +52,7 @@ func (c *DbVersionCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -85,9 +86,9 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 		c.versionInfoDesc,
 		prometheus.GaugeValue,
 		1,
-		NullStringToString(versionInfo.idCode),
-		NullStringToString(versionInfo.buildType),
-		NullStringToString(versionInfo.innerVer),
+		utils.NullStringToString(versionInfo.idCode),
+		utils.NullStringToString(versionInfo.buildType),
+		utils.NullStringToString(versionInfo.innerVer),
 	)
 }
 

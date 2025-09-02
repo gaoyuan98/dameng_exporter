@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"time"
 
@@ -46,7 +47,7 @@ func (c *DbRapplyTimeDiffCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -56,7 +57,7 @@ func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 	// 执行查询
 	rows, err := c.db.QueryContext(ctx, config.QueryRapplyTimeDiffSql)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -79,7 +80,7 @@ func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(
 			c.timeDiffDesc,
 			prometheus.GaugeValue,
-			NullFloat64ToFloat64(info.TimeDiff),
+			utils.NullFloat64ToFloat64(info.TimeDiff),
 		)
 	}
 }

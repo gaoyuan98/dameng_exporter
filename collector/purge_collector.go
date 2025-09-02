@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"time"
 
@@ -46,7 +47,7 @@ func (c *PurgeCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *PurgeCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.dbPool, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.dbPool, c.dataSource); err != nil {
 		return
 	}
 
@@ -75,7 +76,7 @@ func (c *PurgeCollector) getPurgeInfos() ([]PurgeInfo, error) {
 
 	rows, err := c.dbPool.QueryContext(ctx, config.QueryPurgeInfoSqlStr)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return nil, err
 	}
 	defer rows.Close()

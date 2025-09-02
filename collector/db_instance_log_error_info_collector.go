@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"time"
 
@@ -49,7 +50,7 @@ func (c *DbInstanceLogInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -58,7 +59,7 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryInstanceErrorLogSql)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -85,10 +86,10 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for _, info := range instanceLogInfos {
 		//[]string{"pid", "level", "log_time", "txt"}
 
-		pid := NullStringToString(info.Pid)
-		level := NullStringToString(info.Level)
-		logTime := NullStringToString(info.LogTime)
-		txt := NullStringToString(info.Txt)
+		pid := utils.NullStringToString(info.Pid)
+		level := utils.NullStringToString(info.Level)
+		logTime := utils.NullStringToString(info.LogTime)
+		txt := utils.NullStringToString(info.Txt)
 
 		//ps: log日志本身就是异常的,所以统一设置为1
 		logStatusValue := 1
@@ -111,10 +112,10 @@ func removeDuplicateLogInfos(logs []InstanceLogInfo) []InstanceLogInfo {
 	// 按原始顺序遍历，只保留第一次出现的元素
 	for _, info := range logs {
 		// 为每条日志创建一个唯一标识
-		pid := NullStringToString(info.Pid)
-		level := NullStringToString(info.Level)
-		logTime := NullStringToString(info.LogTime)
-		txt := NullStringToString(info.Txt)
+		pid := utils.NullStringToString(info.Pid)
+		level := utils.NullStringToString(info.Level)
+		logTime := utils.NullStringToString(info.LogTime)
+		txt := utils.NullStringToString(info.Txt)
 
 		key := pid + "|" + level + "|" + logTime + "|" + txt
 

@@ -1,4 +1,4 @@
-package collector
+package utils
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 )
 
 // 统一的数据库连接检查（带数据源标识）
-func checkDBConnectionWithSource(db *sql.DB, dataSource string) error {
+func CheckDBConnectionWithSource(db *sql.DB, dataSource string) error {
 	if err := db.Ping(); err != nil {
 		logger.Logger.Errorf("[%s] Database connection is not available: %v", dataSource, err)
 		return err
@@ -20,7 +20,7 @@ func checkDBConnectionWithSource(db *sql.DB, dataSource string) error {
 }
 
 // 封装通用的错误处理逻辑（带数据源标识）
-func handleDbQueryErrorWithSource(err error, dataSource string) {
+func HandleDbQueryErrorWithSource(err error, dataSource string) {
 	if errors.Is(err, context.DeadlineExceeded) {
 		logger.Logger.Errorf("[%s] Query timed out: %v", dataSource, err)
 	} else {
@@ -29,7 +29,7 @@ func handleDbQueryErrorWithSource(err error, dataSource string) {
 }
 
 // 封装通用的错误处理逻辑（保留以向后兼容，后续将逐步废弃）
-func handleDbQueryError(err error) {
+func HandleDbQueryError(err error) {
 	if errors.Is(err, context.DeadlineExceeded) {
 		logger.Logger.Error("Query timed out", zap.Error(err))
 	} else {

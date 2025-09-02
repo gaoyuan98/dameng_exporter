@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"sync"
@@ -83,7 +84,7 @@ func (c *MonitorInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -97,7 +98,7 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryMonitorInfoSqlStr)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -117,16 +118,16 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	// 发送数据到 Prometheus
 	for _, info := range monitorInfos {
-		dwConnTime := NullStringToString(info.DwConnTime)
-		monConfirm := NullStringToString(info.MonConfirm)
-		monId := NullStringToString(info.MonId)
-		monIp := NullStringToString(info.MonIp)
-		monVersion := NullStringToString(info.MonVersion)
+		dwConnTime := utils.NullStringToString(info.DwConnTime)
+		monConfirm := utils.NullStringToString(info.MonConfirm)
+		monId := utils.NullStringToString(info.MonId)
+		monIp := utils.NullStringToString(info.MonIp)
+		monVersion := utils.NullStringToString(info.MonVersion)
 
 		ch <- prometheus.MustNewConstMetric(
 			c.monitorInfoDesc,
 			prometheus.GaugeValue,
-			NullFloat64ToFloat64(info.Mid),
+			utils.NullFloat64ToFloat64(info.Mid),
 			dwConnTime, monConfirm, monId, monIp, monVersion,
 		)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -59,7 +60,7 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	//保存全局结果对象
 	var sessionsStatusInfos []DBSessionsStatusInfo
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -68,7 +69,7 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDBSessionsStatusSqlStr)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -90,11 +91,11 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	// 发送数据到 Prometheus
 	for _, info := range sessionsStatusInfos {
 		if info.stateType.Valid && info.stateType.String == "MAX_SESSION" {
-			maxSession = NullFloat64ToFloat64(info.countVal)
+			maxSession = utils.NullFloat64ToFloat64(info.countVal)
 		} else if info.stateType.Valid && info.stateType.String == "TOTAL" {
-			totalSession = NullFloat64ToFloat64(info.countVal)
+			totalSession = utils.NullFloat64ToFloat64(info.countVal)
 		}
-		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.countVal), NullStringToString(info.stateType))
+		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, utils.NullFloat64ToFloat64(info.countVal), utils.NullStringToString(info.stateType))
 	}
 
 	div := float64(0)

@@ -4,6 +4,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"strings"
 
@@ -15,7 +16,7 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 	registerMux.Lock()
 	defer registerMux.Unlock()
 
-	logger.Logger.Debugf("Registering multi-source collectors, OS: %v", GetOS())
+	logger.Logger.Debugf("Registering multi-source collectors, OS: %v", utils.GetOS())
 
 	// 清空现有收集器
 	collectors = []prometheus.Collector{}
@@ -55,7 +56,7 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 	}
 
 	// 主机指标（如果任何数据源需要，且在Linux系统上）
-	if needHostMetrics && strings.Compare(GetOS(), OS_LINUX) == 0 {
+	if needHostMetrics && strings.Compare(utils.GetOS(), utils.OS_LINUX) == 0 {
 		collectors = append(collectors, AdaptCollector(poolManager, func(db *sql.DB) MetricCollector {
 			return NewDmapProcessCollector(db)
 		}))

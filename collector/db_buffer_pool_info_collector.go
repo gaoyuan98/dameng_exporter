@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -47,7 +48,7 @@ func (c *DbBufferPoolInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbBufferPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := checkDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -56,7 +57,7 @@ func (c *DbBufferPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryBufferPoolHitRateInfoSql)
 	if err != nil {
-		handleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -78,8 +79,8 @@ func (c *DbBufferPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	// 发送数据到 Prometheus
 	for _, info := range bufferPoolInfos {
 
-		bufferName := NullStringToString(info.bufferName)
-		hitRate := NullFloat64ToFloat64(info.hitRate)
+		bufferName := utils.NullStringToString(info.bufferName)
+		hitRate := utils.NullFloat64ToFloat64(info.hitRate)
 		ch <- prometheus.MustNewConstMetric(
 			c.bufferPoolInfoDesc,
 			prometheus.GaugeValue,
