@@ -4,6 +4,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
+	"strings"
 	"sync"
 
 	"github.com/duke-git/lancet/v2/fileutil"
@@ -29,52 +30,17 @@ func NewCustomMetricsMultiSourceAdapter(poolManager *db.DBPoolManager) *CustomMe
 
 // loadConfigForDataSource 为指定数据源加载自定义指标配置
 func (a *CustomMetricsMultiSourceAdapter) loadConfigForDataSource(dsName string) *config.CustomConfig {
-	// 先检查缓存
+	// 配置已在注册时预加载，这里只需要从缓存读取
 	a.cacheMutex.RLock()
-	if cfg, exists := a.configCache[dsName]; exists {
-		a.cacheMutex.RUnlock()
-		return cfg
-	}
+	cfg, exists := a.configCache[dsName]
 	a.cacheMutex.RUnlock()
 
-	// 查找数据源配置
-	var customMetricsFile string
-	for _, ds := range config.GlobalMultiConfig.DataSources {
-		if ds.Name == dsName && ds.Enabled && ds.RegisterCustomMetrics {
-			customMetricsFile = ds.CustomMetricsFile
-			break
-		}
+	if !exists {
+		// 配置应该在注册时已加载，如果没有找到说明该数据源没有配置或加载失败
+		logger.Logger.Debugf("No custom metrics config cached for datasource %s", dsName)
 	}
 
-	if customMetricsFile == "" {
-		return nil
-	}
-
-	// 检查文件是否存在
-	if !fileutil.IsExist(customMetricsFile) {
-		logger.Logger.Warnf("Custom metrics file not found for datasource %s: %s", dsName, customMetricsFile)
-		return nil
-	}
-
-	// 解析配置文件
-	customConfig, err := config.ParseCustomConfig(customMetricsFile)
-	if err != nil {
-		logger.Logger.Error("Failed to parse custom metrics config",
-			zap.String("datasource", dsName),
-			zap.String("file", customMetricsFile),
-			zap.Error(err))
-		return nil
-	}
-
-	// 缓存配置
-	a.cacheMutex.Lock()
-	a.configCache[dsName] = &customConfig
-	a.cacheMutex.Unlock()
-
-	logger.Logger.Infof("Loaded %d custom metrics for datasource %s from %s",
-		len(customConfig.Metrics), dsName, customMetricsFile)
-
-	return &customConfig
+	return cfg
 }
 
 // Describe 实现Prometheus Collector接口
@@ -134,21 +100,67 @@ func (a *CustomMetricsMultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 func RegisterCustomMetricsForMultiSource(reg *prometheus.Registry, poolManager *db.DBPoolManager) {
 	// 检查是否有任何数据源需要自定义指标
 	needCustomMetrics := false
+	totalMetricsCount := 0
+	loadedDataSources := []string{}
+
+	// 创建适配器实例
+	adapter := NewCustomMetricsMultiSourceAdapter(poolManager)
+
 	for _, ds := range config.GlobalMultiConfig.DataSources {
 		if ds.Enabled && ds.RegisterCustomMetrics {
 			needCustomMetrics = true
-			logger.Logger.Debugf("DataSource %s requires custom metrics from %s",
-				ds.Name, ds.CustomMetricsFile)
+
+			// 预加载并验证配置文件
+			if fileutil.IsExist(ds.CustomMetricsFile) {
+				customConfig, err := config.ParseCustomConfig(ds.CustomMetricsFile)
+				if err != nil {
+					logger.Logger.Error("Failed to parse custom metrics config",
+						zap.String("datasource", ds.Name),
+						zap.String("file", ds.CustomMetricsFile),
+						zap.Error(err))
+					continue
+				}
+
+				// 缓存配置到适配器中，避免运行时重复加载
+				adapter.cacheMutex.Lock()
+				adapter.configCache[ds.Name] = &customConfig
+				adapter.cacheMutex.Unlock()
+
+				metricsCount := len(customConfig.Metrics)
+				totalMetricsCount += metricsCount
+				loadedDataSources = append(loadedDataSources, ds.Name)
+
+				// 输出每个数据源的详细加载信息
+				logger.Logger.Infof("DataSource [%s] loaded %d custom metric(s) from %s",
+					ds.Name, metricsCount, ds.CustomMetricsFile)
+
+				// 输出每个指标的详细信息
+				for _, metric := range customConfig.Metrics {
+					fieldsCount := len(metric.MetricsDesc)
+					logger.Logger.Debugf("  - Context: %s, Labels: %v, Fields: %d",
+						metric.Context, metric.Labels, fieldsCount)
+				}
+			} else {
+				logger.Logger.Warnf("Custom metrics file not found for datasource [%s]: %s",
+					ds.Name, ds.CustomMetricsFile)
+				logger.Logger.Warnf("Please check if the file exists or use default file: custom_queries.metrics")
+			}
 		}
 	}
 
 	if !needCustomMetrics {
-		logger.Logger.Debug("No datasource requires custom metrics")
+		logger.Logger.Info("No datasource requires custom metrics")
 		return
 	}
 
-	// 创建并注册自定义指标适配器
-	adapter := NewCustomMetricsMultiSourceAdapter(poolManager)
+	// 注册自定义指标适配器
 	reg.MustRegister(adapter)
-	logger.Logger.Info("Registered custom metrics adapter for multi-source with independent configs")
+
+	// 输出汇总信息
+	if len(loadedDataSources) > 0 {
+		logger.Logger.Infof("Successfully registered custom metrics adapter: Total %d metric(s) from %d datasource(s) [%s]",
+			totalMetricsCount, len(loadedDataSources), strings.Join(loadedDataSources, ", "))
+	} else {
+		logger.Logger.Warn("Custom metrics adapter registered but no metrics were loaded successfully")
+	}
 }

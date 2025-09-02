@@ -9,3 +9,144 @@
 # 注意：这不是配置文件！这是自定义SQL查询的定义文件。
 # 主配置文件请查看：dameng_exporter_multi.toml 或 dameng_exporter.config
 # ================================================================================
+
+# ================================================================================
+# 📚 使用说明 (Usage Guide)
+# ================================================================================
+#
+# 1. 文件格式：TOML格式，每个 [[metric]] 段定义一个自定义查询
+#
+# 2. 字段说明：
+#    - context：指标上下文名称，最终指标名为 dmdbms_<context>_<field>
+#    - labels：标签字段数组，这些字段会作为Prometheus标签，不会作为指标值
+#    - request：SQL查询语句，支持多行SQL（使用三引号"""）
+#    - metricsdesc：字段描述，格式为 { field = "description" }，必须写在一行
+#    - metricstype：字段类型，格式为 { field = "gauge|counter" }，必须写在一行
+#
+# 3. 指标类型：
+#    - gauge：仪表盘类型，瞬时值，可增可减（如：当前会话数、使用率）
+#    - counter：计数器类型，累计值，只增不减（如：请求总数、错误总数）
+#
+# 4. 注意事项：
+#    ⚠️ metricsdesc 和 metricstype 必须使用内联表格式（写在一行）
+#    ⚠️ SQL查询结果的列名会自动转换为小写
+#    ⚠️ 只有数值类型的列才会作为指标值导出
+#    ⚠️ labels中定义的列会作为标签，不会作为指标值
+#
+# 5. 最佳实践：
+#    ✅ 为查询添加适当的WHERE条件以提高性能
+#    ✅ 避免使用SELECT *，明确指定需要的列
+#    ✅ 标签数量不宜过多（建议不超过5个）
+#    ✅ 标签值的基数不宜过大（避免产生过多时间序列）
+#
+# 6. 输出格式：
+#    生成的Prometheus指标格式为：
+#    dmdbms_<context>_<field>{datasource="xxx", <labels>} <value>
+#
+# ================================================================================
+
+# ================================================================================
+# 示例1: 表空间使用率监控
+# 功能：监控各个表空间的使用情况，包括总大小、已用空间和使用率
+# ================================================================================
+[[metric]]
+# 指标上下文名称（会作为指标名称的一部分：dmdbms_tablespace_usage_*）
+context = "tablespace_usage"
+
+# 标签字段（从查询结果中提取作为Prometheus标签）
+labels = ["tablespace_name", "status"]
+
+# SQL查询语句
+request = """
+SELECT 
+    TS.NAME as tablespace_name,
+    TS.STATUS$ as status,
+    ROUND(TS.TOTAL_SIZE/1024/1024, 2) as total_mb,
+    ROUND((TS.TOTAL_SIZE - TS.FREE_SIZE)/1024/1024, 2) as used_mb,
+    ROUND((TS.TOTAL_SIZE - TS.FREE_SIZE) * 100.0 / TS.TOTAL_SIZE, 2) as usage_percent
+FROM 
+    V$TABLESPACE TS
+WHERE 
+    TS.NAME NOT IN ('SYSTEM', 'SYSAUX', 'TEMP')
+ORDER BY 
+    usage_percent DESC
+"""
+
+# 指标描述（key是SQL结果列名，value是指标描述）
+metricsdesc = { total_mb = "表空间总大小(MB)", used_mb = "表空间已用空间(MB)", usage_percent = "表空间使用率(%)" }
+
+# 指标类型定义（gauge：仪表盘类型，counter：计数器类型）
+metricstype = { total_mb = "gauge", used_mb = "gauge", usage_percent = "gauge" }
+
+# ================================================================================
+# 示例2: 活跃会话统计
+# 功能：统计当前数据库的会话状态，包括活跃会话数、阻塞会话数等
+# ================================================================================
+[[metric]]
+# 指标上下文名称（会作为指标名称的一部分：dmdbms_session_stats_*）
+context = "session_stats"
+
+# 无标签（所有字段都作为指标值）
+labels = []
+
+# SQL查询语句
+request = """
+SELECT 
+    COUNT(*) as total_sessions,
+    COUNT(CASE WHEN STATE = 'ACTIVE' THEN 1 END) as active_sessions,
+    COUNT(CASE WHEN STATE = 'IDLE' THEN 1 END) as idle_sessions,
+    COUNT(CASE WHEN BLOCKING_SESS != 0 THEN 1 END) as blocked_sessions,
+    COUNT(DISTINCT USER_NAME) as unique_users,
+    MAX(CASE WHEN STATE = 'ACTIVE' THEN TIME_USED ELSE 0 END) as max_active_time_ms
+FROM 
+    V$SESSIONS 
+WHERE 
+    USER_NAME NOT IN ('SYS', 'SYSDBA', 'SYSSSO', 'SYSAUDITOR')
+"""
+
+# 指标描述
+metricsdesc = { total_sessions = "总会话数", active_sessions = "活跃会话数", idle_sessions = "空闲会话数", blocked_sessions = "被阻塞会话数", unique_users = "唯一用户数", max_active_time_ms = "最长活跃会话时间(毫秒)" }
+
+# 指标类型定义
+metricstype = { total_sessions = "gauge", active_sessions = "gauge", idle_sessions = "gauge", blocked_sessions = "gauge", unique_users = "gauge", max_active_time_ms = "gauge" }
+
+# ================================================================================
+# 💡 添加自定义指标的步骤
+# ================================================================================
+# 1. 复制一个 [[metric]] 段作为模板
+# 2. 修改 context 为你的指标名称
+# 3. 编写 SQL 查询语句，确保返回数值类型的列
+# 4. 定义 labels（如果需要）
+# 5. 为每个数值列添加 metricsdesc 描述
+# 6. 为每个数值列设置 metricstype 类型
+# 7. 重启 dameng_exporter 使配置生效
+#
+# 验证方法：
+# 1. 查看启动日志：DataSource [xxx] loaded N custom metric(s)
+# 2. 访问 http://localhost:9200/metrics 查看生成的指标
+# 3. 搜索 dmdbms_<your_context>_ 前缀的指标
+# ================================================================================
+
+# ================================================================================
+# ⚠️ 常见错误及解决方法
+# ================================================================================
+# 
+# 错误1：toml: newlines not allowed within inline tables
+# 原因：metricsdesc 或 metricstype 使用了多行格式
+# 解决：将其改为单行格式 { key1 = "value1", key2 = "value2" }
+#
+# 错误2：指标没有出现在 /metrics 端点
+# 可能原因：
+# - SQL 查询错误或超时（检查日志）
+# - registerCustomMetrics 设置为 false（检查配置文件）
+# - 文件路径错误（检查 customMetricsFile 配置）
+# - 字段不是数值类型（使用 TO_NUMBER 转换）
+#
+# 错误3：标签值过多导致性能问题
+# 原因：标签的基数太大（如：使用了 session_id 作为标签）
+# 解决：只使用有限值的字段作为标签（如：status、type 等）
+# ================================================================================
+# 文档版本：v1.0
+# 更新日期：2024-12-02
+# 适用版本：dameng_exporter v1.1.6+
+# ================================================================================
