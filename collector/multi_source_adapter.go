@@ -32,28 +32,18 @@ func SetDataSourceIfSupported(collector MetricCollector, dataSource string) {
 type MultiSourceAdapter struct {
 	poolManager     *db.DBPoolManager
 	createCollector func(*sql.DB) MetricCollector
-	collectorName   string // 采集器名称
+	collectorName   string // 采集器名称（延迟初始化）
 	mu              sync.Mutex
+	nameOnce        sync.Once // 确保名称只获取一次
 }
 
 // NewMultiSourceAdapter 创建多数据源适配器
 func NewMultiSourceAdapter(poolManager *db.DBPoolManager, createFunc func(*sql.DB) MetricCollector) *MultiSourceAdapter {
-	adapter := &MultiSourceAdapter{
+	return &MultiSourceAdapter{
 		poolManager:     poolManager,
 		createCollector: createFunc,
+		collectorName:   "UnknownCollector", // 默认名称，将在首次使用时更新
 	}
-
-	// 尝试获取采集器名称
-	if poolManager != nil {
-		pools := poolManager.GetHealthyPools()
-		if len(pools) > 0 {
-			// 创建一个临时采集器来获取类型名称
-			tempCollector := createFunc(pools[0].DB)
-			adapter.collectorName = getCollectorName(tempCollector)
-		}
-	}
-
-	return adapter
 }
 
 // getCollectorName 获取采集器的名称
@@ -108,6 +98,11 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 
 			// 创建采集器实例
 			collector := a.createCollector(p.DB)
+
+			// 延迟初始化采集器名称（只执行一次）
+			a.nameOnce.Do(func() {
+				a.collectorName = getCollectorName(collector)
+			})
 
 			// 如果采集器支持数据源感知，设置数据源名称
 			SetDataSourceIfSupported(collector, p.Name)
