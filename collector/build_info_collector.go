@@ -7,6 +7,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+// Build variables that will be set at compile time via -ldflags
+var (
+	GitRevision = "unknown"
+	GitBranch   = "unknown"
+)
+
 // BuildInfoCollector 结构体
 type BuildInfoCollector struct {
 	buildInfoDesc *prometheus.Desc
@@ -23,7 +29,7 @@ func NewBuildInfoCollector() *BuildInfoCollector {
 		buildInfoDesc: prometheus.NewDesc(
 			dameng_exporter_build_info,
 			"A metric with a constant '1' value labeled by version, revision, branch, goversion from which dameng_exporter was built, and the goos and goarch for the build.",
-			[]string{"host_name", "version", "revision", "branch", "goversion", "goos", "goarch"},
+			[]string{"version", "revision", "branch", "goversion", "goos", "goarch"},
 			nil,
 		),
 	}
@@ -36,24 +42,15 @@ func (c *BuildInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect 实现 prometheus.Collector 接口
 func (c *BuildInfoCollector) Collect(ch chan<- prometheus.Metric) {
-
-	// 获取构建信息
-	revision := "70ab247ddcb5c9e3c76be98a8ad399275ff0d727"
-	branch := "HEAD"
-	goversion := runtime.Version()
-	goos := runtime.GOOS
-	goarch := runtime.GOARCH
-	hostname := config.GetHostName()
 	ch <- prometheus.MustNewConstMetric(
 		c.buildInfoDesc,
 		prometheus.GaugeValue,
 		1,
-		hostname,
 		config.GetVersion(),
-		revision,
-		branch,
-		goversion,
-		goos,
-		goarch,
+		GitRevision,
+		GitBranch,
+		runtime.Version(),
+		runtime.GOOS,
+		runtime.GOARCH,
 	)
 }

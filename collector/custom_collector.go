@@ -32,8 +32,8 @@ func NewCustomMetrics(db *sql.DB, sqlConfig config.CustomConfig) *CustomMetrics 
 	// 预定义所有指标
 	metrics := make(map[string]prometheus.Collector)
 	for _, metric := range sqlConfig.Metrics {
-		// 在标签列表前添加固定的 host_name
-		labels := append([]string{"host_name"}, metric.Labels...)
+		// 使用原始标签列表
+		labels := metric.Labels
 
 		for field, desc := range metric.MetricsDesc {
 			// 根据 MetricsType 创建 CounterVec 或 GaugeVec
@@ -106,13 +106,12 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 		}
 
 		for _, result := range results {
-			// 创建带有固定 host_name 的标签值列表
-			labelValues := make([]string, len(metric.Labels)+1)
-			labelValues[0] = config.GetHostName() // 固定的 host_name 标签值
+			// 创建标签值列表
+			labelValues := make([]string, len(metric.Labels))
 
 			for i, label := range metric.Labels {
 				if val, ok := result[label]; ok {
-					labelValues[i+1] = fmt.Sprintf("%v", val)
+					labelValues[i] = fmt.Sprintf("%v", val)
 				}
 			}
 

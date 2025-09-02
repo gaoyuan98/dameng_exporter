@@ -18,6 +18,19 @@ if "%VERSION%"=="" (
 
 echo Building %PROGRAM_NAME% version: %VERSION%
 
+REM Get Git information
+for /f "tokens=*" %%i in ('git rev-parse HEAD 2^>nul') do set GIT_REVISION=%%i
+if "%GIT_REVISION%"=="" set GIT_REVISION=unknown
+
+for /f "tokens=*" %%i in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set GIT_BRANCH=%%i
+if "%GIT_BRANCH%"=="" set GIT_BRANCH=unknown
+
+echo Git Revision: %GIT_REVISION%
+echo Git Branch: %GIT_BRANCH%
+
+REM Set ldflags with build info
+set LDFLAGS=-s -w -X "dameng_exporter/collector.GitRevision=%GIT_REVISION%" -X "dameng_exporter/collector.GitBranch=%GIT_BRANCH%"
+
 REM 设置需要打包的配置文件
 set CONFIG_FILES=dameng_exporter.toml custom_queries.metrics
 
@@ -25,7 +38,7 @@ set CONFIG_FILES=dameng_exporter.toml custom_queries.metrics
 REM 编译Windows 64位版本
 set GOOS=windows
 set GOARCH=amd64
-go build -ldflags "-s -w" -o %PROGRAM_NAME%_windows_amd64.exe
+go build -ldflags "%LDFLAGS%" -o %PROGRAM_NAME%_windows_amd64.exe
 if %errorlevel% neq 0 (
     echo Error compiling Windows 64-bit version
     timeout /t 3 /nobreak >nul
@@ -59,7 +72,7 @@ rmdir /s /q %TEMP_DIR%
 REM 编译Linux 64位版本
 set GOOS=linux
 set GOARCH=amd64
-go build -ldflags "-s -w" -o %PROGRAM_NAME%_linux_amd64
+go build -ldflags "%LDFLAGS%" -o %PROGRAM_NAME%_linux_amd64
 if %errorlevel% neq 0 (
     echo Error compiling Linux 64-bit version
     timeout /t 3 /nobreak >nul
@@ -95,7 +108,7 @@ REM 编译Linux ARM版本
 set GOOS=linux
 set GOARCH=arm64
 set GOHOSTARCH=arm64
-go build -ldflags "-s -w" -o %PROGRAM_NAME%_linux_arm64
+go build -ldflags "%LDFLAGS%" -o %PROGRAM_NAME%_linux_arm64
 if %errorlevel% neq 0 (
     echo Error compiling Linux ARM version
     timeout /t 3 /nobreak >nul
