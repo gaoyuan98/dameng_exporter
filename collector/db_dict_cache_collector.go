@@ -18,7 +18,7 @@ import (
 // DictCacheInfo 数据字典缓存信息结构体
 type DictCacheInfo struct {
 	lruDiscard      sql.NullFloat64
-	disabledSize    sql.NullFloat64
+	ddlDiscard      sql.NullFloat64
 	disabledDictNum sql.NullFloat64
 }
 
@@ -50,7 +50,7 @@ func NewDbDictCacheCollector(db *sql.DB) MetricCollector {
 		dictCacheTotalDesc: prometheus.NewDesc(
 			dmdbms_dict_cache_total,
 			"DM database dictionary cache total counters",
-			[]string{"cache_metric_type"}, // 使用标签区分不同的计数器类型
+			[]string{"dict_cache_type"}, // 使用标签区分不同的计数器类型
 			nil,
 		),
 	}
@@ -66,7 +66,7 @@ func (c *DbDictCacheCollector) checkDictCacheFields(ctx context.Context) []strin
 		c.availableFields = []string{}
 
 		// 检查每个字段是否存在
-		fields := []string{"LRU_DISCARD", "DISABLED_SIZE", "DISABLED_DICT_NUM"}
+		fields := []string{"LRU_DISCARD", "DDL_DISCARD", "DISABLED_DICT_NUM"}
 		for _, field := range fields {
 			query := fmt.Sprintf("SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = '%s'", field)
 			var count int
@@ -97,7 +97,7 @@ func (c *DbDictCacheCollector) buildDynamicQuery(fields []string) string {
 	}
 
 	// 为不存在的字段添加NULL占位符，保持结果集结构一致
-	allFields := []string{"LRU_DISCARD", "DISABLED_SIZE", "DISABLED_DICT_NUM"}
+	allFields := []string{"LRU_DISCARD", "DDL_DISCARD", "DISABLED_DICT_NUM"}
 	for _, field := range allFields {
 		found := false
 		for _, availField := range fields {
@@ -152,7 +152,7 @@ func (c *DbDictCacheCollector) Collect(ch chan<- prometheus.Metric) {
 	var dictCacheInfo DictCacheInfo
 	err := c.db.QueryRowContext(ctx, query).Scan(
 		&dictCacheInfo.lruDiscard,
-		&dictCacheInfo.disabledSize,
+		&dictCacheInfo.ddlDiscard,
 		&dictCacheInfo.disabledDictNum,
 	)
 
@@ -176,17 +176,17 @@ func (c *DbDictCacheCollector) Collect(ch chan<- prometheus.Metric) {
 		)
 	}
 
-	// DISABLED_SIZE - 被淘汰字典对象的空间，单位字节（累计值）
-	if dictCacheInfo.disabledSize.Valid {
+	// DDL_DISCARD - DDL操作导致字典对象被淘汰的次数
+	if dictCacheInfo.ddlDiscard.Valid {
 		ch <- prometheus.MustNewConstMetric(
 			c.dictCacheTotalDesc,
 			prometheus.CounterValue,
-			dictCacheInfo.disabledSize.Float64,
-			"disabled_size_bytes",
+			dictCacheInfo.ddlDiscard.Float64,
+			"ddl_discard",
 		)
 	}
 
-	// DISABLED_DICT_NUM - 缓存池中被淘汰字典对象的总数（累计值）
+	// DISABLED_DICT_NUM - 缓存池中被淘汰字典对象的总数
 	if dictCacheInfo.disabledDictNum.Valid {
 		ch <- prometheus.MustNewConstMetric(
 			c.dictCacheTotalDesc,
