@@ -230,6 +230,14 @@ name = "dm_prod"
 dbHost = "192.168.1.100:5236"
 dbUser = "SYSDBA"
 dbPwd = "SYSDBA"
+
+# 多标签配置 - 支持 Grafana 面板多维度过滤
+[[datasource]]
+name = "dm_prod_primary"
+dbHost = "192.168.1.100:5236"
+dbUser = "SYSDBA"
+dbPwd = "SYSDBA"
+labels = "env=prod,region=beijing,cluster=order_cluster,role=primary"
 ```
 
 #### 完整配置示例
@@ -270,7 +278,7 @@ registerHostMetrics = true
 registerDatabaseMetrics = true
 registerDmhsMetrics = false
 registerCustomMetrics = true
-labels = "env=production,region=cn-north"
+labels = "env=prod,region=beijing,cluster=order_cluster"  # 用于多维度过滤
 customMetricsFile = "./custom_prod.metrics"
 
 # 数据源2 - 测试环境
@@ -292,7 +300,7 @@ registerHostMetrics = false
 registerDatabaseMetrics = true
 registerDmhsMetrics = false
 registerCustomMetrics = false
-labels = "env=test,region=cn-north"
+labels = "env=test,region=shanghai,cluster=test_cluster"  # 用于多维度过滤
 ```
 2. 启动服务：
 
@@ -375,9 +383,22 @@ curl -X POST http://localhost:9090/-/reload
 
 1. 登录 Grafana（默认 http://localhost:3000）
 2. 导航到 **Dashboard** → **Import**
-3. 上传面板文件：`docs/达梦DB监控面板_20250518.json`
+3. 上传面板文件：
+   - **多数据源版本**（推荐）：`docs/达梦DB监控面板_多标签_20250903.json`
+     - 支持多维度标签过滤（datasource、env、region、cluster）
+     - 适用于多数据源、多环境监控场景
+     - 向后兼容，即使只配置了 datasource 标签也能正常工作
+   - **原始版本**：`docs/达梦DB监控面板_20250518.json`
+     - 适用于单一数据源的简单场景
 4. 选择 Prometheus 数据源
 5. 点击 **Import** 完成导入
+
+> 💡 **多标签版本说明**：
+> - **datasource**：数据源标识（必需）
+> - **env**：环境标识（如：prod、test、dev）
+> - **region**：地域标识（如：beijing、shanghai）
+> - **cluster**：集群标识（如：order_cluster、user_cluster）
+> - 支持通过 Grafana 变量进行灵活的级联过滤
 
 <img src="./img/grafana_01.png" width="800" height="400" alt="Grafana导入步骤" />
 

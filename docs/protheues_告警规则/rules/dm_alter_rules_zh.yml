@@ -97,28 +97,3 @@ groups:
     annotations:
       description: "主机：{{ $labels.instance }} 存在表空间使用率超过95%"
       summary: "主机：{{ $labels.instance }}: 存在表空间使用率超过95%，请核实"
-  - alert: HS的进程连接异常
-    expr: dmdbms_dmhs_process_is_exit == 0
-    for: 15s
-    labels:
-      severity: 警告
-    annotations:
-      description: "主机：{{ $labels.instance }} HS的进程连接异常"
-      summary: "主机：{{ $labels.instance }}:HS的进程连接异常，请确认是否正常"
-  - alert: HS的checkPointTime超过8h
-    expr: dmdbms_dmhs_script_info{dmhs_lable="check_point_time"}==-2 or dmdbms_dmhs_script_info{dmhs_lable="check_point_time"}> 60*60*8
-#    expr: dmdbms_dmhs_check_point_delay >=0 and dmdbms_dmhs_check_point_delay > 60*60*8
-    for: 15s
-    labels:
-      severity: 警告
-    annotations:
-      description: "主机：{{ $labels.instance }} HS的checkPointTime超过8h"
-      summary: "主机：{{ $labels.instance }}:HS的checkPointTime超过8h,请确认是否正常"
-  - alert: HS的currentLogTime超过5m
-    expr: dmdbms_dmhs_script_info{dmhs_lable="current_log_time"}==-2 or dmdbms_dmhs_script_info{dmhs_lable="current_log_time"}> 60*5*1
-    for: 15s
-    labels:
-      severity: 警告
-    annotations:
-      description: "主机：{{ $labels.instance }} HS的currentLogTime超过5m"
-      summary: "主机：{{ $labels.instance }}:HS的currentLogTime超过5m,请确认是否正常"
