@@ -1,60 +1,12 @@
-listenAddress = ":9200"
-metricPath = "/metrics"
-version = ""
-logMaxSize = 10
-logMaxBackups = 3
-logMaxAge = 30
+# ========================================
+# 全局配置
+# ========================================
 logLevel = "debug"
-encodeConfigPwd = true
-enableBasicAuth = false
-basicAuthUsername = ""
-basicAuthPassword = ""
-globalTimeoutSeconds = 3
-
 [[datasource]]
-  name = "master"
-  description = "主库"
-  enabled = true
-  dbHost = "81.70.105.201:5236"
-  dbUser = "SYSDBA"
-  dbPwd = "ENC(zsvHz8TN9c/S2sXY3s/Y7svHz8TNm5iZhA==)"
-  queryTimeout = 3
-  maxOpenConns = 10
-  maxIdleConns = 2
-  connMaxLifetime = 30
-  bigKeyDataCacheTime = 60
-  alarmKeyCacheTime = 5
-  checkSlowSQL = false
-  slowSqlTime = 10000
-  slowSqlMaxRows = 10
-  registerHostMetrics = false
-  registerDatabaseMetrics = true
-  registerDmhsMetrics = false
-  registerCustomMetrics = true
-  priority = 1
-  labels = "role=master"
-  customMetricsFile = "./custom_queries.metrics"
-
-[[datasource]]
-  name = "slave1"
-  description = "备库1"
-  enabled = true
-  dbHost = "10.77.18.91:5236"
-  dbUser = "SYSDBA"
-  dbPwd = "ENC(zsvHz8TN9c/S2sXY3s/Y7svHz8TNm5iZhA==)"
-  queryTimeout = 3
-  maxOpenConns = 5
-  maxIdleConns = 1
-  connMaxLifetime = 20
-  bigKeyDataCacheTime = 30
-  alarmKeyCacheTime = 3
-  checkSlowSQL = false
-  slowSqlTime = 10000
-  slowSqlMaxRows = 10
-  registerHostMetrics = false
-  registerDatabaseMetrics = true
-  registerDmhsMetrics = false
-  registerCustomMetrics = true
-  priority = 2
-  #labels = "role=slave"
-  customMetricsFile = "./custom_queries.metrics"
+name = "prod_primary_01"
+description = "生产环境主库-订单系统"
+enabled = true
+dbHost = "81.70.105.201:5236"
+dbUser = "SYSDBA"
+dbPwd = "Dameng123."  # 支持ENC()加密格式
+labels = "env=prod,region=beijing,cluster=order_cluster"

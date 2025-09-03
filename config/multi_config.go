@@ -156,8 +156,22 @@ func (ds *DataSourceConfig) ApplyDefaults() {
 		ds.Description = fmt.Sprintf("DataSource: %s", ds.Name)
 	}
 
-	// 布尔值默认处理（只有在创建新配置时才应用）
-	// 注意：TOML解析会正确设置布尔值，这里主要用于程序内部创建的配置
+	// 布尔值默认处理
+	// 由于Go的bool零值是false，我们无法区分"用户设置为false"和"未设置"
+	// 这里采用简单策略：如果所有布尔字段都是false，认为是未设置，应用默认值
+	if !ds.RegisterHostMetrics && !ds.RegisterDatabaseMetrics &&
+		!ds.RegisterDmhsMetrics && !ds.RegisterCustomMetrics && !ds.CheckSlowSQL {
+		// 全部为false，应用默认值
+		ds.RegisterHostMetrics = DefaultDataSourceConfig.RegisterHostMetrics
+		ds.RegisterDatabaseMetrics = DefaultDataSourceConfig.RegisterDatabaseMetrics
+		ds.RegisterDmhsMetrics = DefaultDataSourceConfig.RegisterDmhsMetrics
+		ds.RegisterCustomMetrics = DefaultDataSourceConfig.RegisterCustomMetrics
+		ds.CheckSlowSQL = DefaultDataSourceConfig.CheckSlowSQL
+	}
+	// 如果Enabled也是false，单独处理（因为默认是true）
+	if !ds.Enabled && ds.Name != "" {
+		ds.Enabled = DefaultDataSourceConfig.Enabled
+	}
 }
 
 // Validate 验证配置
