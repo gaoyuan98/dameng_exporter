@@ -89,6 +89,7 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbDwWatcherInfoCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDBSystemInfoCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbInstanceLogErrorCollector))
+		collectors = append(collectors, AdaptCollector(poolManager, NewDbDictCacheCollector))
 	}
 
 	// DMHS指标（如果任何数据源需要）

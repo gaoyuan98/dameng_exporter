@@ -73,6 +73,9 @@ const (
 	dmdbms_system_cpu_info    string = "dmdbms_system_cpu_info"
 	dmdbms_system_memory_info string = "dmdbms_system_memory_info"
 	dmdbms_system_base_info   string = "dmdbms_system_base_info"
+
+	// 数据字典缓存指标
+	dmdbms_dict_cache_total string = "dmdbms_dict_cache_total"
 )
 
 // MetricCollector 接口
