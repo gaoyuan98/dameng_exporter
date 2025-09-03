@@ -56,6 +56,27 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
+	// 构建缓存键，包含数据源标识
+	cacheKey := fmt.Sprintf("db_version_info_%s", c.dataSource)
+
+	// 尝试从缓存获取版本信息
+	if cachedValue, found := config.GetFromCache(cacheKey); found {
+		// 缓存值格式: "idCode|buildType|innerVer"
+		parts := strings.Split(cachedValue, "|")
+		if len(parts) == 3 {
+			logger.Logger.Debugf("[%s] Using cached database version info", c.dataSource)
+			ch <- prometheus.MustNewConstMetric(
+				c.versionInfoDesc,
+				prometheus.GaugeValue,
+				1,
+				parts[0], // idCode
+				parts[1], // buildType
+				parts[2], // innerVer
+			)
+			return
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
@@ -69,6 +90,12 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 			logger.Logger.Error(fmt.Sprintf("[%s] exec getDbVersionV1 func error", c.dataSource), zap.Error(err))
 			return
 		}
+
+		// 缓存V1版本信息
+		cacheValue := fmt.Sprintf("%s||", dbVersion)
+		config.SetCache(cacheKey, cacheValue, time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
+		logger.Logger.Debugf("[%s] Database version info (V1) cached", c.dataSource)
+
 		// 使用V1版本时，新增标签填充空值
 		ch <- prometheus.MustNewConstMetric(
 			c.versionInfoDesc,
@@ -80,6 +107,14 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 		)
 		return
 	}
+
+	// 缓存V2版本信息
+	cacheValue := fmt.Sprintf("%s|%s|%s",
+		utils.NullStringToString(versionInfo.idCode),
+		utils.NullStringToString(versionInfo.buildType),
+		utils.NullStringToString(versionInfo.innerVer))
+	config.SetCache(cacheKey, cacheValue, time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
+	logger.Logger.Debugf("[%s] Database version info (V2) cached", c.dataSource)
 
 	// 发送V2版本信息到Prometheus
 	ch <- prometheus.MustNewConstMetric(
