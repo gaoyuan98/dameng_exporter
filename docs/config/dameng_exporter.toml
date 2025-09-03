@@ -1,15 +1,46 @@
 # ========================================
-# 全局配置
-# ========================================
-logLevel = "info"
-# ========================================
 # 数据源配置
 # ========================================
+# labels 说明：
+# - 用于为指标添加自定义标签，便于在 Prometheus 中进行查询和分组
+# - 格式：key1=value1,key2=value2,key3=value3（逗号分隔，无空格）
+# - 常用标签示例：
+#   env: 环境标识（dev/test/prod）
+#   region: 地域（beijing/shanghai/guangzhou）
+#   cluster: 集群名称（订单集群/用户集群等）
+# ========================================
+# 单数据源配置示例
 [[datasource]]
 name = "prod_primary_01"
-description = "生产环境主库-OA系统"
 enabled = true
 dbHost = "192.168.1.1:5236"
 dbUser = ""
 dbPwd = ""
 labels = "env=prod,region=beijing,cluster=oa_cluster"
+
+# ========================================
+# 多数据源配置示例
+# ========================================
+# 可配置多个 [[datasource]] 块，每个块代表一个独立的数据库实例
+# 每个数据源的指标都会带上对应的 labels 标签，便于区分和查询
+# 注：每个标签的name值时必须保证配置文件内的唯一，不可重复
+
+# 生产环境-订单系统主库
+# [[datasource]]
+# name = "prod_order_master"
+# description = "生产环境-订单系统主库"
+# enabled = true
+# dbHost = "192.168.1.10:5236"
+# dbUser = "monitor_user"
+# dbPwd = "encrypted_password"
+# labels = "env=prod,region=beijing,cluster=order_cluster,role=master,app=order"
+
+# 生产环境-订单系统备库
+# [[datasource]]
+# name = "prod_order_slave"
+# description = "生产环境-订单系统从库"
+# enabled = true
+# dbHost = "192.168.1.11:5236"
+# dbUser = "monitor_user"
+# dbPwd = "encrypted_password"
+# labels = "env=prod,region=beijing,cluster=order_cluster,role=slave,app=order"

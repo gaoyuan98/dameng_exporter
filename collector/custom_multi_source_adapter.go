@@ -129,6 +129,14 @@ func RegisterCustomMetricsForMultiSource(reg *prometheus.Registry, poolManager *
 	for _, ds := range config.GlobalMultiConfig.DataSources {
 		if ds.Enabled && ds.RegisterCustomMetrics {
 			needCustomMetrics = true
+
+			// 如果没有配置自定义文件，跳过
+			if ds.CustomMetricsFile == "" {
+				logger.Logger.Debugf("DataSource [%s] has no custom metrics file configured, skipping",
+					ds.Name)
+				continue
+			}
+
 			// 预加载并验证配置文件
 			if fileutil.IsExist(ds.CustomMetricsFile) {
 				customConfig, err := config.ParseCustomConfig(ds.CustomMetricsFile)
@@ -162,7 +170,6 @@ func RegisterCustomMetricsForMultiSource(reg *prometheus.Registry, poolManager *
 			} else {
 				logger.Logger.Warnf("Custom metrics file not found for datasource [%s]: %s",
 					ds.Name, ds.CustomMetricsFile)
-				logger.Logger.Warnf("Please check if the file exists or use default file: custom_queries.metrics")
 			}
 		}
 	}

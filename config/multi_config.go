@@ -120,7 +120,7 @@ var DefaultDataSourceConfig = DataSourceConfig{
 	RegisterCustomMetrics:   true,
 
 	// 其他默认值
-	CustomMetricsFile: "./custom_queries.metrics",
+	CustomMetricsFile: "", // 默认为空，需要用户显式配置
 }
 
 // ApplyDefaults 应用默认值
@@ -149,9 +149,8 @@ func (ds *DataSourceConfig) ApplyDefaults() {
 	if ds.SlowSqlMaxRows == 0 {
 		ds.SlowSqlMaxRows = DefaultDataSourceConfig.SlowSqlMaxRows
 	}
-	if ds.CustomMetricsFile == "" {
-		ds.CustomMetricsFile = DefaultDataSourceConfig.CustomMetricsFile
-	}
+	// CustomMetricsFile 不设置默认值，保持用户配置的原样
+	// 如果用户没配置，就是空字符串
 	if ds.Description == "" {
 		ds.Description = fmt.Sprintf("DataSource: %s", ds.Name)
 	}
@@ -330,24 +329,24 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 
 	sb.WriteString("\n========== Configuration Summary ==========\n")
 
-	// 服务配置 - 一行
+	// 服务配置 - 使用完整参数名
 	sb.WriteString(fmt.Sprintf("[Service] listenAddress=%s, metricPath=%s, version=%s\n",
 		msc.ListenAddress, msc.MetricPath, msc.Version))
 
-	// 日志配置 - 一行
-	sb.WriteString(fmt.Sprintf("[Logging] level=%s, maxSize=%dMB, maxBackups=%d, maxAge=%d days\n",
+	// 日志配置 - 使用完整参数名
+	sb.WriteString(fmt.Sprintf("[Logging] logLevel=%s, logMaxSize=%dMB, logMaxBackups=%d, logMaxAge=%d days\n",
 		msc.LogLevel, msc.LogMaxSize, msc.LogMaxBackups, msc.LogMaxAge))
 
-	// 安全配置 - 一行
-	authInfo := fmt.Sprintf("basicAuth=%v", msc.EnableBasicAuth)
+	// 安全配置 - 使用完整参数名
+	authInfo := fmt.Sprintf("enableBasicAuth=%v", msc.EnableBasicAuth)
 	if msc.EnableBasicAuth {
-		authInfo += fmt.Sprintf(", user=%s", msc.BasicAuthUsername)
+		authInfo += fmt.Sprintf(", basicAuthUsername=%s", msc.BasicAuthUsername)
 	}
 	sb.WriteString(fmt.Sprintf("[Security] %s, encodeConfigPwd=%v\n",
 		authInfo, msc.EncodeConfigPwd))
 
-	// 性能配置 - 一行
-	sb.WriteString(fmt.Sprintf("[Performance] globalTimeout=%ds, collectionMode=%s\n",
+	// 性能配置 - 使用完整参数名
+	sb.WriteString(fmt.Sprintf("[Performance] globalTimeoutSeconds=%ds, collectionMode=%s\n",
 		msc.GlobalTimeoutSeconds, msc.CollectionMode))
 
 	// 数据源摘要 - 一行
@@ -367,39 +366,37 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 		sb.WriteString("\n---------- Debug: DataSource Details ----------\n")
 		for i, ds := range msc.DataSources {
 			sb.WriteString(fmt.Sprintf("[DS-%d] %s:\n", i+1, ds.Name))
-			// 基本信息
-			sb.WriteString(fmt.Sprintf("  Host: %s | User: %s | Enabled: %v\n",
+			// 基本信息 - 使用完整参数名
+			sb.WriteString(fmt.Sprintf("  dbHost=%s, dbUser=%s, enabled=%v\n",
 				ds.DbHost, ds.DbUser, ds.Enabled))
 
-			// 连接池配置
-			sb.WriteString(fmt.Sprintf("  Connection: maxOpen=%d, maxIdle=%d, lifetime=%dmin, queryTimeout=%ds\n",
+			// 连接池配置 - 使用完整参数名
+			sb.WriteString(fmt.Sprintf("  maxOpenConns=%d, maxIdleConns=%d, connMaxLifetime=%dmin, queryTimeout=%ds\n",
 				ds.MaxOpenConns, ds.MaxIdleConns, ds.ConnMaxLifetime, ds.QueryTimeout))
 
-			// 缓存配置
-			sb.WriteString(fmt.Sprintf("  Cache: bigKeyData=%dmin, alarmKey=%dmin\n",
+			// 缓存配置 - 使用完整参数名
+			sb.WriteString(fmt.Sprintf("  bigKeyDataCacheTime=%dmin, alarmKeyCacheTime=%dmin\n",
 				ds.BigKeyDataCacheTime, ds.AlarmKeyCacheTime))
 
-			// 指标功能开关
-			sb.WriteString(fmt.Sprintf("  Metrics: host=%v, database=%v, dmhs=%v, custom=%v\n",
+			// 指标功能开关 - 使用完整参数名
+			sb.WriteString(fmt.Sprintf("  registerHostMetrics=%v, registerDatabaseMetrics=%v, registerDmhsMetrics=%v, registerCustomMetrics=%v\n",
 				ds.RegisterHostMetrics, ds.RegisterDatabaseMetrics, ds.RegisterDmhsMetrics, ds.RegisterCustomMetrics))
 
-			// 慢SQL配置
+			// 慢SQL配置 - 使用完整参数名
 			if ds.CheckSlowSQL {
-				sb.WriteString(fmt.Sprintf("  SlowSQL: enabled=%v, threshold=%dms, maxRows=%d\n",
+				sb.WriteString(fmt.Sprintf("  checkSlowSQL=%v, slowSqlTime=%dms, slowSqlMaxRows=%d\n",
 					ds.CheckSlowSQL, ds.SlowSqlTime, ds.SlowSqlMaxRows))
 			} else {
-				sb.WriteString(fmt.Sprintf("  SlowSQL: enabled=%v\n", ds.CheckSlowSQL))
+				sb.WriteString(fmt.Sprintf("  checkSlowSQL=%v\n", ds.CheckSlowSQL))
 			}
 
 			// 显示标签信息（如果有）
 			if ds.Labels != "" {
-				sb.WriteString(fmt.Sprintf("  Labels: %s\n", ds.Labels))
+				sb.WriteString(fmt.Sprintf("  labels=%s\n", ds.Labels))
 			}
 
-			// 显示自定义指标文件（如果有）
-			if ds.CustomMetricsFile != "" && ds.CustomMetricsFile != "./custom_queries.metrics" {
-				sb.WriteString(fmt.Sprintf("  CustomFile: %s\n", ds.CustomMetricsFile))
-			}
+			// 显示自定义指标文件路径（空值表示未配置）
+			sb.WriteString(fmt.Sprintf("  customMetricsFile=%s\n", ds.CustomMetricsFile))
 		}
 		sb.WriteString("----------------------------------------------\n")
 	}

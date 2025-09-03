@@ -52,12 +52,12 @@
 # 测试用例1: 简单语句测试（带标签）
 # 说明：演示如何使用标签来区分不同维度的指标
 # ================================================================================
-[[metric]]
-context = "context_with_labels"
-labels = ["label_1", "label_2"]
-request = "SELECT 1 as value_1, 2 as value_2, 'First label' as label_1, 'Second label' as label_2 FROM DUAL"
-metricsdesc = { value_1 = "Simple example returning always 1 as counter", value_2 = "Same but returning always 2 as gauge" }
-metricstype = { value_1 = "counter", value_2 = "gauge" }
+# [[metric]]
+# context = "context_with_labels"
+# labels = ["label_1", "label_2"]
+# request = "SELECT 1 as value_1, 2 as value_2, 'First label' as label_1, 'Second label' as label_2 FROM DUAL"
+# metricsdesc = { value_1 = "Simple example returning always 1 as counter", value_2 = "Same but returning always 2 as gauge" }
+# metricstype = { value_1 = "counter", value_2 = "gauge" }
 
 # 生成的指标示例：
 # dmdbms_context_with_labels_value_1{datasource="master",label_1="First label",label_2="Second label"} 1

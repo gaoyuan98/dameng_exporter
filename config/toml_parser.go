@@ -81,7 +81,7 @@ func MergeMultiSourceConfigFromCmdArgs(config *MultiSourceConfig, args *CmdArgs)
 			RegisterDatabaseMetrics: *args.RegisterDatabaseMetrics,
 			RegisterDmhsMetrics:     *args.RegisterDmhsMetrics,
 			RegisterCustomMetrics:   *args.RegisterCustomMetrics,
-			CustomMetricsFile:       DefaultDataSourceConfig.CustomMetricsFile,
+			CustomMetricsFile:       "", // 命令行模式下默认不使用自定义指标文件
 		}}
 	} else if hasDbHost || hasDbUser || hasDbPwd {
 		// 如果只指定了部分数据库连接参数，报错
