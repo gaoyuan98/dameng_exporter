@@ -1,0 +1,15 @@
+# ========================================
+# 全局配置
+# ========================================
+logLevel = "info"
+# ========================================
+# 数据源配置
+# ========================================
+[[datasource]]
+name = "prod_primary_01"
+description = "生产环境主库-OA系统"
+enabled = true
+dbHost = "192.168.1.1:5236"
+dbUser = ""
+dbPwd = ""
+labels = "env=prod,region=beijing,cluster=oa_cluster"

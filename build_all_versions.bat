@@ -31,8 +31,9 @@ echo Git Branch: %GIT_BRANCH%
 REM Set ldflags with build info
 set LDFLAGS=-s -w -X "dameng_exporter/collector.GitRevision=%GIT_REVISION%" -X "dameng_exporter/collector.GitBranch=%GIT_BRANCH%"
 
-REM 设置需要打包的配置文件
+REM 设置需要打包的配置文件（从docs/config目录获取）
 set CONFIG_FILES=dameng_exporter.toml custom_queries.metrics
+set CONFIG_SOURCE_DIR=docs\config
 
 
 REM 编译Windows 64位版本
@@ -54,7 +55,7 @@ mkdir %TEMP_DIR%
 REM 复制文件到临时目录
 move %PROGRAM_NAME%_windows_amd64.exe %TEMP_DIR%\%PROGRAM_NAME%.exe
 for %%f in (%CONFIG_FILES%) do (
-    if exist %%f copy %%f %TEMP_DIR%\ >nul
+    if exist %CONFIG_SOURCE_DIR%\%%f copy %CONFIG_SOURCE_DIR%\%%f %TEMP_DIR%\ >nul
 )
 
 REM 打包Windows版本为tar.gz
@@ -88,7 +89,7 @@ mkdir %TEMP_DIR%
 REM 复制文件到临时目录
 move %PROGRAM_NAME%_linux_amd64 %TEMP_DIR%\%PROGRAM_NAME%
 for %%f in (%CONFIG_FILES%) do (
-    if exist %%f copy %%f %TEMP_DIR%\ >nul
+    if exist %CONFIG_SOURCE_DIR%\%%f copy %CONFIG_SOURCE_DIR%\%%f %TEMP_DIR%\ >nul
 )
 
 REM 打包Linux版本为tar.gz
@@ -124,7 +125,7 @@ mkdir %TEMP_DIR%
 REM 复制文件到临时目录
 move %PROGRAM_NAME%_linux_arm64 %TEMP_DIR%\%PROGRAM_NAME%
 for %%f in (%CONFIG_FILES%) do (
-    if exist %%f copy %%f %TEMP_DIR%\ >nul
+    if exist %CONFIG_SOURCE_DIR%\%%f copy %CONFIG_SOURCE_DIR%\%%f %TEMP_DIR%\ >nul
 )
 
 REM 打包Linux ARM版本为tar.gz
@@ -164,7 +165,7 @@ echo.
 echo ======================================
 echo All versions compiled successfully!
 echo Version: %VERSION%
-echo Package files include:
+echo Package files include (from %CONFIG_SOURCE_DIR% directory):
 for %%f in (%CONFIG_FILES%) do (
     echo   - %%f
 )
