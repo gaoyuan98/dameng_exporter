@@ -125,6 +125,14 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 					if err != nil {
 						conver_float = 0.0
 					}
+
+					// 如果启用了忽略零值且当前值为0，则跳过该指标
+					if metric.IgnoreZeroResult && conver_float == 0 {
+						logger.Logger.Debugf("[%s] Ignoring zero value for metric: %s_%s",
+							dsName, metric.Context, field)
+						continue
+					}
+
 					switch metric.MetricsType[field] {
 					case "counter":
 						collector.(*prometheus.CounterVec).WithLabelValues(labelValues...).Add(conver_float)

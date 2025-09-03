@@ -13,11 +13,12 @@ type CustomConfig struct {
 
 // 定义单个 metric 的结构体
 type CustomMetric struct {
-	Context     string            `toml:"context"`
-	Labels      []string          `toml:"labels,omitempty"`
-	Request     string            `toml:"request"`
-	MetricsDesc map[string]string `toml:"metricsdesc"`
-	MetricsType map[string]string `toml:"metricstype"` // 新增字段，定义每个指标的类型
+	Context          string            `toml:"context"`
+	Labels           []string          `toml:"labels,omitempty"`
+	Request          string            `toml:"request"`
+	MetricsDesc      map[string]string `toml:"metricsdesc"`
+	MetricsType      map[string]string `toml:"metricstype"`                // 新增字段，定义每个指标的类型
+	IgnoreZeroResult bool              `toml:"ignorezeroresult,omitempty"` // 新增字段，是否忽略零值结果
 }
 
 // ParseCustomConfig 解析自定义指标定义文件

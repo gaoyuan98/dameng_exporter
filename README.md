@@ -221,26 +221,79 @@ GRANT SELECT ON V$DYNAMIC_TABLE_COLUMNS TO PROMETHEUS;
 
 1. 创建配置文件 `dameng_exporter.toml`：
 
+#### 最小配置示例
+
+```toml
+# 最小配置 - 使用所有默认值
+[[datasource]]
+name = "dm_prod"
+dbHost = "192.168.1.100:5236"
+dbUser = "SYSDBA"
+dbPwd = "SYSDBA"
+```
+
+#### 完整配置示例
+
 ```toml
 # 全局配置
 listenAddress = ":9200"
 metricPath = "/metrics"
 logLevel = "info"
+logMaxSize = 10
+logMaxBackups = 3
+logMaxAge = 30
+encodeConfigPwd = true
+enableBasicAuth = false
+basicAuthUsername = "admin"
+basicAuthPassword = "ENC(encrypted_password_here)"
+globalTimeoutSeconds = 5
+collectionMode = "blocking"
 
-# 数据源配置
+# 数据源1 - 生产环境
 [[datasource]]
 name = "dm_prod"
 description = "生产环境达梦数据库"
+enabled = true
 dbHost = "192.168.1.100:5236"
-dbUser = "PROMETHEUS"
-dbPwd = "YourPassword123"
+dbUser = "SYSDBA"
+dbPwd = "ENC(encrypted_password)"
 queryTimeout = 30
 maxOpenConns = 10
 maxIdleConns = 2
+connMaxLifetime = 30
+bigKeyDataCacheTime = 60
+alarmKeyCacheTime = 5
+checkSlowSQL = true
+slowSqlTime = 5000
+slowSqlMaxRows = 20
+registerHostMetrics = true
 registerDatabaseMetrics = true
+registerDmhsMetrics = false
 registerCustomMetrics = true
-```
+labels = "env=production,region=cn-north"
+customMetricsFile = "./custom_prod.metrics"
 
+# 数据源2 - 测试环境
+[[datasource]]
+name = "dm_test"
+description = "测试环境达梦数据库"
+enabled = true
+dbHost = "192.168.1.101:5236"
+dbUser = "TEST_USER"
+dbPwd = "test_password"
+queryTimeout = 20
+maxOpenConns = 5
+maxIdleConns = 1
+connMaxLifetime = 20
+bigKeyDataCacheTime = 30
+alarmKeyCacheTime = 3
+checkSlowSQL = false
+registerHostMetrics = false
+registerDatabaseMetrics = true
+registerDmhsMetrics = false
+registerCustomMetrics = false
+labels = "env=test,region=cn-north"
+```
 2. 启动服务：
 
 ```bash
