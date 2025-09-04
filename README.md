@@ -3,10 +3,38 @@
 > ⚠️ **重要提示：v1.2.0+ 采用全新多数据源架构，与 v1.1.6 及更早版本不兼容。[查看版本兼容性说明](#版本兼容性说明)**
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-v1.2.0-blue" alt="Version">
+  <!-- 项目统计 -->
+  <img src="https://img.shields.io/github/stars/gaoyuan98/dameng_exporter?style=social" alt="GitHub Stars">
+  <img src="https://img.shields.io/github/forks/gaoyuan98/dameng_exporter?style=social" alt="GitHub Forks">
+  <img src="https://img.shields.io/github/watchers/gaoyuan98/dameng_exporter?style=social" alt="GitHub Watchers">
+</p>
+
+<p align="center">
+  <!-- 版本和下载 -->
+  <img src="https://img.shields.io/github/v/release/gaoyuan98/dameng_exporter" alt="Latest Release">
+  <img src="https://img.shields.io/github/downloads/gaoyuan98/dameng_exporter/total" alt="Total Downloads">
+  <img src="https://img.shields.io/github/downloads/gaoyuan98/dameng_exporter/latest/total" alt="Latest Version Downloads">
+  
+  <!-- Docker 统计 -->
+  <img src="https://img.shields.io/docker/pulls/gaoyuan98/dameng_exporter" alt="Docker Pulls">
+  <img src="https://img.shields.io/docker/image-size/gaoyuan98/dameng_exporter" alt="Docker Image Size">
+</p>
+
+<p align="center">
+  <!-- 项目状态 -->
+  <img src="https://img.shields.io/github/last-commit/gaoyuan98/dameng_exporter" alt="Last Commit">
+  <img src="https://img.shields.io/github/commit-activity/m/gaoyuan98/dameng_exporter" alt="Commit Activity">
+  <img src="https://img.shields.io/github/issues/gaoyuan98/dameng_exporter" alt="Open Issues">
+  <img src="https://img.shields.io/github/issues-pr/gaoyuan98/dameng_exporter" alt="Open Pull Requests">
+</p>
+
+<p align="center">
+  <!-- 技术栈 -->
+  <img src="https://img.shields.io/badge/go-1.23+-00ADD8?logo=go&logoColor=white" alt="Go Version">
+  <img src="https://img.shields.io/badge/DM-8.0+-FF6B6B?logo=database&logoColor=white" alt="DM Version">
+  <img src="https://img.shields.io/badge/prometheus-2.0+-E6522C?logo=prometheus&logoColor=white" alt="Prometheus">
+  <img src="https://img.shields.io/badge/grafana-8.5+-F46800?logo=grafana&logoColor=white" alt="Grafana">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-  <img src="https://img.shields.io/badge/go-1.23+-blue" alt="Go Version">
-  <img src="https://img.shields.io/badge/DM-8.0+-orange" alt="DM Version">
 </p>
 
 ## 📖 简介
