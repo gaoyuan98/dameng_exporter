@@ -99,7 +99,7 @@ var DefaultDataSourceConfig = DataSourceConfig{
 	Enabled: true,
 
 	// 连接池默认值
-	QueryTimeout:    30,
+	QueryTimeout:    10,
 	MaxOpenConns:    10,
 	MaxIdleConns:    2,
 	ConnMaxLifetime: 30,
