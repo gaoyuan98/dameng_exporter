@@ -183,86 +183,32 @@ GRANT SELECT ON V$DB_CACHE  TO MONITOR_USER;
 
 1. 创建配置文件 `dameng_exporter.toml`：
 
-#### 最小配置示例
+#### 配置示例
 
 ```toml
-# 最小配置 - 使用所有默认值
+# 单数据源配置
 [[datasource]]
 name = "dm_prod"
 dbHost = "192.168.1.100:5236"
 dbUser = "SYSDBA"
 dbPwd = "SYSDBA"
 
-# 多标签配置 - 支持 Grafana 面板多维度过滤
-[[datasource]]
-name = "dm_prod_primary"
-dbHost = "192.168.1.100:5236"
-dbUser = "SYSDBA"
-dbPwd = "SYSDBA"
-labels = "env=prod,region=beijing,cluster=order_cluster,role=primary"
-```
-
-#### 完整配置示例
-
-```toml
-# 全局配置
-listenAddress = ":9200"
-metricPath = "/metrics"
-logLevel = "info"
-logMaxSize = 10
-logMaxBackups = 3
-logMaxAge = 30
-encodeConfigPwd = true
-enableBasicAuth = false
-basicAuthUsername = "admin"
-basicAuthPassword = "admin123"  # Basic Auth 密码（启用后需要加密，见下文 Basic Auth 章节）
-globalTimeoutSeconds = 5
-collectionMode = "blocking"
-
-# 数据源1 - 生产环境
+# 多数据源配置示例
 [[datasource]]
 name = "dm_prod"
-description = "生产环境达梦数据库"
-enabled = true
 dbHost = "192.168.1.100:5236"
 dbUser = "SYSDBA"
-dbPwd = "ENC(encrypted_password)"  # 数据库密码（自动加密，启动后会自动替换为加密形式）
-queryTimeout = 30
-maxOpenConns = 10
-maxIdleConns = 2
-connMaxLifetime = 30
-bigKeyDataCacheTime = 60
-alarmKeyCacheTime = 5
-checkSlowSQL = true
-slowSqlTime = 5000
-slowSqlMaxRows = 20
-registerHostMetrics = true
-registerDatabaseMetrics = true
-registerDmhsMetrics = false
-registerCustomMetrics = true
-labels = "env=prod,region=beijing,cluster=order_cluster"  # 用于多维度过滤
-customMetricsFile = "./custom_prod.metrics"
+dbPwd = "SYSDBA123"
+labels = "env=prod,region=beijing"  # 可选：用于 Grafana 面板过滤
 
-# 数据源2 - 测试环境
 [[datasource]]
 name = "dm_test"
-description = "测试环境达梦数据库"
-enabled = true
 dbHost = "192.168.1.101:5236"
 dbUser = "TEST_USER"
-dbPwd = "test_password"
-queryTimeout = 20
-maxOpenConns = 5
-maxIdleConns = 1
-connMaxLifetime = 20
-bigKeyDataCacheTime = 30
-alarmKeyCacheTime = 3
-checkSlowSQL = false
-registerHostMetrics = false
-registerDatabaseMetrics = true
-registerDmhsMetrics = false
-registerCustomMetrics = false
-labels = "env=test,region=shanghai,cluster=test_cluster"  # 用于多维度过滤
+dbPwd = "TestPassword"
+labels = "env=test,region=shanghai"  # 可选：用于 Grafana 面板过滤
+
+# 如需更多配置选项，请参考：docs/documents/参数配置指南.md
 ```
 2. 启动服务：
 
@@ -317,21 +263,17 @@ docker run -d --name dameng_exporter \
 
 ```yaml
 scrape_configs:
-  # 单机配置
-  - job_name: "dm_single"
+  # 单个 Exporter 实例
+  - job_name: "dameng_exporter"
     static_configs:
       - targets: ["192.168.1.100:9200"]
-        labels:
-          cluster_name: "生产数据库"
-          env: "production"
   
-  # 集群配置（主备节点）
-  - job_name: "dm_cluster"
+  # 多个 Exporter 实例（监控不同环境）
+  - job_name: "dameng_exporter_multi"
     static_configs:
-      - targets: ["192.168.1.101:9200", "192.168.1.102:9200"]
-        labels:
-          cluster_name: "OA集群"
-          env: "production"
+      - targets: 
+        - "192.168.1.100:9200"  # 生产环境 Exporter
+        - "192.168.1.101:9200"  # 测试环境 Exporter
 ```
 
 重载 Prometheus 配置：
