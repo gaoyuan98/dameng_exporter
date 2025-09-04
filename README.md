@@ -125,9 +125,11 @@ go build -o dameng_exporter main.go
 
 ### Grafana 面板效果
 
-<img src="./img/tubiao_01.png" width="1000" height="500" alt="监控面板1" />
+<img src="./img/tubiao_03.png" width="1000" height="500" alt="监控面板1" />
 <br />
-<img src="./img/tubiao_02.png" width="1000" height="500" alt="监控面板2" />
+<img src="./img/tubiao_04.png" width="1000" height="500" alt="监控面板2" />
+<br />
+<img src="./img/tubiao_05.png" width="1000" height="500" alt="监控面板2" />
 <br />
 <img src="./img/grafana_04.png" width="1000" height="500" alt="监控面板3" />
 
