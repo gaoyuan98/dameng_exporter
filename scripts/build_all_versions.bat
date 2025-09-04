@@ -5,7 +5,7 @@ REM 设置变量
 set PROGRAM_NAME=dameng_exporter
 
 REM 从 Go 源码中提取版本号
-for /f "tokens=4" %%i in ('findstr /C:"const Version" dameng_exporter.go') do (
+for /f "tokens=4" %%i in ('findstr /C:"const Version" ..\dameng_exporter.go') do (
     set VERSION=%%i
     REM 移除引号
     set VERSION=!VERSION:"=!
@@ -31,9 +31,12 @@ echo Git Branch: %GIT_BRANCH%
 REM Set ldflags with build info
 set LDFLAGS=-s -w -X "dameng_exporter/collector.GitRevision=%GIT_REVISION%" -X "dameng_exporter/collector.GitBranch=%GIT_BRANCH%"
 
+REM 切换到上级目录执行编译
+cd ..
+
 REM 设置需要打包的配置文件（从docs/config目录获取）
 set CONFIG_FILES=dameng_exporter.toml custom_queries.metrics
-set CONFIG_SOURCE_DIR=docs\config
+set CONFIG_SOURCE_DIR=..\docs\config
 
 
 REM 编译Windows 64位版本
@@ -171,4 +174,6 @@ for %%f in (%CONFIG_FILES%) do (
 )
 echo ======================================
 echo.
+REM 返回 scripts 目录
+cd scripts
 exit /b 0

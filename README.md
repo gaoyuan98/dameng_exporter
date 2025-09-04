@@ -38,7 +38,6 @@ dameng_exporter/
 │   ├── documents/               # 文档文件
 │   │   ├── 参数配置指南.md     # 参数详细说明文档
 │   │   ├── 自定义指标使用指南.md # 自定义指标使用指南
-│   │   └── *.md                 # 其他文档
 │   ├── dashboards/              # Grafana 面板模板
 │   │   └── *.json               # 监控面板文件
 │   ├── alertmanager/            # 告警配置模板
@@ -46,10 +45,10 @@ dameng_exporter/
 ├── collector/                   # 指标采集器实现
 ├── config/                      # 配置文件目录
 ├── logs/                        # 日志文件目录
+├── scripts/                     # 脚本工具目录
 ├── dameng_exporter.toml         # 主配置文件
 ├── custom_metrics.toml          # 自定义指标配置
-├── README.md                    # 项目主文档
-└── build_all_versions.bat       # Windows 一键编译脚本
+└── README.md                    # 项目主文档
 ```
 
 ## 🚀 快速开始
@@ -87,6 +86,15 @@ tar -xzf dameng_exporter_v1.2.0_linux_arm64.tar.gz
 docker pull gaoyuan98/dameng_exporter:latest  # 拉取最新版本
 # docker pull gaoyuan98/dameng_exporter:v1.2.0  # 拉取指定版本
 
+# 如果遇到拉取失败，尝试以下方法：
+# 1. 使用完整路径
+docker pull docker.io/gaoyuan98/dameng_exporter:latest
+
+# 2. 使用国内镜像加速（腾讯云为例）
+# 先配置镜像加速器：sudo vim /etc/docker/daemon.json
+# 添加: {"registry-mirrors": ["https://mirror.ccs.tencentyun.com"]}
+# 重启: sudo systemctl restart docker
+
 # 运行容器
 docker run -d --name dameng_exporter \
   -p 9200:9200 \
@@ -110,7 +118,7 @@ cd dameng_exporter
 go build -o dameng_exporter main.go
 
 # Windows 一键编译
-./build_all_versions.bat
+./scripts/build_all_versions.bat
 ```
 
 ## 📈 监控效果展示

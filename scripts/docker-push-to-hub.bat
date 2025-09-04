@@ -1,6 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
+REM 切换到项目根目录
+cd ..
+
 echo ======================================
 echo Docker Hub Push Script for dameng_exporter
 echo Target Repository: gaoyuan98/dameng_exporter
@@ -27,14 +30,16 @@ echo Checking local images...
 docker images dameng_exporter:%VERSION%-linux-amd64 >nul 2>&1
 if %errorlevel% neq 0 (
     echo Error: Local image dameng_exporter:%VERSION%-linux-amd64 not found
-    echo Please build images first using docker-build-linux-multiarch.bat
+    echo Please build images first using scripts\docker-build-linux-multiarch.bat
+    cd scripts
     exit /b 1
 )
 
 docker images dameng_exporter:%VERSION%-linux-arm64 >nul 2>&1
 if %errorlevel% neq 0 (
     echo Error: Local image dameng_exporter:%VERSION%-linux-arm64 not found
-    echo Please build images first using docker-build-linux-multiarch.bat
+    echo Please build images first using scripts\docker-build-linux-multiarch.bat
+    cd scripts
     exit /b 1
 )
 
@@ -117,6 +122,8 @@ echo   docker pull gaoyuan98/dameng_exporter:%VERSION%
 echo   docker pull gaoyuan98/dameng_exporter:latest-linux-arm64
 echo ======================================
 echo.
+REM 返回 scripts 目录
+cd scripts
 exit /b 0
 
 :push_error
@@ -130,4 +137,6 @@ echo   1. Not logged in to Docker Hub (run: docker login)
 echo   2. No permission to push to gaoyuan98/dameng_exporter
 echo   3. Network connection issues
 echo.
+REM 返回 scripts 目录
+cd scripts
 exit /b 1

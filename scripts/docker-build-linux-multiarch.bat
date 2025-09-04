@@ -1,6 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
+REM 切换到项目根目录执行 Docker 构建
+cd ..
+
 REM 获取 Git 信息
 for /f "tokens=*" %%i in ('git rev-parse HEAD 2^>nul') do set GIT_REVISION=%%i
 if "%GIT_REVISION%"=="" set GIT_REVISION=unknown
@@ -148,3 +151,6 @@ if /i "%PUSH_TO_HUB%"=="y" (
     echo   docker push gaoyuan98/dameng_exporter:%VERSION%-linux-amd64
 )
 echo.
+
+REM 返回 scripts 目录
+cd scripts
