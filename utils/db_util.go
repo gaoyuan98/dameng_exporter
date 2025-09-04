@@ -1,10 +1,31 @@
-package collector
+package utils
 
 import (
+	"context"
+	"dameng_exporter/logger"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 )
+
+// 统一的数据库连接检查（带数据源标识）
+func CheckDBConnectionWithSource(db *sql.DB, dataSource string) error {
+	if err := db.Ping(); err != nil {
+		logger.Logger.Errorf("[%s] Database connection is not available: %v", dataSource, err)
+		return err
+	}
+	return nil
+}
+
+// 封装通用的错误处理逻辑（带数据源标识）
+func HandleDbQueryErrorWithSource(err error, dataSource string) {
+	if errors.Is(err, context.DeadlineExceeded) {
+		logger.Logger.Errorf("[%s] Query timed out: %v", dataSource, err)
+	} else {
+		logger.Logger.Errorf("[%s] Error querying database: %v", dataSource, err)
+	}
+}
 
 func NullStringToString(ns sql.NullString) string {
 	if ns.Valid {

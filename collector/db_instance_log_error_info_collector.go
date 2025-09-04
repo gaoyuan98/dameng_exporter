@@ -4,7 +4,9 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,6 +25,12 @@ type InstanceLogInfo struct {
 type DbInstanceLogInfoCollector struct {
 	db                  *sql.DB
 	instanceLogInfoDesc *prometheus.Desc
+	dataSource          string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbInstanceLogInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbInstanceLogErrorCollector(db *sql.DB) MetricCollector {
@@ -31,7 +39,7 @@ func NewDbInstanceLogErrorCollector(db *sql.DB) MetricCollector {
 		instanceLogInfoDesc: prometheus.NewDesc(
 			dmdbms_instance_log_error_info,
 			"Information about DM database Instance error log info",
-			[]string{"host_name", "pid", "level", "log_time", "txt"},
+			[]string{"pid", "level", "log_time", "txt"},
 			nil,
 		),
 	}
@@ -42,24 +50,17 @@ func (c *DbInstanceLogInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryInstanceErrorLogSql)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -69,28 +70,27 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		var info InstanceLogInfo
 		//LOG_TIME,PID,LEVEL$,TXT
 		if err := rows.Scan(&info.LogTime, &info.Pid, &info.Level, &info.Txt); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		instanceLogInfos = append(instanceLogInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 
 	// 对instanceLogInfos进行去重处理
 	instanceLogInfos = removeDuplicateLogInfos(instanceLogInfos)
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	for _, info := range instanceLogInfos {
-		//[]string{"host_name", "pid", "level", "log_time", "txt"}
+		//[]string{"pid", "level", "log_time", "txt"}
 
-		pid := NullStringToString(info.Pid)
-		level := NullStringToString(info.Level)
-		logTime := NullStringToString(info.LogTime)
-		txt := NullStringToString(info.Txt)
+		pid := utils.NullStringToString(info.Pid)
+		level := utils.NullStringToString(info.Level)
+		logTime := utils.NullStringToString(info.LogTime)
+		txt := utils.NullStringToString(info.Txt)
 
 		//ps: log日志本身就是异常的,所以统一设置为1
 		logStatusValue := 1
@@ -99,7 +99,7 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			c.instanceLogInfoDesc,
 			prometheus.GaugeValue,
 			float64(logStatusValue),
-			hostname, pid, level, logTime, txt,
+			pid, level, logTime, txt,
 		)
 	}
 }
@@ -113,10 +113,10 @@ func removeDuplicateLogInfos(logs []InstanceLogInfo) []InstanceLogInfo {
 	// 按原始顺序遍历，只保留第一次出现的元素
 	for _, info := range logs {
 		// 为每条日志创建一个唯一标识
-		pid := NullStringToString(info.Pid)
-		level := NullStringToString(info.Level)
-		logTime := NullStringToString(info.LogTime)
-		txt := NullStringToString(info.Txt)
+		pid := utils.NullStringToString(info.Pid)
+		level := utils.NullStringToString(info.Level)
+		logTime := utils.NullStringToString(info.LogTime)
+		txt := utils.NullStringToString(info.Txt)
 
 		key := pid + "|" + level + "|" + logTime + "|" + txt
 

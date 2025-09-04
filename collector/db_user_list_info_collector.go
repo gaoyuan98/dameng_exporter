@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -26,6 +27,12 @@ type UserInfo struct {
 type DbUserCollector struct {
 	db               *sql.DB
 	userListInfoDesc *prometheus.Desc
+	dataSource       string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbUserCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbUserCollector(db *sql.DB) MetricCollector {
@@ -34,7 +41,7 @@ func NewDbUserCollector(db *sql.DB) MetricCollector {
 		userListInfoDesc: prometheus.NewDesc(
 			dmdbms_user_list_info,
 			"Information about DM database users",
-			[]string{"host_name", "username", "read_only", "expiry_date", "expiry_date_day", "default_tablespace", "profile", "create_time"},
+			[]string{"username", "read_only", "expiry_date", "expiry_date_day", "default_tablespace", "profile", "create_time"},
 			nil,
 		),
 	}
@@ -45,24 +52,17 @@ func (c *DbUserCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryUserInfoSqlStr)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -82,20 +82,19 @@ func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	for _, info := range userInfos {
-		username := NullStringToString(info.Username)
-		readOnly := NullStringToString(info.ReadOnly)
-		expiryDate := NullStringToString(info.ExpiryDate)
-		expiryDateDay := NullStringToString(info.ExpiryDateDay)
-		defaultTablespace := NullStringToString(info.DefaultTablespace)
-		profile := NullStringToString(info.Profile)
-		createTime := NullStringToString(info.CreateTime)
+		username := utils.NullStringToString(info.Username)
+		readOnly := utils.NullStringToString(info.ReadOnly)
+		expiryDate := utils.NullStringToString(info.ExpiryDate)
+		expiryDateDay := utils.NullStringToString(info.ExpiryDateDay)
+		defaultTablespace := utils.NullStringToString(info.DefaultTablespace)
+		profile := utils.NullStringToString(info.Profile)
+		createTime := utils.NullStringToString(info.CreateTime)
 
 		// 判断 AccountStatus 的值
 		accountStatusValue := 0.0
-		if NullStringToString(info.AccountStatus) == "锁定" {
+		if utils.NullStringToString(info.AccountStatus) == "锁定" {
 			accountStatusValue = 1.0
 		}
 
@@ -103,7 +102,7 @@ func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 			c.userListInfoDesc,
 			prometheus.GaugeValue,
 			accountStatusValue,
-			hostname, username, readOnly, expiryDate, expiryDateDay, defaultTablespace, profile, createTime,
+			username, readOnly, expiryDate, expiryDateDay, defaultTablespace, profile, createTime,
 		)
 	}
 }

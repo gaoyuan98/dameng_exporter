@@ -4,7 +4,9 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"strings"
@@ -14,6 +16,12 @@ import (
 type DbJobRunningInfoCollector struct {
 	db              *sql.DB
 	jobErrorNumDesc *prometheus.Desc
+	dataSource      string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbJobRunningInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // 定义存储查询结果的结构体
@@ -27,7 +35,7 @@ func NewDbJobRunningInfoCollector(db *sql.DB) MetricCollector {
 		jobErrorNumDesc: prometheus.NewDesc(
 			dmdbms_joblog_error_num,
 			"dmdbms_joblog_error_num info information",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 添加标签
 			nil,
 		),
 	}
@@ -38,29 +46,22 @@ func (c *DbJobRunningInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDbJobRunningInfoSqlStr)
 	if err != nil {
 		// 检查报错信息中是否包含 "v$dmmonitor" 字符串
 		if strings.Contains(err.Error(), "SYSJOB") {
-			logger.Logger.Warn("数据库未开启定时任务功能，无法检查错误任务异常数量。请执行sql语句call SP_INIT_JOB_SYS(1); 开启定时作业的功能。（该报错不影响其他指标采集数据,也可忽略）")
+			logger.Logger.Warnf("[%s] 数据库未开启定时任务功能，无法检查错误任务异常数量。请执行sql语句call SP_INIT_JOB_SYS(1); 开启定时作业的功能。（该报错不影响其他指标采集数据,也可忽略）", c.dataSource)
 			return
 		}
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -69,16 +70,16 @@ func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	var errorCountInfo ErrorCountInfo
 	if rows.Next() {
 		if err := rows.Scan(&errorCountInfo.ErrorNum); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			return
 		}
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 
-	ch <- prometheus.MustNewConstMetric(c.jobErrorNumDesc, prometheus.GaugeValue, NullInt64ToFloat64(errorCountInfo.ErrorNum), config.GetHostName())
+	ch <- prometheus.MustNewConstMetric(c.jobErrorNumDesc, prometheus.GaugeValue, utils.NullInt64ToFloat64(errorCountInfo.ErrorNum))
 
 }

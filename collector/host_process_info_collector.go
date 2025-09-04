@@ -4,11 +4,10 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -32,6 +31,12 @@ type DmapProcessCollector struct {
 	localInstallBinPath  string
 	lastPID              string
 	//mutex                sync.Mutex
+	dataSource string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DmapProcessCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // 初始化收集器
@@ -41,31 +46,31 @@ func NewDmapProcessCollector(db *sql.DB) *DmapProcessCollector {
 		dmapProcessDesc: prometheus.NewDesc(
 			dmdbms_dmap_process_is_exit,
 			"Information about DM database dmap process existence",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 		dmserverProcessDesc: prometheus.NewDesc(
 			dmdbms_dmserver_process_is_exit,
 			"Information about DM database dmserver process existence",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 		dmwatcherProcessDesc: prometheus.NewDesc(
 			dmdbms_dmwatcher_process_is_exit,
 			"Information about DM database dmwatcher process existence",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 		dmmonitorProcessDesc: prometheus.NewDesc(
 			dmdbms_dmmonitor_process_is_exit,
 			"Information about DM database dmmonitor process existence",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 		dmagentProcessDesc: prometheus.NewDesc(
 			dmdbms_dmagent_process_is_exit,
 			"Information about DM database dmagent process existence",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 	}
@@ -82,15 +87,8 @@ func (c *DmapProcessCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect 方法
 func (c *DmapProcessCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
@@ -115,36 +113,30 @@ func (c *DmapProcessCollector) Collect(ch chan<- prometheus.Metric) {
 	//c.mutex.Unlock()
 
 	// 检查各个进程
-	hostname, _ := os.Hostname()
 	ch <- prometheus.MustNewConstMetric(
 		c.dmapProcessDesc,
 		prometheus.GaugeValue,
 		checkProcess(c.localInstallBinPath, dbInstanceInfo.PID, "dmap"),
-		hostname,
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.dmserverProcessDesc,
 		prometheus.GaugeValue,
 		checkProcess(c.localInstallBinPath, dbInstanceInfo.PID, "dmserver"),
-		hostname,
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.dmwatcherProcessDesc,
 		prometheus.GaugeValue,
 		checkProcess(c.localInstallBinPath, dbInstanceInfo.PID, "dmwatcher"),
-		hostname,
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.dmmonitorProcessDesc,
 		prometheus.GaugeValue,
 		checkProcess(c.localInstallBinPath, dbInstanceInfo.PID, "dmmonitor"),
-		hostname,
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.dmagentProcessDesc,
 		prometheus.GaugeValue,
 		checkProcess(c.localInstallBinPath, dbInstanceInfo.PID, "dmagent"),
-		hostname,
 	)
 
 }
@@ -189,7 +181,7 @@ func checkProcess(installBinPath, pid, processName string) float64 {
 func getDbInstanceInfo(db *sql.DB) (DBInstanceInfo, error) {
 	var info DBInstanceInfo
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	query := `

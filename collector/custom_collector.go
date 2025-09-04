@@ -15,9 +15,15 @@ import (
 
 // CustomMetrics 结构体，封装多个 Prometheus Collectors
 type CustomMetrics struct {
-	metrics   map[string]prometheus.Collector
-	db        *sql.DB
-	sqlConfig config.CustomConfig
+	metrics    map[string]prometheus.Collector
+	db         *sql.DB
+	sqlConfig  config.CustomConfig
+	dataSource string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (cm *CustomMetrics) SetDataSource(name string) {
+	cm.dataSource = name
 }
 
 // NewCustomMetrics 返回一个封装了数据库和配置的 CustomMetrics 实例
@@ -26,8 +32,8 @@ func NewCustomMetrics(db *sql.DB, sqlConfig config.CustomConfig) *CustomMetrics 
 	// 预定义所有指标
 	metrics := make(map[string]prometheus.Collector)
 	for _, metric := range sqlConfig.Metrics {
-		// 在标签列表前添加固定的 host_name
-		labels := append([]string{"host_name"}, metric.Labels...)
+		// 使用原始标签列表
+		labels := metric.Labels
 
 		for field, desc := range metric.MetricsDesc {
 			// 根据 MetricsType 创建 CounterVec 或 GaugeVec
@@ -56,9 +62,10 @@ func NewCustomMetrics(db *sql.DB, sqlConfig config.CustomConfig) *CustomMetrics 
 		}
 	}
 	return &CustomMetrics{
-		metrics:   metrics,
-		db:        db,
-		sqlConfig: sqlConfig,
+		metrics:    metrics,
+		db:         db,
+		sqlConfig:  sqlConfig,
+		dataSource: "default", // 设置默认数据源名称，避免空值
 	}
 }
 
@@ -71,31 +78,40 @@ func (cm *CustomMetrics) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect 方法，用于实现 prometheus.Collector 接口
 func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
-	logger.Logger.Debugf(".exec..")
+	// 始终使用数据源名称，如果为空则使用"default"
+	dsName := cm.dataSource
+	if dsName == "" {
+		dsName = "default"
+	}
+	logger.Logger.Debugf("[%s] Collecting custom metrics...", dsName)
 
 	if err := cm.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available", zap.Error(err))
+		logger.Logger.Error("Database connection is not available",
+			zap.String("datasource", dsName),
+			zap.Error(err))
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	// 遍历配置中的每个 Metric，执行查询并收集数据
 	for _, metric := range cm.sqlConfig.Metrics {
 		results, err := queryDynamicDatabase(ctx, cm.db, metric.Request)
 		if err != nil {
-			logger.Logger.Error("查询数据库错误", zap.Error(err))
+			logger.Logger.Error("查询数据库错误",
+				zap.String("datasource", dsName),
+				zap.String("context", metric.Context),
+				zap.Error(err))
 			continue
 		}
 
 		for _, result := range results {
-			// 创建带有固定 host_name 的标签值列表
-			labelValues := make([]string, len(metric.Labels)+1)
-			labelValues[0] = config.GetHostName() // 固定的 host_name 标签值
+			// 创建标签值列表
+			labelValues := make([]string, len(metric.Labels))
 
 			for i, label := range metric.Labels {
 				if val, ok := result[label]; ok {
-					labelValues[i+1] = fmt.Sprintf("%v", val)
+					labelValues[i] = fmt.Sprintf("%v", val)
 				}
 			}
 
@@ -109,6 +125,14 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 					if err != nil {
 						conver_float = 0.0
 					}
+
+					// 如果启用了忽略零值且当前值为0，则跳过该指标
+					if metric.IgnoreZeroResult && conver_float == 0 {
+						logger.Logger.Debugf("[%s] Ignoring zero value for metric: %s_%s",
+							dsName, metric.Context, field)
+						continue
+					}
+
 					switch metric.MetricsType[field] {
 					case "counter":
 						collector.(*prometheus.CounterVec).WithLabelValues(labelValues...).Add(conver_float)

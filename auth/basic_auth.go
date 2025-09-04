@@ -20,7 +20,7 @@ func isEncryptedPassword(password string) bool {
 // BasicAuthMiddleware 处理Basic认证的中间件
 func BasicAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !config.GlobalConfig.EnableBasicAuth {
+		if !config.Global.GetEnableBasicAuth() {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -55,7 +55,7 @@ func BasicAuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		// 验证用户名
-		if subtle.ConstantTimeCompare([]byte(username), []byte(config.GlobalConfig.BasicAuthUsername)) != 1 {
+		if subtle.ConstantTimeCompare([]byte(username), []byte(config.Global.GetBasicAuthUsername())) != 1 {
 			w.Header().Set("WWW-Authenticate", `Basic realm="DAMENG Exporter Metrics"`)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusUnauthorized)
@@ -84,7 +84,7 @@ func BasicAuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		// 获取配置的密码
-		configuredPassword := config.GlobalConfig.BasicAuthPassword
+		configuredPassword := config.Global.GetBasicAuthPassword()
 		//logger.Logger.Debugf("Configured password type: %v", isEncryptedPassword(configuredPassword))
 		//logger.Logger.Debugf("Configured password: %s", configuredPassword)
 		//logger.Logger.Debugf("Received password type: %v", isEncryptedPassword(password))

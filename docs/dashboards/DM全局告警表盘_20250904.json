@@ -24,14 +24,13 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -106,7 +105,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -123,7 +122,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -198,7 +197,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -215,7 +214,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -290,7 +289,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -307,7 +306,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -382,7 +381,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -399,7 +398,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -474,7 +473,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -491,7 +490,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -566,7 +565,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -583,7 +582,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -658,7 +657,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -675,7 +674,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -750,7 +749,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -767,7 +766,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -842,7 +841,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -859,7 +858,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -934,7 +933,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -951,7 +950,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -1026,7 +1025,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -1043,7 +1042,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -1118,7 +1117,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -1135,7 +1134,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -1210,7 +1209,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -1227,7 +1226,7 @@
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "-cgUg64Hk"
+        "uid": "${DS_PROMETHEUS}"
       },
       "description": "",
       "fieldConfig": {
@@ -1302,7 +1301,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "-cgUg64Hk"
+            "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
           "exemplar": true,
@@ -1321,7 +1320,26 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "Prometheus",
+          "value": "Prometheus"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "Prometheus Data Source",
+        "multi": false,
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
   },
   "time": {
     "from": "now-6h",
@@ -1331,6 +1349,16 @@
   "timezone": "",
   "title": "DM全局告警表盘",
   "uid": "QTNwS6VHz",
-  "version": 5,
-  "weekStart": ""
+  "version": 1,
+  "weekStart": "",
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ]
 }

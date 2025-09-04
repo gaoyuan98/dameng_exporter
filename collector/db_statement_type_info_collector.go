@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -20,15 +21,21 @@ type DbSqlExecTypeInfo struct {
 type DbSqlExecTypeCollector struct {
 	db                *sql.DB
 	statementTypeDesc *prometheus.Desc
+	dataSource        string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbSqlExecTypeCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbSqlExecTypeCollector(db *sql.DB) MetricCollector {
 	return &DbSqlExecTypeCollector{
 		db: db,
 		statementTypeDesc: prometheus.NewDesc(
-			dmdbms_statement_type_info,
+			dmdbms_statement_type_total,
 			"Information about different types of statements",
-			[]string{"host_name", "statement_name"},
+			[]string{"statement_name"},
 			nil,
 		),
 	}
@@ -40,24 +47,17 @@ func (c *DbSqlExecTypeCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbSqlExecTypeCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QuerySqlExecuteCountSqlStr)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -76,15 +76,14 @@ func (c *DbSqlExecTypeCollector) Collect(ch chan<- prometheus.Metric) {
 		logger.Logger.Error("Error with rows", zap.Error(err))
 	}
 	// 发送数据到 Prometheus
-	hostname := config.GetHostName()
 	for _, info := range sysstatInfos {
-		statementName := NullStringToString(info.Name)
+		statementName := utils.NullStringToString(info.Name)
 
 		ch <- prometheus.MustNewConstMetric(
 			c.statementTypeDesc,
 			prometheus.CounterValue,
-			NullFloat64ToFloat64(info.StatVal),
-			hostname, statementName,
+			utils.NullFloat64ToFloat64(info.StatVal),
+			statementName,
 		)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"time"
 
@@ -20,6 +21,12 @@ type RapplyTimeDiff struct {
 type DbRapplyTimeDiffCollector struct {
 	db           *sql.DB
 	timeDiffDesc *prometheus.Desc
+	dataSource   string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbRapplyTimeDiffCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbRapplyTimeDiffCollector(db *sql.DB) MetricCollector {
@@ -28,7 +35,7 @@ func NewDbRapplyTimeDiffCollector(db *sql.DB) MetricCollector {
 		timeDiffDesc: prometheus.NewDesc(
 			dmdbms_rapply_time_diff,
 			"Time difference in seconds between APPLY_CMT_TIME and LAST_CMT_TIME from V$RAPPLY_STAT",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 	}
@@ -39,24 +46,18 @@ func (c *DbRapplyTimeDiffCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time: %vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	// 执行查询
 	rows, err := c.db.QueryContext(ctx, config.QueryRapplyTimeDiffSql)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -75,13 +76,11 @@ func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	hostname := config.GetHostName()
 	for _, info := range rapplyTimeDiffs {
 		ch <- prometheus.MustNewConstMetric(
 			c.timeDiffDesc,
 			prometheus.GaugeValue,
-			NullFloat64ToFloat64(info.TimeDiff),
-			hostname,
+			utils.NullFloat64ToFloat64(info.TimeDiff),
 		)
 	}
 }

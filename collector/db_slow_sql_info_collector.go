@@ -4,7 +4,9 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"time"
@@ -13,6 +15,12 @@ import (
 type SessionInfoCollector struct {
 	db              *sql.DB
 	slowSQLInfoDesc *prometheus.Desc
+	dataSource      string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *SessionInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // 定义数据结构
@@ -32,7 +40,7 @@ func NewSlowSessionInfoCollector(db *sql.DB) MetricCollector {
 		slowSQLInfoDesc: prometheus.NewDesc(
 			dmdbms_slow_sql_info,
 			"Information about slow SQL statements",
-			[]string{"host_name", "sess_id", "curr_sch", "thrd_id", "last_recv_time", "conn_ip", "slow_sql"},
+			[]string{"sess_id", "curr_sch", "thrd_id", "last_recv_time", "conn_ip", "slow_sql"},
 			nil,
 		),
 	}
@@ -43,28 +51,21 @@ func (c *SessionInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	if !config.GlobalConfig.CheckSlowSQL {
-		logger.Logger.Debug("CheckSlowSQL is false, skip collecting slow SQL info")
-		return
-	}
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
-
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if !config.Global.GetCheckSlowSQL() {
+		logger.Logger.Debugf("[%s] CheckSlowSQL is false, skip collecting slow SQL info", c.dataSource)
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, config.GlobalConfig.SlowSqlTime, config.GlobalConfig.SlowSqlMaxRows)
+	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, config.Global.GetSlowSqlTime(), config.Global.GetSlowSqlMaxRows())
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -73,30 +74,29 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info SessionInfo
 		if err := rows.Scan(&info.ExecTime, &info.SlowSQL, &info.SessID, &info.CurrSch, &info.ThrdID, &info.LastRecvTime, &info.ConnIP); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		sessionInfos = append(sessionInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 	for _, info := range sessionInfos {
-		hostName := config.GetHostName()
-		sessionID := NullStringToString(info.SessID)
-		currentSchema := NullStringToString(info.CurrSch)
-		threadID := NullStringToString(info.ThrdID)
-		lastRecvTime := NullTimeToString(info.LastRecvTime)
-		connIP := NullStringToString(info.ConnIP)
-		slowSQL := NullStringToString(info.SlowSQL)
+		sessionID := utils.NullStringToString(info.SessID)
+		currentSchema := utils.NullStringToString(info.CurrSch)
+		threadID := utils.NullStringToString(info.ThrdID)
+		lastRecvTime := utils.NullTimeToString(info.LastRecvTime)
+		connIP := utils.NullStringToString(info.ConnIP)
+		slowSQL := utils.NullStringToString(info.SlowSQL)
 
 		ch <- prometheus.MustNewConstMetric(
 			c.slowSQLInfoDesc,
 			prometheus.GaugeValue,
-			NullFloat64ToFloat64(info.ExecTime),
-			hostName, sessionID, currentSchema, threadID, lastRecvTime, connIP, slowSQL,
+			utils.NullFloat64ToFloat64(info.ExecTime),
+			sessionID, currentSchema, threadID, lastRecvTime, connIP, slowSQL,
 		)
 	}
 }

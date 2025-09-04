@@ -4,7 +4,9 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"go.uber.org/zap"
@@ -24,6 +26,12 @@ type DBInstanceRunningInfoCollector struct {
 	statusOccursDesc    *prometheus.Desc
 	switchingOccursDesc *prometheus.Desc
 	dbStartDayDesc      *prometheus.Desc
+	dataSource          string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DBInstanceRunningInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 const (
@@ -41,55 +49,55 @@ func NewDBInstanceRunningInfoCollector(db *sql.DB) MetricCollector {
 		startTimeDesc: prometheus.NewDesc(
 			dmdbms_start_time_info,
 			"Database status time",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		statusDesc: prometheus.NewDesc(
 			dmdbms_status_info,
 			"Database status, value info: open = 1,mount = 2,suspend = 3 ,other = 4",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		modeDesc: prometheus.NewDesc(
 			dmdbms_mode_info,
 			"Database mode, value info: primary = 1,normal = 2,standby = 3 ,other = 4",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		trxNumDesc: prometheus.NewDesc(
 			dmdbms_trx_info,
 			"Number of transactions",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		deadlockDesc: prometheus.NewDesc(
 			dmdbms_dead_lock_num_info,
 			"Number of deadlocks",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		threadNumDesc: prometheus.NewDesc(
 			dmdbms_thread_num_info,
 			"Number of threads",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		statusOccursDesc: prometheus.NewDesc( //这个是数据库状态切换的标识  OPEN
 			dmdbms_db_status_occurs,
 			"status changes status, value info: false is 0 , true is 1",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 		switchingOccursDesc: prometheus.NewDesc(
 			dmdbms_switching_occurs,
 			"Database instance switching occurs， value info:  error is 0 , true is 1  ",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 		dbStartDayDesc: prometheus.NewDesc(
 			dmdbms_start_day,
 			"Database instance start_day ",
-			[]string{"host_name"}, // 添加标签
+			[]string{}, // 移除host_name标签
 			nil,
 		),
 	}
@@ -108,23 +116,17 @@ func (c *DBInstanceRunningInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := checkDBConnection(c.db); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDBInstanceRunningInfoSqlStr)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -134,7 +136,7 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	if rows.Next() {
 		var startTimeStr, statusStr, modeStr, trxNumStr, deadlockNumStr, threadNumStr string
 		if err := rows.Scan(&startTimeStr, &statusStr, &modeStr, &trxNumStr, &deadlockNumStr, &threadNumStr, &dbStartDay); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			return
 		}
 		status, _ = strconv.ParseFloat(statusStr, 64)
@@ -146,19 +148,19 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		// 加载东八区（北京时间）时区
 		loc, err := time.LoadLocation("Asia/Shanghai")
 		if err != nil {
-			logger.Logger.Error("Error loading time location", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error loading time location", c.dataSource), zap.Error(err))
 		}
 		// 解析时间字符串为 time.Time 类型，并指定东八区时区
 		startTime, err := time.ParseInLocation("2006-01-02 15:04:05", startTimeStr, loc)
 		if err != nil {
-			logger.Logger.Error("Error parsing start time", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error parsing start time", c.dataSource), zap.Error(err))
 			// 如果转换失败则赋予默认时间值（此处使用东八区）
 			startTime = time.Date(2006, time.January, 1, 0, 0, 0, 0, loc)
 		}
 		/*		// 解析时间戳字符串为 time.Time 类型
 				startTime, err := time.Parse("2006-01-02 15:04:05", startTimeStr)
 				if err != nil {
-					logger.Logger.Error("Error parsing start time", zap.Error(err))
+					logger.Logger.Error(fmt.Sprintf("[%s] Error parsing start time", c.dataSource), zap.Error(err))
 					// 如果转换失败则赋予默认时间值
 					var defaultTime = time.Date(2006, time.January, 1, 0, 0, 0, 0, loc)
 					startTime = defaultTime
@@ -199,14 +201,14 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (c *DBInstanceRunningInfoCollector) collectMetrics(ch chan<- prometheus.Metric, data map[string]float64) {
-	ch <- prometheus.MustNewConstMetric(c.startTimeDesc, prometheus.GaugeValue, data["startTime"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.statusDesc, prometheus.GaugeValue, data["status"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.modeDesc, prometheus.GaugeValue, data["mode"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.trxNumDesc, prometheus.GaugeValue, data["trxNum"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.deadlockDesc, prometheus.GaugeValue, data["deadlockNum"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.threadNumDesc, prometheus.GaugeValue, data["threadNum"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.statusOccursDesc, prometheus.GaugeValue, data["status"], config.GetHostName())
-	ch <- prometheus.MustNewConstMetric(c.dbStartDayDesc, prometheus.GaugeValue, data["dbStartDay"], config.GetHostName())
+	ch <- prometheus.MustNewConstMetric(c.startTimeDesc, prometheus.GaugeValue, data["startTime"])
+	ch <- prometheus.MustNewConstMetric(c.statusDesc, prometheus.GaugeValue, data["status"])
+	ch <- prometheus.MustNewConstMetric(c.modeDesc, prometheus.GaugeValue, data["mode"])
+	ch <- prometheus.MustNewConstMetric(c.trxNumDesc, prometheus.GaugeValue, data["trxNum"])
+	ch <- prometheus.MustNewConstMetric(c.deadlockDesc, prometheus.GaugeValue, data["deadlockNum"])
+	ch <- prometheus.MustNewConstMetric(c.threadNumDesc, prometheus.GaugeValue, data["threadNum"])
+	ch <- prometheus.MustNewConstMetric(c.statusOccursDesc, prometheus.GaugeValue, data["status"])
+	ch <- prometheus.MustNewConstMetric(c.dbStartDayDesc, prometheus.GaugeValue, data["dbStartDay"])
 }
 
 /*
@@ -219,50 +221,24 @@ Default Case：如果 AlarmSwitchStr 缓存键不存在，设置 switchingOccurs
 func (c *DBInstanceRunningInfoCollector) handleDatabaseModeSwitch(ch chan<- prometheus.Metric, mode float64) {
 	modeStr := strconv.FormatFloat(mode, 'f', -1, 64)
 
-	cachedModeValue, modeExists := config.GetFromCache(AlarmSwitchStr) //这个key存储的是 mode值
-	switchOccurExists := config.GetKeyExists(AlarmSwitchOccur)         //这个key表示已经发生切换了，保留的时间
+	// 使用带数据源的缓存键
+	switchStrKey := fmt.Sprintf("%s_%s", AlarmSwitchStr, c.dataSource)
+	switchOccurKey := fmt.Sprintf("%s_%s", AlarmSwitchOccur, c.dataSource)
+
+	cachedModeValue, modeExists := config.GetFromCache(switchStrKey) //这个key存储的是 mode值
+	switchOccurExists := config.GetKeyExists(switchOccurKey)         //这个key表示已经发生切换了，保留的时间
 
 	switch {
 	case switchOccurExists:
-		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual, config.GetHostName())
+		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual)
 	case modeExists && cachedModeValue == modeStr:
-		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
+		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal)
 	case modeExists:
-		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual, config.GetHostName())
-		config.DeleteFromCache(AlarmSwitchStr)
-		config.SetCache(AlarmSwitchOccur, strconv.Itoa(AlarmStatus_Unusual), time.Minute*time.Duration(config.GlobalConfig.AlarmKeyCacheTime))
+		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual)
+		config.DeleteFromCache(switchStrKey)
+		config.SetCache(switchOccurKey, strconv.Itoa(AlarmStatus_Unusual), time.Minute*time.Duration(config.Global.GetAlarmKeyCacheTime()))
 	default:
-		config.SetCache(AlarmSwitchStr, modeStr, time.Minute*time.Duration(config.GlobalConfig.BigKeyDataCacheTime))
-		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
+		config.SetCache(switchStrKey, modeStr, time.Minute*time.Duration(config.Global.GetAlarmKeyCacheTime()*2))
+		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal)
 	}
 }
-
-/*
-func (c *DBInstanceRunningInfoCollector) handleDatabaseModeSwitch(ch chan<- prometheus.Metric, mode float64) {
-	//，'f'表示以小数形式输出，-1表示将所有小数位都输出，64表示mode的类型是float64。
-	modeStr := strconv.FormatFloat(mode, 'f', -1, 64)
-
-	if config.GetKeyExists(AlarmSwitchOccur) {
-		// 如果key存在表名发生过切换
-		ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual, config.GetHostName())
-	} else {
-		// 判断是否发生切换
-		if config.GetKeyExists(AlarmSwitchStr) {
-			// 判断模式是否发生切换
-			if cachedMode, found := config.GetFromCache(AlarmSwitchStr); found && cachedMode == modeStr {
-				// 模式未发生变化
-				ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
-			} else {
-				// 模式发生变化
-				ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Unusual, config.GetHostName())
-				config.DeleteFromCache(AlarmSwitchStr)
-				config.SetCache(AlarmSwitchOccur, strconv.Itoa(AlarmStatus_Unusual), 30*time.Minute)
-			}
-		} else {
-			// 第一次出现，更新缓存
-			config.SetCache(AlarmSwitchStr, modeStr, 30*time.Minute)
-			ch <- prometheus.MustNewConstMetric(c.switchingOccursDesc, prometheus.GaugeValue, AlarmStatus_Normal, config.GetHostName())
-		}
-	}
-}
-*/

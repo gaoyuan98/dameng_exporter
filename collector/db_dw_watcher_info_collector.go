@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -23,6 +24,12 @@ type DbDwWatcherInfo struct {
 type DbDwWatcherInfoCollector struct {
 	db                *sql.DB
 	dwWatcherInfoDesc *prometheus.Desc
+	dataSource        string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbDwWatcherInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbDwWatcherInfoCollector(db *sql.DB) MetricCollector {
@@ -31,7 +38,7 @@ func NewDbDwWatcherInfoCollector(db *sql.DB) MetricCollector {
 		dwWatcherInfoDesc: prometheus.NewDesc(
 			dmdbms_dw_watcher_info,
 			"Information about DM database Instance Watcher info, dw_status value info:  open = 1,mount = 2,suspend = 3 ,other = 4",
-			[]string{"host_name", "dw_mode", "dw_status", "auto_restart"},
+			[]string{"dw_mode", "dw_status", "auto_restart"},
 			nil,
 		),
 	}
@@ -42,24 +49,17 @@ func (c *DbDwWatcherInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbDwWatcherInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDwWatcherInfoSql)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -78,21 +78,20 @@ func (c *DbDwWatcherInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		logger.Logger.Error("Error with rows", zap.Error(err))
 	}
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	for _, info := range dbDwWatcherInfos {
-		//[]string{"host_name", "pid", "level", "log_time", "txt"}
+		//[]string{"dw_mode", "dw_status", "auto_restart"}
 
-		dwMode := NullStringToString(info.DwMode)
-		dwStatus := NullStringToString(info.DwStatus)
-		autoRestart := NullStringToString(info.AutoRestart)
-		dwStatusToNum := NullFloat64ToFloat64(info.DwStatusToNum)
+		dwMode := utils.NullStringToString(info.DwMode)
+		dwStatus := utils.NullStringToString(info.DwStatus)
+		autoRestart := utils.NullStringToString(info.AutoRestart)
+		dwStatusToNum := utils.NullFloat64ToFloat64(info.DwStatusToNum)
 
 		ch <- prometheus.MustNewConstMetric(
 			c.dwWatcherInfoDesc,
 			prometheus.GaugeValue,
 			dwStatusToNum,
-			hostname, dwMode, dwStatus, autoRestart,
+			dwMode, dwStatus, autoRestart,
 		)
 	}
 }

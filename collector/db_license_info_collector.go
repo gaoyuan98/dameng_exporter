@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,6 +22,12 @@ type DbLicenseInfo struct {
 type DbLicenseCollector struct {
 	db              *sql.DB
 	licenseDateDesc *prometheus.Desc
+	dataSource      string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbLicenseCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbLicenseCollector(db *sql.DB) MetricCollector {
@@ -29,7 +36,7 @@ func NewDbLicenseCollector(db *sql.DB) MetricCollector {
 		licenseDateDesc: prometheus.NewDesc(
 			dmdbms_license_date,
 			"Information about DM database license expiration date",
-			[]string{"host_name", "date_day_str"},
+			[]string{"date_day_str"},
 			nil,
 		),
 	}
@@ -40,24 +47,17 @@ func (c *DbLicenseCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDbGrantInfoSql)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -66,42 +66,41 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info DbLicenseInfo
 		if err := rows.Scan(&info.ExpiredDate); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		licenseInfos = append(licenseInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 
-	hostname := config.GetHostName()
 	for _, info := range licenseInfos {
-		expiredDateStr := NullStringToString(info.ExpiredDate)
+		expiredDateStr := utils.NullStringToString(info.ExpiredDate)
 		var returnDateStr string
 		var licenseStatus string
 		if expiredDateStr != "" {
 			expiredDate, err := time.Parse("20060102", expiredDateStr)
 			if err != nil {
-				logger.Logger.Error("Error parsing date", zap.Error(err))
+				logger.Logger.Error(fmt.Sprintf("[%s] Error parsing date", c.dataSource), zap.Error(err))
 				continue
 			}
 			betweenDay := expiredDate.Sub(time.Now()).Hours() / 24
 			returnDateStr = fmt.Sprintf("%.0f", betweenDay)
 			licenseStatus = returnDateStr
-			logger.Logger.Infof("Check Database License Date Info Success, betweenDay is %s day", returnDateStr)
+			logger.Logger.Infof("[%s] Check Database License Date Info Success, betweenDay is %s day", c.dataSource, returnDateStr)
 		} else {
 			licenseStatus = "无限制"
 			returnDateStr = "-1"
-			logger.Logger.Debugf("Check Database License Date Info Success, Expired Unlimited")
+			logger.Logger.Debugf("[%s] Check Database License Date Info Success, Expired Unlimited", c.dataSource)
 		}
 
 		ch <- prometheus.MustNewConstMetric(
 			c.licenseDateDesc,
 			prometheus.GaugeValue,
 			parseToFloat64(returnDateStr),
-			hostname, licenseStatus,
+			licenseStatus,
 		)
 	}
 

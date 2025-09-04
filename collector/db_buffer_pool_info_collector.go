@@ -4,7 +4,9 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"time"
@@ -20,6 +22,12 @@ type BufferPoolInfo struct {
 type DbBufferPoolInfoCollector struct {
 	db                 *sql.DB
 	bufferPoolInfoDesc *prometheus.Desc
+	dataSource         string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbBufferPoolInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbBufferPoolCollector(db *sql.DB) MetricCollector {
@@ -28,7 +36,7 @@ func NewDbBufferPoolCollector(db *sql.DB) MetricCollector {
 		bufferPoolInfoDesc: prometheus.NewDesc(
 			dmdbms_bufferpool_info,
 			"Information about DM database bufferpool return hitRate",
-			[]string{"host_name", "buffer_name"},
+			[]string{"buffer_name"},
 			nil,
 		),
 	}
@@ -39,24 +47,17 @@ func (c *DbBufferPoolInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbBufferPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryBufferPoolHitRateInfoSql)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -65,27 +66,26 @@ func (c *DbBufferPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info BufferPoolInfo
 		if err := rows.Scan(&info.bufferName, &info.hitRate); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		bufferPoolInfos = append(bufferPoolInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	for _, info := range bufferPoolInfos {
 
-		bufferName := NullStringToString(info.bufferName)
-		hitRate := NullFloat64ToFloat64(info.hitRate)
+		bufferName := utils.NullStringToString(info.bufferName)
+		hitRate := utils.NullFloat64ToFloat64(info.hitRate)
 		ch <- prometheus.MustNewConstMetric(
 			c.bufferPoolInfoDesc,
 			prometheus.GaugeValue,
 			hitRate,
-			hostname, bufferName,
+			bufferName,
 		)
 	}
 }

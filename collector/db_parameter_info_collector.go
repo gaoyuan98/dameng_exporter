@@ -4,7 +4,9 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"time"
@@ -20,6 +22,12 @@ type IniParameterInfo struct {
 type IniParameterCollector struct {
 	db                *sql.DB
 	parameterInfoDesc *prometheus.Desc
+	dataSource        string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *IniParameterCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewIniParameterCollector(db *sql.DB) MetricCollector {
@@ -28,7 +36,7 @@ func NewIniParameterCollector(db *sql.DB) MetricCollector {
 		parameterInfoDesc: prometheus.NewDesc(
 			dmdbms_parameter_info,
 			"Information about DM database parameters",
-			[]string{"host_name", "param_name"},
+			[]string{"param_name"},
 			nil,
 		),
 	}
@@ -40,24 +48,17 @@ func (c *IniParameterCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryParameterInfoSql)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -66,25 +67,24 @@ func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info IniParameterInfo
 		if err := rows.Scan(&info.ParaName, &info.ParaValue); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		iniParameterInfos = append(iniParameterInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 
 	// 发送数据到 Prometheus
-	hostname := config.GetHostName()
 	for _, info := range iniParameterInfos {
-		paramName := NullStringToString(info.ParaName)
+		paramName := utils.NullStringToString(info.ParaName)
 		ch <- prometheus.MustNewConstMetric(
 			c.parameterInfoDesc,
 			prometheus.GaugeValue,
-			NullFloat64ToFloat64(info.ParaValue),
-			hostname, paramName,
+			utils.NullFloat64ToFloat64(info.ParaValue),
+			paramName,
 		)
 	}
 }

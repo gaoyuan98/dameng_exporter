@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"strings"
@@ -17,6 +18,12 @@ import (
 type DbVersionCollector struct {
 	db              *sql.DB
 	versionInfoDesc *prometheus.Desc
+	dataSource      string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbVersionCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // 版本信息结构体
@@ -33,7 +40,7 @@ func NewDbVersionCollector(db *sql.DB) MetricCollector {
 		versionInfoDesc: prometheus.NewDesc(
 			dmdbms_version,
 			"Information about DM database version",
-			[]string{"host_name", "db_version_str", "build_type", "inner_ver"},
+			[]string{"db_version_str", "build_type", "inner_ver"},
 			nil,
 		),
 	}
@@ -44,36 +51,56 @@ func (c *DbVersionCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	// 构建缓存键，包含数据源标识
+	cacheKey := fmt.Sprintf("db_version_info_%s", c.dataSource)
+
+	// 尝试从缓存获取版本信息
+	if cachedValue, found := config.GetFromCache(cacheKey); found {
+		// 缓存值格式: "idCode|buildType|innerVer"
+		parts := strings.Split(cachedValue, "|")
+		if len(parts) == 3 {
+			logger.Logger.Debugf("[%s] Using cached database version info", c.dataSource)
+			ch <- prometheus.MustNewConstMetric(
+				c.versionInfoDesc,
+				prometheus.GaugeValue,
+				1,
+				parts[0], // idCode
+				parts[1], // buildType
+				parts[2], // innerVer
+			)
+			return
+		}
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	// 尝试使用V2版本获取版本信息
-	versionInfo, err := getDbVersionV2(ctx, c.db)
+	versionInfo, err := c.getDbVersionV2(ctx, c.db)
 	if err != nil {
 		logger.Logger.Warn("V2 version query failed, falling back to V1 version", zap.Error(err))
 		// 如果V2版本失败，使用V1版本
-		dbVersion, err := getDbVersionV1(ctx, c.db)
+		dbVersion, err := c.getDbVersionV1(ctx, c.db)
 		if err != nil {
-			logger.Logger.Error("exec getDbVersionV1 func error", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] exec getDbVersionV1 func error", c.dataSource), zap.Error(err))
 			return
 		}
+
+		// 缓存V1版本信息
+		cacheValue := fmt.Sprintf("%s||", dbVersion)
+		config.SetCache(cacheKey, cacheValue, time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
+		logger.Logger.Debugf("[%s] Database version info (V1) cached", c.dataSource)
+
 		// 使用V1版本时，新增标签填充空值
 		ch <- prometheus.MustNewConstMetric(
 			c.versionInfoDesc,
 			prometheus.GaugeValue,
 			1,
-			config.GetHostName(),
 			dbVersion,
 			"", // build_type为空
 			"", // inner_ver为空
@@ -81,20 +108,27 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
+	// 缓存V2版本信息
+	cacheValue := fmt.Sprintf("%s|%s|%s",
+		utils.NullStringToString(versionInfo.idCode),
+		utils.NullStringToString(versionInfo.buildType),
+		utils.NullStringToString(versionInfo.innerVer))
+	config.SetCache(cacheKey, cacheValue, time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
+	logger.Logger.Debugf("[%s] Database version info (V2) cached", c.dataSource)
+
 	// 发送V2版本信息到Prometheus
 	ch <- prometheus.MustNewConstMetric(
 		c.versionInfoDesc,
 		prometheus.GaugeValue,
 		1,
-		config.GetHostName(),
-		NullStringToString(versionInfo.idCode),
-		NullStringToString(versionInfo.buildType),
-		NullStringToString(versionInfo.innerVer),
+		utils.NullStringToString(versionInfo.idCode),
+		utils.NullStringToString(versionInfo.buildType),
+		utils.NullStringToString(versionInfo.innerVer),
 	)
 }
 
 // 获取数据库版本信息 V2版本
-func getDbVersionV2(ctx context.Context, db *sql.DB) (*DbVersionInfo, error) {
+func (c *DbVersionCollector) getDbVersionV2(ctx context.Context, db *sql.DB) (*DbVersionInfo, error) {
 	var versionInfo DbVersionInfo
 
 	row := db.QueryRowContext(ctx, config.QueryVersionInfoSqlStr)
@@ -103,12 +137,12 @@ func getDbVersionV2(ctx context.Context, db *sql.DB) (*DbVersionInfo, error) {
 		return nil, err
 	}
 
-	logger.Logger.Debugf("Check Database version Info V2 Success, version info: %+v", versionInfo)
+	logger.Logger.Debugf("[%s] Check Database version Info V2 Success, version info: %+v", c.dataSource, versionInfo)
 	return &versionInfo, nil
 }
 
 // 获取数据库版本信息 V1版本
-func getDbVersionV1(ctx context.Context, db *sql.DB) (string, error) {
+func (c *DbVersionCollector) getDbVersionV1(ctx context.Context, db *sql.DB) (string, error) {
 	var dbVersion string
 
 	query := `SELECT /*+DM_EXPORTER*/ position('BUILD_VERSION', to_char(TABLEDEF('SYS', 'V$INSTANCE'))) POS FROM dual`
@@ -142,6 +176,6 @@ func getDbVersionV1(ctx context.Context, db *sql.DB) (string, error) {
 		dbVersion = strings.TrimSpace(dbVersion)
 	}
 
-	logger.Logger.Debugf("Check Database version Info V1 Success, version value %s", dbVersion)
+	logger.Logger.Debugf("[%s] Check Database version Info V1 Success, version value %s", c.dataSource, dbVersion)
 	return dbVersion, nil
 }

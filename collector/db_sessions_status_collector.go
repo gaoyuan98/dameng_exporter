@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -15,12 +16,18 @@ type DBSessionsStatusCollector struct {
 	db                    *sql.DB
 	sessionTypeDesc       *prometheus.Desc
 	sessionPercentageDesc *prometheus.Desc
+	dataSource            string // 数据源名称
 }
 
 // DBSessionsStatusInfo 结构体
 type DBSessionsStatusInfo struct {
 	stateType sql.NullString
 	countVal  sql.NullFloat64
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DBSessionsStatusCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 // NewDBSessionsStatusCollector 函数
@@ -30,13 +37,13 @@ func NewDBSessionsStatusCollector(db *sql.DB) MetricCollector {
 		sessionTypeDesc: prometheus.NewDesc(
 			dmdbms_session_type_Info,
 			"Number of database sessions type status",
-			[]string{"host_name", "session_type"},
+			[]string{"session_type"},
 			nil,
 		),
 		sessionPercentageDesc: prometheus.NewDesc(
 			dmdbms_session_percentage,
 			"Number of database sessions type percentage,method: total/max_session * 100%",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 	}
@@ -49,27 +56,20 @@ func (c *DBSessionsStatusCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
 	//保存全局结果对象
 	var sessionsStatusInfos []DBSessionsStatusInfo
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDBSessionsStatusSqlStr)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
 	}
 	defer rows.Close()
@@ -91,11 +91,11 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	// 发送数据到 Prometheus
 	for _, info := range sessionsStatusInfos {
 		if info.stateType.Valid && info.stateType.String == "MAX_SESSION" {
-			maxSession = NullFloat64ToFloat64(info.countVal)
+			maxSession = utils.NullFloat64ToFloat64(info.countVal)
 		} else if info.stateType.Valid && info.stateType.String == "TOTAL" {
-			totalSession = NullFloat64ToFloat64(info.countVal)
+			totalSession = utils.NullFloat64ToFloat64(info.countVal)
 		}
-		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, NullFloat64ToFloat64(info.countVal), config.GetHostName(), NullStringToString(info.stateType))
+		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, utils.NullFloat64ToFloat64(info.countVal), utils.NullStringToString(info.stateType))
 	}
 
 	div := float64(0)
@@ -106,6 +106,6 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		div = 0
 	}
 	//eg：计算百分比，此处没有计算百分比
-	ch <- prometheus.MustNewConstMetric(c.sessionPercentageDesc, prometheus.GaugeValue, div, "")
+	ch <- prometheus.MustNewConstMetric(c.sessionPercentageDesc, prometheus.GaugeValue, div)
 
 }

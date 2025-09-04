@@ -4,10 +4,9 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,29 +20,7 @@ const (
 	DB_ARCH_INVALID   = 2
 )
 
-// 定义收集器结构体
-type DbArchStatusCollector struct {
-	db                       *sql.DB
-	archStatusDesc           *prometheus.Desc //归档状态(本地)
-	archSwitchRateDesc       *prometheus.Desc //归档切换频率
-	archSwitchRateDetailInfo *prometheus.Desc //归档切换频率详情
-	archStatusInfo           *prometheus.Desc //归档所有状态
-	archSendDetailInfo       *prometheus.Desc //归档状态的发送详情
-	archSendDiffValue        *prometheus.Desc //归档发送的差值
-}
-
-// 20250311 新增如果归档开启的话 返回这个归档跟上一个归档的间隔时间
-// 定义数据结构
-type DbArchSwitchRateInfo struct {
-	status     sql.NullString
-	createTime sql.NullString
-	path       sql.NullString
-	clsn       sql.NullString
-	srcDbMagic sql.NullString
-	minusDiff  sql.NullFloat64
-}
-
-// 20250401 新增归档状态的所有信息不仅限于local状态
+// DbArchStatusInfo 归档状态信息
 type DbArchStatusInfo struct {
 	archType   sql.NullString
 	archDest   sql.NullString
@@ -51,59 +28,33 @@ type DbArchStatusInfo struct {
 	archStatus sql.NullFloat64
 }
 
-// 20250401 新增归档状态的发送详情
-// SELECT ARCH_DEST,ARCH_TYPE,LSN_DIFFERENCE,LAST_SEND_CODE,LAST_SEND_DESC,TO_CHAR(LAST_START_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_START_TIME,TO_CHAR(LAST_END_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_END_TIME,LAST_SEND_TIME FROM V$ARCH_SEND_INFO;
-type DbArchSendDetailInfo struct {
-	archDest      sql.NullString
-	archType      sql.NullString
-	lsnDiff       sql.NullFloat64
-	lastSendCode  sql.NullString
-	lastSendDesc  sql.NullString
-	lastStartTime sql.NullString
-	lastEndTime   sql.NullString
-	lastSendTime  sql.NullString
+// DbArchStatusCollector 归档基础状态采集器
+type DbArchStatusCollector struct {
+	db             *sql.DB
+	archStatusDesc *prometheus.Desc // 归档状态(本地)
+	archStatusInfo *prometheus.Desc // 归档所有状态
+	dataSource     string           // 数据源名称
 }
 
-// 初始化收集器
+// SetDataSource 实现DataSourceAware接口
+func (c *DbArchStatusCollector) SetDataSource(name string) {
+	c.dataSource = name
+}
+
+// NewDbArchStatusCollector 初始化归档状态采集器
 func NewDbArchStatusCollector(db *sql.DB) MetricCollector {
 	return &DbArchStatusCollector{
 		db: db,
 		archStatusDesc: prometheus.NewDesc(
 			dmdbms_arch_status,
 			"Information about DM database archive status, value info: vaild = 1,invaild = 2,no_enable= -1",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
-		archSwitchRateDesc: prometheus.NewDesc(
-			dmdbms_arch_switch_rate,
-			"Information about DM database archive switch rate，Always output the most recent piece of data",
-			[]string{"host_name" /*, "status", "createTime", "path", "clsn", "srcDbMagic"*/},
-			nil,
-		),
-		archSwitchRateDetailInfo: prometheus.NewDesc(
-			dmdbms_arch_switch_rate_detail_info,
-			"Information about DM database archive switch rate info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
-			[]string{"host_name", "status", "createTime", "path", "clsn", "srcDbMagic"},
-			nil,
-		),
-
 		archStatusInfo: prometheus.NewDesc(
 			dmdbms_arch_status_info,
 			"Information about DM database archive status, value info: vaild = 1,invaild = 0",
-			[]string{"host_name", "arch_type", "arch_dest", "arch_src"},
-			nil,
-		),
-
-		archSendDetailInfo: prometheus.NewDesc(
-			dmdbms_arch_send_detail_info,
-			"Information about DM database archive send detail info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
-			[]string{"host_name", "arch_type", "arch_dest", "last_send_code", "last_send_desc", "last_start_time", "last_end_time", "last_send_time"},
-			nil,
-		),
-		archSendDiffValue: prometheus.NewDesc(
-			dmdbms_arch_send_diff_value,
-			"Information about DM database archive send detail info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
-			[]string{"host_name", "arch_type", "arch_dest"},
+			[]string{"arch_type", "arch_dest", "arch_src"},
 			nil,
 		),
 	}
@@ -111,135 +62,62 @@ func NewDbArchStatusCollector(db *sql.DB) MetricCollector {
 
 func (c *DbArchStatusCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.archStatusDesc
-	ch <- c.archSwitchRateDesc
-	ch <- c.archSwitchRateDetailInfo
 	ch <- c.archStatusInfo
-	ch <- c.archSendDetailInfo
-	ch <- c.archSendDiffValue
 }
 
 func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
-
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
 	// 获取数据库归档状态信息
-	dbArchStatus, err := getDbArchStatus(ctx, c.db)
+	dbArchStatus, err := c.getDbArchStatus(ctx, c.db)
 	if err != nil {
-		logger.Logger.Error("exec getDbArchStatus func error", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] exec getDbArchStatus func error", c.dataSource), zap.Error(err))
 		setArchMetric(ch, c.archStatusDesc, DB_ARCH_INVALID)
 		return
 	}
 
+	// 发送归档状态指标
 	setArchMetric(ch, c.archStatusDesc, dbArchStatus)
-	//如果归档是开启的，则查询归档切换频率
-	if dbArchStatus == DB_ARCH_VALID {
-		//查询语句并封装对象
-		dbArchSwitchRateInfo, err := getDbArchSwitchRate(ctx, c.db)
-		if err != nil {
-			//logger.Logger.Error("exec getDbArchSwitchRate func error", zap.Error(err))
-			return
-		}
-		clsn := NullStringToString(dbArchSwitchRateInfo.clsn)
-		srcDbMagic := NullStringToString(dbArchSwitchRateInfo.srcDbMagic)
-		status := NullStringToString(dbArchSwitchRateInfo.status)
-		path := NullStringToString(dbArchSwitchRateInfo.path)
-		createTime := NullStringToString(dbArchSwitchRateInfo.createTime)
-		minusDiff := NullFloat64ToFloat64(dbArchSwitchRateInfo.minusDiff)
-		hostname := config.GetHostName()
-		//做折线图
-		ch <- prometheus.MustNewConstMetric(
-			c.archSwitchRateDesc,
-			prometheus.GaugeValue,
-			minusDiff,
-			hostname,
-		)
-		//归档切换的详细信息
-		ch <- prometheus.MustNewConstMetric(
-			c.archSwitchRateDetailInfo,
-			prometheus.GaugeValue,
-			minusDiff,
-			hostname, status, createTime, path, clsn, srcDbMagic,
-		)
 
-		//查询所有归档的状态信息
-		dbArchStatusInfos, err := getDbArchStatusInfo(ctx, c.db)
+	// 如果归档开启，查询所有归档的状态信息
+	if dbArchStatus == DB_ARCH_VALID {
+		dbArchStatusInfos, err := c.getDbArchStatusInfo(ctx, c.db)
 		if err != nil {
-			logger.Logger.Error("exec getDbArchStatusInfo func error", zap.Error(err))
+			logger.Logger.Error(fmt.Sprintf("[%s] exec getDbArchStatusInfo func error", c.dataSource), zap.Error(err))
 			return
 		}
+
 		for _, dbArchStatusInfo := range dbArchStatusInfos {
-			archType := NullStringToString(dbArchStatusInfo.archType)
-			archDest := NullStringToString(dbArchStatusInfo.archDest)
-			archSrc := NullStringToString(dbArchStatusInfo.archSrc)
-			archStatus := NullFloat64ToFloat64(dbArchStatusInfo.archStatus)
+			archType := utils.NullStringToString(dbArchStatusInfo.archType)
+			archDest := utils.NullStringToString(dbArchStatusInfo.archDest)
+			archSrc := utils.NullStringToString(dbArchStatusInfo.archSrc)
+			archStatus := utils.NullFloat64ToFloat64(dbArchStatusInfo.archStatus)
+
 			ch <- prometheus.MustNewConstMetric(
 				c.archStatusInfo,
 				prometheus.GaugeValue,
 				archStatus,
-				hostname, archType, archDest, archSrc,
+				archType, archDest, archSrc,
 			)
 		}
-
-		//查询所有归档发送详情信息
-		dbArchSendInfos, err := getDbArchSendDetailInfo(ctx, c.db)
-		if err != nil {
-			logger.Logger.Error("exec getDbArchSendDetailInfo func error", zap.Error(err))
-			return
-		}
-		for _, dbArchSendInfo := range dbArchSendInfos {
-			archType := NullStringToString(dbArchSendInfo.archType)
-			archDest := NullStringToString(dbArchSendInfo.archDest)
-			lsnDiff := NullFloat64ToFloat64(dbArchSendInfo.lsnDiff)
-			lastSendCode := NullStringToString(dbArchSendInfo.lastSendCode)
-			lastSendDesc := NullStringToString(dbArchSendInfo.lastSendDesc)
-			lastStartTime := NullStringToString(dbArchSendInfo.lastStartTime)
-			lastEndTime := NullStringToString(dbArchSendInfo.lastEndTime)
-			lastSendTime := NullStringToString(dbArchSendInfo.lastSendTime)
-			ch <- prometheus.MustNewConstMetric(
-				c.archSendDetailInfo,
-				prometheus.GaugeValue,
-				lsnDiff,
-				hostname, archType, archDest, lastSendCode, lastSendDesc, lastStartTime, lastEndTime, lastSendTime,
-			)
-			//20250605 存放diff差值
-			ch <- prometheus.MustNewConstMetric(
-				c.archSendDiffValue,
-				prometheus.GaugeValue,
-				lsnDiff,
-				hostname, archType, archDest,
-			)
-
-		}
-
 	}
-
 }
 
 func setArchMetric(ch chan<- prometheus.Metric, desc *prometheus.Desc, value int) {
-	hostname := config.GetHostName()
 	ch <- prometheus.MustNewConstMetric(
 		desc,
 		prometheus.GaugeValue,
 		float64(value),
-		hostname,
 	)
-
 }
 
-// 获取数据库归档状态信息
-func getDbArchStatus(ctx context.Context, db *sql.DB) (int, error) {
+// getDbArchStatus 获取数据库归档状态信息
+func (c *DbArchStatusCollector) getDbArchStatus(ctx context.Context, db *sql.DB) (int, error) {
 	var dbArchStatus string
 
 	// 查询 PARA_VALUE
@@ -267,132 +145,33 @@ func getDbArchStatus(ctx context.Context, db *sql.DB) (int, error) {
 		return DB_ARCH_NO_ENABLE, nil
 	}
 
-	logger.Logger.Info("Check Database Arch Status Info Success")
+	logger.Logger.Infof("[%s] Check Database Arch Status Info Success", c.dataSource)
 	return DB_ARCH_INVALID, nil
 }
 
-// 查询归档切换频率
-func getDbArchSwitchRate(ctx context.Context, db *sql.DB) (DbArchSwitchRateInfo, error) {
-
-	var dbArchSwitchRateInfo DbArchSwitchRateInfo
-
-	rows, err := db.QueryContext(ctx, config.QueryArchiveSwitchRateSql)
-	if err != nil {
-		handleDbQueryError(err)
-		return dbArchSwitchRateInfo, err
-	}
-	defer rows.Close()
-	rows.Next()
-	if err := rows.Scan(&dbArchSwitchRateInfo.status, &dbArchSwitchRateInfo.createTime, &dbArchSwitchRateInfo.path, &dbArchSwitchRateInfo.clsn, &dbArchSwitchRateInfo.srcDbMagic, &dbArchSwitchRateInfo.minusDiff); err != nil {
-		logger.Logger.Error("Error scanning row", zap.Error(err))
-		return dbArchSwitchRateInfo, err
-	}
-	return dbArchSwitchRateInfo, nil
-}
-
-// 查询归档的所有状态信息
-func getDbArchStatusInfo(ctx context.Context, db *sql.DB) ([]DbArchStatusInfo, error) {
+// getDbArchStatusInfo 查询归档的所有状态信息
+func (c *DbArchStatusCollector) getDbArchStatusInfo(ctx context.Context, db *sql.DB) ([]DbArchStatusInfo, error) {
 	var dbArchStatusInfos []DbArchStatusInfo
 	rows, err := db.QueryContext(ctx, config.QueryArchiveSendStatusSql)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return dbArchStatusInfos, err
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var dbArchStatusInfo DbArchStatusInfo
-		if err := rows.Scan(&dbArchStatusInfo.archStatus, &dbArchStatusInfo.archType, &dbArchStatusInfo.archDest, &dbArchStatusInfo.archSrc); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+		if err := rows.Scan(&dbArchStatusInfo.archStatus, &dbArchStatusInfo.archType,
+			&dbArchStatusInfo.archDest, &dbArchStatusInfo.archSrc); err != nil {
+			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		dbArchStatusInfos = append(dbArchStatusInfos, dbArchStatusInfo)
 	}
+
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
+
 	return dbArchStatusInfos, nil
-}
-
-var (
-	viewArchApplyInfoCheckOnce      sync.Once
-	viewArchApplyInfoExists         bool
-	viewArchSendInfoFieldsCheckOnce sync.Once
-	viewArchSendInfoFieldsExist     bool
-)
-
-// ViewArchSendInfoFieldsExist 检查V$ARCH_SEND_INFO视图中的特定字段是否存在
-// 检查LAST_SEND_CODE和LAST_SEND_DESC字段是否都存在
-// 使用sync.Once确保检查只执行一次
-// 参数:
-//   - ctx: 上下文，用于控制查询超时
-//   - db: 数据库连接
-//
-// 返回值:
-//   - bool: 两个字段都存在返回true，否则返回false
-func ViewArchSendInfoFieldsExist(ctx context.Context, db *sql.DB) bool {
-	viewArchSendInfoFieldsCheckOnce.Do(func() {
-		var count int
-		if err := db.QueryRowContext(ctx, config.QueryArchSendInfoFieldsExist).Scan(&count); err != nil {
-			logger.Logger.Warn("Failed to check V$ARCH_SEND_INFO fields existence", zap.Error(err))
-			viewArchSendInfoFieldsExist = false
-			return
-		}
-		// 如果count为2，说明两个字段都存在
-		viewArchSendInfoFieldsExist = count == 2
-		logger.Logger.Debugf("V$ARCH_SEND_INFO fields exist: %v (LAST_SEND_CODE，LAST_SEND_DESC)", viewArchSendInfoFieldsExist)
-	})
-	return viewArchSendInfoFieldsExist
-}
-
-// 查询所有归档发送详情信息
-func getDbArchSendDetailInfo(ctx context.Context, db *sql.DB) ([]DbArchSendDetailInfo, error) {
-	//20250509 如果视图V$ARCH_APPLY_INFO存在,则使用视图V$ARCH_APPLY_INFO的RPKG_LSN字段
-	var querySql string
-	if ViewArchApplyInfoExists(ctx, db) {
-		querySql = config.QueryArchSendDetailInfo2
-	} else {
-		querySql = config.QueryArchSendDetailInfo
-	}
-
-	//20250610 检查V$ARCH_SEND_INFO视图中的字段是否存在（LAST_SEND_CODE，LAST_SEND_DESC）
-	if !ViewArchSendInfoFieldsExist(ctx, db) {
-		// 如果字段不存在，将相关字段替换为空字符串
-		querySql = strings.ReplaceAll(querySql, "LAST_SEND_CODE,", "'' AS LAST_SEND_CODE,")
-		querySql = strings.ReplaceAll(querySql, "LAST_SEND_DESC,", "'' AS LAST_SEND_DESC,")
-	}
-
-	var dbArchSendDetailInfos []DbArchSendDetailInfo
-	rows, err := db.QueryContext(ctx, querySql)
-	if err != nil {
-		handleDbQueryError(err)
-		return dbArchSendDetailInfos, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var dbArchSendDetailInfo DbArchSendDetailInfo
-		if err := rows.Scan(&dbArchSendDetailInfo.archDest, &dbArchSendDetailInfo.archType, &dbArchSendDetailInfo.lsnDiff, &dbArchSendDetailInfo.lastSendCode, &dbArchSendDetailInfo.lastSendDesc, &dbArchSendDetailInfo.lastStartTime, &dbArchSendDetailInfo.lastEndTime, &dbArchSendDetailInfo.lastSendTime); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
-			continue
-		}
-		dbArchSendDetailInfos = append(dbArchSendDetailInfos, dbArchSendDetailInfo)
-	}
-	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
-	}
-
-	return dbArchSendDetailInfos, nil
-}
-
-func ViewArchApplyInfoExists(ctx context.Context, db *sql.DB) bool {
-	viewArchApplyInfoCheckOnce.Do(func() {
-		var count int
-		if err := db.QueryRowContext(ctx, config.QueryArchApplyInfoExists).Scan(&count); err != nil {
-			logger.Logger.Warn("V$ARCH_APPLY_INFO not accessible, fallback to alternative query", zap.Error(err))
-			viewArchApplyInfoExists = false
-			return
-		}
-		viewArchApplyInfoExists = count == 1
-		logger.Logger.Debugf("V$ARCH_APPLY_INFO exists: %v", viewArchApplyInfoExists)
-	})
-	return viewArchApplyInfoExists
 }

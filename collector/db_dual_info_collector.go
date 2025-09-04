@@ -4,7 +4,9 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
+	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"time"
@@ -18,6 +20,12 @@ const (
 type DbDualInfoCollector struct {
 	db           *sql.DB
 	dualInfoDesc *prometheus.Desc
+	dataSource   string // 数据源名称
+}
+
+// SetDataSource 实现DataSourceAware接口
+func (c *DbDualInfoCollector) SetDataSource(name string) {
+	c.dataSource = name
 }
 
 func NewDbDualCollector(db *sql.DB) MetricCollector {
@@ -26,7 +34,7 @@ func NewDbDualCollector(db *sql.DB) MetricCollector {
 		dualInfoDesc: prometheus.NewDesc(
 			dmdbms_dual_info,
 			"Information about DM database query dual table info,return false is 0, true is 1",
-			[]string{"host_name"},
+			[]string{},
 			nil,
 		),
 	}
@@ -37,45 +45,37 @@ func (c *DbDualInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbDualInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	funcStart := time.Now()
-	// 时间间隔的计算发生在 defer 语句执行时，确保能够获取到正确的函数执行时间。
-	defer func() {
-		duration := time.Since(funcStart)
-		logger.Logger.Debugf("func exec time：%vms", duration.Milliseconds())
-	}()
 
-	if err := c.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available: %v", zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.GlobalConfig.QueryTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	dualValue := QueryDualInfo(ctx, c.db)
+	dualValue := c.QueryDualInfo(ctx)
 
-	hostname := config.GetHostName()
 	// 发送数据到 Prometheus
 	ch <- prometheus.MustNewConstMetric(
 		c.dualInfoDesc,
 		prometheus.GaugeValue,
 		dualValue,
-		hostname,
 	)
 
 }
 
-func QueryDualInfo(ctx context.Context, db *sql.DB) float64 {
+func (c *DbDualInfoCollector) QueryDualInfo(ctx context.Context) float64 {
 	var dualValue float64
-	rows, err := db.QueryContext(ctx, config.QueryDualInfoSql)
+	rows, err := c.db.QueryContext(ctx, config.QueryDualInfoSql)
 	if err != nil {
-		handleDbQueryError(err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return DB_DUAL_FAILUR
 	}
 	defer rows.Close()
 	rows.Next()
 	err = rows.Scan(&dualValue)
 	if err != nil {
+		logger.Logger.Error(fmt.Sprintf("[%s] Error scanning dual value", c.dataSource), zap.Error(err))
 		return DB_DUAL_FAILUR
 	}
 
