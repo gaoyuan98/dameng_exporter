@@ -21,14 +21,6 @@
 </p>
 
 <p align="center">
-  <!-- 项目状态 -->
-  <img src="https://img.shields.io/github/last-commit/gaoyuan98/dameng_exporter" alt="Last Commit">
-  <img src="https://img.shields.io/github/commit-activity/m/gaoyuan98/dameng_exporter" alt="Commit Activity">
-  <img src="https://img.shields.io/github/issues/gaoyuan98/dameng_exporter" alt="Open Issues">
-  <img src="https://img.shields.io/github/issues-pr/gaoyuan98/dameng_exporter" alt="Open Pull Requests">
-</p>
-
-<p align="center">
   <!-- 技术栈 -->
   <img src="https://img.shields.io/badge/go-1.23+-00ADD8?logo=go&logoColor=white" alt="Go Version">
   <img src="https://img.shields.io/badge/DM-8.0+-FF6B6B?logo=database&logoColor=white" alt="DM Version">
