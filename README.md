@@ -83,24 +83,20 @@ tar -xzf dameng_exporter_v1.2.0_linux_arm64.tar.gz
 #### 方式二：Docker 部署
 
 ```bash
-# Docker 镜像支持多架构，会根据系统自动选择合适版本
-# 查看当前系统架构
-uname -m  # x86_64 表示 AMD64，aarch64 表示 ARM64
-
-# 从 Docker Hub 拉取镜像（自动匹配架构）
-docker pull gaoyuan98/dameng_exporter:v1.2.0
-
-# 或者指定架构版本拉取
-docker pull --platform linux/amd64 gaoyuan98/dameng_exporter:v1.2.0  # AMD64 版本
-docker pull --platform linux/arm64 gaoyuan98/dameng_exporter:v1.2.0  # ARM64 版本
+# 拉取镜像（自动匹配系统架构）
+docker pull gaoyuan98/dameng_exporter:latest  # 拉取最新版本
+# docker pull gaoyuan98/dameng_exporter:v1.2.0  # 拉取指定版本
 
 # 运行容器
 docker run -d --name dameng_exporter \
   -p 9200:9200 \
-  gaoyuan98/dameng_exporter:v1.2.0 \
+  gaoyuan98/dameng_exporter:latest \
   --dbHost="192.168.1.100:5236" \
   --dbUser="SYSDBA" \
   --dbPwd="YourPassword"
+
+# 查看所有镜像标签
+# Docker Hub: https://hub.docker.com/r/gaoyuan98/dameng_exporter/tags
 ```
 
 #### 方式三：从源码编译
@@ -237,20 +233,17 @@ curl http://localhost:9200/metrics
 #### 选项 C：Docker 部署
 
 ```bash
-# Docker 会自动根据宿主机架构选择合适的镜像版本（支持 linux/amd64 和 linux/arm64）
-# 查看当前架构：docker version --format '{{.Server.Arch}}'
-
-# 使用配置文件
+# 使用配置文件方式
 docker run -d --name dameng_exporter \
   -p 9200:9200 \
   -v $(pwd)/dameng_exporter.toml:/app/dameng_exporter.toml \
   -v $(pwd)/custom_metrics.toml:/app/custom_metrics.toml \
-  gaoyuan98/dameng_exporter:v1.2.0
+  gaoyuan98/dameng_exporter:latest
 
-# 使用命令行参数
+# 使用命令行参数方式
 docker run -d --name dameng_exporter \
   -p 9200:9200 \
-  gaoyuan98/dameng_exporter:v1.2.0 \
+  gaoyuan98/dameng_exporter:latest \
   --dbHost="192.168.1.100:5236" \
   --dbUser="MONITOR_USER" \
   --dbPwd="YourPassword123"
