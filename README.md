@@ -5,7 +5,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-v1.2.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-  <img src="https://img.shields.io/badge/go-1.19+-blue" alt="Go Version">
+  <img src="https://img.shields.io/badge/go-1.23+-blue" alt="Go Version">
   <img src="https://img.shields.io/badge/DM-8.0+-orange" alt="DM Version">
 </p>
 
@@ -83,17 +83,24 @@ tar -xzf dameng_exporter_v1.2.0_linux_arm64.tar.gz
 #### 方式二：Docker 部署
 
 ```bash
-# AMD64 架构
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.2.0_amd64
+# Docker 镜像支持多架构，会根据系统自动选择合适版本
+# 查看当前系统架构
+uname -m  # x86_64 表示 AMD64，aarch64 表示 ARM64
+
+# 从 Docker Hub 拉取镜像（自动匹配架构）
+docker pull gaoyuan98/dameng_exporter:v1.2.0
+
+# 或者指定架构版本拉取
+docker pull --platform linux/amd64 gaoyuan98/dameng_exporter:v1.2.0  # AMD64 版本
+docker pull --platform linux/arm64 gaoyuan98/dameng_exporter:v1.2.0  # ARM64 版本
+
+# 运行容器
 docker run -d --name dameng_exporter \
   -p 9200:9200 \
-  dameng_exporter:v1.2.0_amd64 \
+  gaoyuan98/dameng_exporter:v1.2.0 \
   --dbHost="192.168.1.100:5236" \
   --dbUser="SYSDBA" \
   --dbPwd="YourPassword"
-
-# ARM64 架构
-docker pull registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.2.0_arm64
 ```
 
 #### 方式三：从源码编译
@@ -172,7 +179,7 @@ GRANT SELECT ON V$DB_CACHE  TO MONITOR_USER;
 
 #### 选项 A：使用配置文件（推荐）
 
-> 📖 **配置参数详解**：查看 [参数配置指南](./docs/documents/参数配置指南.md) 了解所有参数的详细说明和使用示例。
+> 📖 **配置参数详解**：查看 [参数配置指南](https://github.com/gaoyuan98/dameng_exporter/blob/master/docs/documents/参数配置指南.md) 了解所有参数的详细说明和使用示例。
 
 1. 创建配置文件 `dameng_exporter.toml`：
 
@@ -208,7 +215,7 @@ logMaxAge = 30
 encodeConfigPwd = true
 enableBasicAuth = false
 basicAuthUsername = "admin"
-basicAuthPassword = "ENC(encrypted_password_here)"
+basicAuthPassword = "admin123"  # Basic Auth 密码（启用后需要加密，见下文 Basic Auth 章节）
 globalTimeoutSeconds = 5
 collectionMode = "blocking"
 
@@ -219,7 +226,7 @@ description = "生产环境达梦数据库"
 enabled = true
 dbHost = "192.168.1.100:5236"
 dbUser = "SYSDBA"
-dbPwd = "ENC(encrypted_password)"
+dbPwd = "ENC(encrypted_password)"  # 数据库密码（自动加密，启动后会自动替换为加密形式）
 queryTimeout = 30
 maxOpenConns = 10
 maxIdleConns = 2
@@ -284,20 +291,24 @@ curl http://localhost:9200/metrics
 #### 选项 C：Docker 部署
 
 ```bash
+# Docker 会自动根据宿主机架构选择合适的镜像版本（支持 linux/amd64 和 linux/arm64）
+# 查看当前架构：docker version --format '{{.Server.Arch}}'
+
 # 使用配置文件
 docker run -d --name dameng_exporter \
   -p 9200:9200 \
   -v $(pwd)/dameng_exporter.toml:/app/dameng_exporter.toml \
   -v $(pwd)/custom_metrics.toml:/app/custom_metrics.toml \
-  registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.2.0_amd64
+  gaoyuan98/dameng_exporter:v1.2.0
 
 # 使用命令行参数
 docker run -d --name dameng_exporter \
   -p 9200:9200 \
-  registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter:v1.2.0_amd64 \
+  gaoyuan98/dameng_exporter:v1.2.0 \
   --dbHost="192.168.1.100:5236" \
   --dbUser="MONITOR_USER" \
   --dbPwd="YourPassword123"
+
 ```
 
 ### 步骤 3：配置 Prometheus
@@ -338,13 +349,10 @@ curl -X POST http://localhost:9090/-/reload
 
 1. 登录 Grafana（默认 http://localhost:3000）
 2. 导航到 **Dashboard** → **Import**
-3. 上传面板文件：
-   - **多数据源版本**（推荐）：`docs/dashboards/达梦DB监控面板_多标签_20250903.json`
-     - 支持多维度标签过滤（datasource、env、region、cluster）
-     - 适用于多数据源、多环境监控场景
-     - 向后兼容，即使只配置了 datasource 标签也能正常工作
-   - **原始版本**：`docs/dashboards/达梦DB监控面板_20250518.json`
-     - 适用于单一数据源的简单场景
+3. 上传面板文件：`docs/dashboards/达梦DB监控面板_多标签_20250903.json`
+   - 支持多维度标签过滤（datasource、env、region、cluster）
+   - 适用于多数据源、多环境监控场景
+   - 向后兼容，即使只配置了 datasource 标签也能正常工作
 4. 选择 Prometheus 数据源
 5. 点击 **Import** 完成导入
 
@@ -396,7 +404,7 @@ metricsdesc = { size_gb = "Database total size in GB" }
 - 📊 支持 Counter 和 Gauge 类型
 - 🔄 配置修改后自动生效
 
-> 📖 **详细文档**：查看 [自定义指标使用指南](./docs/documents/自定义指标使用指南.md) 了解完整的自定义指标使用指南，包括：
+> 📖 **详细文档**：查看 [自定义指标使用指南](https://github.com/gaoyuan98/dameng_exporter/blob/master/docs/documents/自定义指标使用指南.md) 了解完整的自定义指标使用指南，包括：
 > - 详细参数说明
 > - 性能监控、业务指标、安全审计等实用示例
 > - 最佳实践和性能优化建议
@@ -419,7 +427,7 @@ metricsdesc = { size_gb = "Database total size in GB" }
 # dameng_exporter.toml
 enableBasicAuth = true
 basicAuthUsername = "admin"
-basicAuthPassword = "$2a$12$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+basicAuthPassword = "$2a$12$xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # 使用上面生成的加密密码
 ```
 
 #### 3. 配置 Prometheus
@@ -453,7 +461,6 @@ scrape_configs:
 
 - 📖 [源码分析](https://deepwiki.com/gaoyuan98/dameng_exporter)
 - 🐳 [Docker Hub](https://hub.docker.com/r/gaoyuan98/dameng_exporter)
-- 📦 [阿里云镜像](https://registry.cn-hangzhou.aliyuncs.com/dameng_exporter/dameng_exporter)
 
 ### 技术支持
 

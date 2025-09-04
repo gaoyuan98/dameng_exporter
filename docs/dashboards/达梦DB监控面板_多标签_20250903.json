@@ -631,7 +631,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "increase(dmdbms_statement_type_total{statement_name=\"select statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval])/2 ",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"select statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
           "legendFormat": "select",
           "range": true,
           "refId": "SELECT语句"
@@ -642,7 +642,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(dmdbms_statement_type_total{statement_name=\"delete statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval])/2  -0",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"delete statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
           "hide": false,
           "legendFormat": "delete",
           "range": true,
@@ -654,7 +654,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(dmdbms_statement_type_total{statement_name=\"insert statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval])/2  -0",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"insert statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
           "hide": false,
           "legendFormat": "insert",
           "range": true,
@@ -666,7 +666,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(dmdbms_statement_type_total{statement_name=\"update statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval])/2  -0",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"update statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
           "hide": false,
           "legendFormat": "update",
           "range": true,
@@ -678,7 +678,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(dmdbms_statement_type_total{statement_name=\"ddl statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval])/2  -0",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"ddl statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
           "hide": false,
           "legendFormat": "ddl",
           "range": true,
@@ -686,6 +686,168 @@
         }
       ],
       "title": "SQL语句类型执行情况(min)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "description": "查询V$SYSSTAT的解析、执行计划、读写相关统计信息",
+      "gridPos": {
+        "h": 16,
+        "w": 12,
+        "x": 11,
+        "y": 21
+      },
+      "id": 147,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"parse count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "解析次数",
+          "range": true,
+          "refId": "parse_count"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"hard parse count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "硬解析次数",
+          "range": true,
+          "refId": "hard_parse"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"plan total count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "执行计划总数",
+          "range": true,
+          "refId": "plan_total"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"plan cache hit count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "计划缓存命中数",
+          "range": true,
+          "refId": "cache_hit"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"logic read count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "逻辑读次数",
+          "range": true,
+          "refId": "logic_read"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"physical read count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "物理读次数",
+          "range": true,
+          "refId": "physical_read"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"physical write count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "物理写次数",
+          "range": true,
+          "refId": "physical_write"
+        }
+      ],
+      "title": "SQL解析和执行统计(min)",
       "type": "timeseries"
     },
     {
@@ -746,7 +908,7 @@
       },
       "gridPos": {
         "x": 11,
-        "y": 21,
+        "y": 37,
         "w": 12,
         "h": 9
       },
@@ -768,12 +930,12 @@
       "pluginVersion": "8.5.27",
       "targets": [
         {
-          "expr": "increase(dmdbms_dict_cache_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\",dict_cache_type=\"lru_discard\"}[$interval])",
+          "expr": "rate(dmdbms_dict_cache_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\",dict_cache_type=\"lru_discard\"}[$interval]) * 60",
           "legendFormat": "LRU淘汰次数",
           "refId": "A"
         },
         {
-          "expr": "increase(dmdbms_dict_cache_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\",dict_cache_type=\"ddl_discard\"}[$interval])",
+          "expr": "rate(dmdbms_dict_cache_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\",dict_cache_type=\"ddl_discard\"}[$interval]) * 60",
           "legendFormat": "DDL淘汰次数",
           "refId": "B"
         },
@@ -1763,7 +1925,7 @@
         "h": 11,
         "w": 12,
         "x": 11,
-        "y": 30
+        "y": 46
       },
       "id": 6,
       "options": {
@@ -1993,7 +2155,7 @@
         "h": 6,
         "w": 11,
         "x": 0,
-        "y": 28
+        "y": 44
       },
       "id": 10,
       "options": {
@@ -2154,7 +2316,7 @@
         "h": 11,
         "w": 11,
         "x": 0,
-        "y": 32
+        "y": 48
       },
       "id": 2,
       "options": {
@@ -2407,7 +2569,7 @@
         "h": 8,
         "w": 12,
         "x": 11,
-        "y": 32
+        "y": 48
       },
       "id": 30,
       "options": {
@@ -2553,7 +2715,7 @@
         "h": 8,
         "w": 12,
         "x": 11,
-        "y": 40
+        "y": 48
       },
       "id": 51,
       "options": {
@@ -2698,7 +2860,7 @@
         "h": 9,
         "w": 11,
         "x": 0,
-        "y": 43
+        "y": 59
       },
       "id": 44,
       "options": {
@@ -2725,7 +2887,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "increase(dmdbms_statement_type_total{statement_name=\"transaction total count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval])/2 ",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"transaction total count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
           "range": true,
           "refId": "TPS值"
         }
@@ -2803,7 +2965,7 @@
         "h": 9,
         "w": 12,
         "x": 11,
-        "y": 48
+        "y": 64
       },
       "id": 53,
       "options": {
@@ -2881,7 +3043,7 @@
         "h": 7,
         "w": 11,
         "x": 0,
-        "y": 52
+        "y": 68
       },
       "id": 50,
       "options": {
@@ -3011,7 +3173,7 @@
         "h": 9,
         "w": 12,
         "x": 11,
-        "y": 57
+        "y": 73
       },
       "id": 54,
       "options": {
@@ -3117,7 +3279,7 @@
         "h": 16,
         "w": 11,
         "x": 0,
-        "y": 59
+        "y": 75
       },
       "id": 48,
       "options": {
@@ -3138,7 +3300,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "increase(dmdbms_ckpttime_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval])/2  -0",
+          "expr": "rate(dmdbms_ckpttime_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
           "refId": "A"
         }
       ],
@@ -3214,7 +3376,7 @@
         "h": 13,
         "w": 12,
         "x": 11,
-        "y": 66
+        "y": 82
       },
       "id": 35,
       "options": {
@@ -3318,7 +3480,7 @@
         "h": 6,
         "w": 11,
         "x": 0,
-        "y": 75
+        "y": 91
       },
       "id": 58,
       "options": {
@@ -3463,7 +3625,7 @@
         "h": 8,
         "w": 12,
         "x": 11,
-        "y": 79
+        "y": 103
       },
       "id": 36,
       "options": {
@@ -3553,7 +3715,7 @@
         "h": 6,
         "w": 11,
         "x": 0,
-        "y": 81
+        "y": 97
       },
       "id": 56,
       "options": {
@@ -3642,7 +3804,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 87
+        "y": 103
       },
       "id": 23,
       "panels": [],
