@@ -67,7 +67,7 @@ dameng_exporter/
 ├── logs/                        # 日志文件目录
 ├── scripts/                     # 脚本工具目录
 ├── dameng_exporter.toml         # 主配置文件
-├── custom_metrics.toml          # 自定义指标配置
+├── custom_queries.metrics       # 自定义指标配置
 └── README.md                    # 项目主文档
 ```
 
@@ -352,22 +352,56 @@ cp docs/alertmanager/*.yml /etc/alertmanager/
 
 自定义指标功能允许用户通过 SQL 查询定义专属的监控指标，无需修改源代码。
 
-#### 快速示例
+#### 配置流程
+
+1. 在 `dameng_exporter.toml` 中为目标数据源启用自定义指标并指定配置文件：
+   ```toml
+   [[datasource]]
+   name = "dm_prod"
+   dbHost = "192.168.1.100:5236"
+   dbUser = "SYSDBA"
+   dbPwd = "SYSDBA"
+   registerCustomMetrics = true
+   customMetricsFile = "./custom_queries.metrics"  # 支持相对/绝对路径
+   ```
+   `registerCustomMetrics` 默认为 `true`，若显式设置为 `false` 将跳过自定义指标；`customMetricsFile` 必须指向实际存在的 `.metrics`、`.sql.toml` 或 `.queries.toml` 文件。
+2. 在 `custom_queries.metrics` 中新增一个或多个 `[[metric]]` 区块以定义 SQL 查询。
+3. 保存文件后重新启动 Exporter（或重新部署容器），日志中出现 `loaded X custom metric(s)` 表示加载成功。
+
+#### 指标定义模板
 
 ```toml
-# custom_metrics.toml
+# custom_queries.metrics
 [[metric]]
-context = "database_size"
-request = "SELECT SUM(TOTAL_SIZE*PAGE/1024/1024/1024) as size_gb FROM V$TABLESPACE"
-metricsdesc = { size_gb = "Database total size in GB" }
+context = "tablespace_usage"
+labels = ["tablespace_name"]
+request = """
+SELECT name AS tablespace_name,
+       TOTAL_SIZE * PAGE / 1024 / 1024 / 1024 AS size_gb
+FROM   SYS.V$TABLESPACE
+"""
+metricsdesc = { size_gb = "Tablespace size in GB" }
+metricstype = { size_gb = "gauge" }
+# ignorezeroresult = true  # 可选：为 true 时忽略数值为 0 的样本
 ```
+
+- `context` 用于生成最终的指标前缀 `dmdbms_<context>_<字段名>`。
+- `labels` 定义会作为 Prometheus 标签暴露的列，未配置时默认为空数组。
+- `request` 需要返回数值列（指标）和可选的标签列，字段名会自动转换为小写。
+- `metricsdesc` 与 `metricstype` 必须使用内联表形式（单行），并为每个数值列提供描述及类型（`gauge` 或 `counter`）。
+- `ignorezeroresult` 为可选布尔值，设置为 `true` 时会过滤掉值为 0 的结果。
+
+#### 验证与排错
+
+- 执行 `curl http://<exporter-host>:9200/metrics | grep dmdbms_tablespace_usage` 检查指标是否输出。
+- 若未看到指标，请确认 SQL 可在数据库中直接执行、字段类型正确，并查看日志是否存在解析或执行错误。
 
 #### 功能特性
 
 - 🔧 通过 SQL 灵活定义指标
 - 🏷️ 支持多维度标签
 - 📊 支持 Counter 和 Gauge 类型
-- 🔄 配置修改后自动生效
+- 🔄 保存配置并重启后即可生效
 
 > 📖 **详细文档**：查看 [自定义指标使用指南](https://github.com/gaoyuan98/dameng_exporter/blob/master/docs/documents/自定义指标使用指南.md) 了解完整的自定义指标使用指南，包括：
 > - 详细参数说明
