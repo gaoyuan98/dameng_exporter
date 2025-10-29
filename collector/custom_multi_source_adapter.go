@@ -37,7 +37,7 @@ func (a *CustomMetricsMultiSourceAdapter) loadConfigForDataSource(dsName string)
 
 	if !exists {
 		// 配置应该在注册时已加载，如果没有找到说明该数据源没有配置或加载失败
-		logger.Logger.Debugf("No custom metrics config cached for datasource %s", dsName)
+		logger.Logger.Debugf("No custom metrics config cached for datasource [%s] ", dsName)
 	}
 
 	return cfg
