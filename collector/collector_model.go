@@ -48,6 +48,7 @@ const (
 	dmdbms_arch_status_info             string = "dmdbms_arch_status_info"
 	dmdbms_arch_send_detail_info        string = "dmdbms_arch_send_detail_info"
 	dmdbms_arch_send_diff_value         string = "dmdbms_arch_send_diff_value"
+	dmdbms_arch_queue_waiting_info      string = "dmdbms_arch_queue_waiting_info"
 	dmdbms_start_day                    string = "dmdbms_start_day"
 	dmdbms_rapply_sys_task_mem_used     string = "dmdbms_rapply_sys_task_mem_used"
 	dmdbms_rapply_sys_task_num          string = "dmdbms_rapply_sys_task_num"
