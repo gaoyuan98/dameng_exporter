@@ -9,7 +9,9 @@ import (
 	"github.com/duke-git/lancet/v2/fileutil"
 )
 
-// LoadMultiSourceConfig 加载多数据源配置
+// LoadMultiSourceConfig 加载多数据源配置。
+// 它依次执行：文件存在性检查、读取字节、解析为原始 map 以记录字段显式情况、
+// 反解析为结构体、结合字段存在信息补齐默认值、解密敏感字段并最终校验配置合法性。
 func LoadMultiSourceConfig(configFile string) (*MultiSourceConfig, error) {
 	if configFile == "" {
 		return nil, fmt.Errorf("config file path is empty")
@@ -27,10 +29,12 @@ func LoadMultiSourceConfig(configFile string) (*MultiSourceConfig, error) {
 	}
 
 	// 解析TOML配置
-	config := &MultiSourceConfig{}
-	if _, err := toml.Decode(string(content), config); err != nil {
+	var raw rawMultiSourceConfig
+	if _, err := toml.Decode(string(content), &raw); err != nil {
 		return nil, fmt.Errorf("failed to parse config file as TOML: %w", err)
 	}
+
+	config := raw.toConfig()
 
 	config.ConfigFile = configFile
 
@@ -48,6 +52,156 @@ func LoadMultiSourceConfig(configFile string) (*MultiSourceConfig, error) {
 	}
 
 	return config, nil
+}
+
+// rawMultiSourceConfig 对应配置文件的原始映射，使用指针布尔字段以保留“是否显式配置”信息。
+type rawMultiSourceConfig struct {
+	ListenAddress        string                `toml:"listenAddress"`
+	MetricPath           string                `toml:"metricPath"`
+	Version              string                `toml:"version"`
+	LogMaxSize           int                   `toml:"logMaxSize"`
+	LogMaxBackups        int                   `toml:"logMaxBackups"`
+	LogMaxAge            int                   `toml:"logMaxAge"`
+	LogLevel             string                `toml:"logLevel"`
+	EncodeConfigPwd      bool                  `toml:"encodeConfigPwd"`
+	EnableBasicAuth      bool                  `toml:"enableBasicAuth"`
+	BasicAuthUsername    string                `toml:"basicAuthUsername"`
+	BasicAuthPassword    string                `toml:"basicAuthPassword"`
+	GlobalTimeoutSeconds int                   `toml:"globalTimeoutSeconds"`
+	CollectionMode       string                `toml:"collectionMode"`
+	DataSources          []rawDataSourceConfig `toml:"datasource"`
+}
+
+// toConfig 将原始结构转换为应用了默认值的最终配置结构。
+func (raw rawMultiSourceConfig) toConfig() *MultiSourceConfig {
+	cfg := DefaultMultiSourceConfig
+
+	if raw.ListenAddress != "" {
+		cfg.ListenAddress = raw.ListenAddress
+	}
+	if raw.MetricPath != "" {
+		cfg.MetricPath = raw.MetricPath
+	}
+	if raw.Version != "" {
+		cfg.Version = raw.Version
+	}
+	if raw.LogMaxSize != 0 {
+		cfg.LogMaxSize = raw.LogMaxSize
+	}
+	if raw.LogMaxBackups != 0 {
+		cfg.LogMaxBackups = raw.LogMaxBackups
+	}
+	if raw.LogMaxAge != 0 {
+		cfg.LogMaxAge = raw.LogMaxAge
+	}
+	if raw.LogLevel != "" {
+		cfg.LogLevel = raw.LogLevel
+	}
+	cfg.EncodeConfigPwd = raw.EncodeConfigPwd
+	cfg.EnableBasicAuth = raw.EnableBasicAuth
+	if raw.BasicAuthUsername != "" {
+		cfg.BasicAuthUsername = raw.BasicAuthUsername
+	}
+	if raw.BasicAuthPassword != "" {
+		cfg.BasicAuthPassword = raw.BasicAuthPassword
+	}
+	if raw.GlobalTimeoutSeconds != 0 {
+		cfg.GlobalTimeoutSeconds = raw.GlobalTimeoutSeconds
+	}
+	if raw.CollectionMode != "" {
+		cfg.CollectionMode = raw.CollectionMode
+	}
+
+	cfg.DataSources = make([]DataSourceConfig, len(raw.DataSources))
+	for i, dsRaw := range raw.DataSources {
+		cfg.DataSources[i] = dsRaw.toConfig()
+	}
+
+	return &cfg
+}
+
+// rawDataSourceConfig 保留数据源级布尔字段的显式设置情况。
+type rawDataSourceConfig struct {
+	Name                    string `toml:"name"`
+	Description             string `toml:"description"`
+	Enabled                 *bool  `toml:"enabled"`
+	DbHost                  string `toml:"dbHost"`
+	DbUser                  string `toml:"dbUser"`
+	DbPwd                   string `toml:"dbPwd"`
+	QueryTimeout            int    `toml:"queryTimeout"`
+	MaxOpenConns            int    `toml:"maxOpenConns"`
+	MaxIdleConns            int    `toml:"maxIdleConns"`
+	ConnMaxLifetime         int    `toml:"connMaxLifetime"`
+	BigKeyDataCacheTime     int    `toml:"bigKeyDataCacheTime"`
+	AlarmKeyCacheTime       int    `toml:"alarmKeyCacheTime"`
+	CheckSlowSQL            *bool  `toml:"checkSlowSQL"`
+	SlowSqlTime             int    `toml:"slowSqlTime"`
+	SlowSqlMaxRows          int    `toml:"slowSqlMaxRows"`
+	RegisterHostMetrics     *bool  `toml:"registerHostMetrics"`
+	RegisterDatabaseMetrics *bool  `toml:"registerDatabaseMetrics"`
+	RegisterDmhsMetrics     *bool  `toml:"registerDmhsMetrics"`
+	RegisterCustomMetrics   *bool  `toml:"registerCustomMetrics"`
+	Labels                  string `toml:"labels"`
+	CustomMetricsFile       string `toml:"customMetricsFile"`
+}
+
+// toConfig 将原始数据源配置转换为最终结构，并在必要时套用默认值。
+func (raw rawDataSourceConfig) toConfig() DataSourceConfig {
+	cfg := DefaultDataSourceConfig
+
+	cfg.Name = raw.Name
+	cfg.Description = raw.Description
+	if raw.Enabled != nil {
+		cfg.Enabled = *raw.Enabled
+	}
+	cfg.DbHost = raw.DbHost
+	cfg.DbUser = raw.DbUser
+	cfg.DbPwd = raw.DbPwd
+	if raw.QueryTimeout != 0 {
+		cfg.QueryTimeout = raw.QueryTimeout
+	}
+	if raw.MaxOpenConns != 0 {
+		cfg.MaxOpenConns = raw.MaxOpenConns
+	}
+	if raw.MaxIdleConns != 0 {
+		cfg.MaxIdleConns = raw.MaxIdleConns
+	}
+	if raw.ConnMaxLifetime != 0 {
+		cfg.ConnMaxLifetime = raw.ConnMaxLifetime
+	}
+	if raw.BigKeyDataCacheTime != 0 {
+		cfg.BigKeyDataCacheTime = raw.BigKeyDataCacheTime
+	}
+	if raw.AlarmKeyCacheTime != 0 {
+		cfg.AlarmKeyCacheTime = raw.AlarmKeyCacheTime
+	}
+	if raw.CheckSlowSQL != nil {
+		cfg.CheckSlowSQL = *raw.CheckSlowSQL
+	}
+	if raw.SlowSqlTime != 0 {
+		cfg.SlowSqlTime = raw.SlowSqlTime
+	}
+	if raw.SlowSqlMaxRows != 0 {
+		cfg.SlowSqlMaxRows = raw.SlowSqlMaxRows
+	}
+	if raw.RegisterHostMetrics != nil {
+		cfg.RegisterHostMetrics = *raw.RegisterHostMetrics
+	}
+	if raw.RegisterDatabaseMetrics != nil {
+		cfg.RegisterDatabaseMetrics = *raw.RegisterDatabaseMetrics
+	}
+	if raw.RegisterDmhsMetrics != nil {
+		cfg.RegisterDmhsMetrics = *raw.RegisterDmhsMetrics
+	}
+	if raw.RegisterCustomMetrics != nil {
+		cfg.RegisterCustomMetrics = *raw.RegisterCustomMetrics
+	}
+	cfg.Labels = raw.Labels
+	cfg.CustomMetricsFile = raw.CustomMetricsFile
+
+	cfg.ApplyDefaults()
+
+	return cfg
 }
 
 // MergeMultiSourceConfigFromCmdArgs 合并命令行参数到多数据源配置

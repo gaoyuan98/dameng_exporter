@@ -123,8 +123,14 @@ var DefaultDataSourceConfig = DataSourceConfig{
 	CustomMetricsFile: "", // 默认为空，需要用户显式配置
 }
 
-// ApplyDefaults 应用默认值
+// ApplyDefaults 填充数值型和描述性字段的默认值，不会覆盖布尔开关。
+// 外部仍可调用此方法来确保 DataSourceConfig 结构体中的必需字段具备合理默认值。
 func (ds *DataSourceConfig) ApplyDefaults() {
+	ds.applyDefaults()
+}
+
+// applyDefaults 提供内部默认值填充逻辑，避免重复。
+func (ds *DataSourceConfig) applyDefaults() {
 	if ds.QueryTimeout == 0 {
 		ds.QueryTimeout = DefaultDataSourceConfig.QueryTimeout
 	}
@@ -153,23 +159,6 @@ func (ds *DataSourceConfig) ApplyDefaults() {
 	// 如果用户没配置，就是空字符串
 	if ds.Description == "" {
 		ds.Description = fmt.Sprintf("DataSource: %s", ds.Name)
-	}
-
-	// 布尔值默认处理
-	// 由于Go的bool零值是false，我们无法区分"用户设置为false"和"未设置"
-	// 这里采用简单策略：如果所有布尔字段都是false，认为是未设置，应用默认值
-	if !ds.RegisterHostMetrics && !ds.RegisterDatabaseMetrics &&
-		!ds.RegisterDmhsMetrics && !ds.RegisterCustomMetrics && !ds.CheckSlowSQL {
-		// 全部为false，应用默认值
-		ds.RegisterHostMetrics = DefaultDataSourceConfig.RegisterHostMetrics
-		ds.RegisterDatabaseMetrics = DefaultDataSourceConfig.RegisterDatabaseMetrics
-		ds.RegisterDmhsMetrics = DefaultDataSourceConfig.RegisterDmhsMetrics
-		ds.RegisterCustomMetrics = DefaultDataSourceConfig.RegisterCustomMetrics
-		ds.CheckSlowSQL = DefaultDataSourceConfig.CheckSlowSQL
-	}
-	// 如果Enabled也是false，单独处理（因为默认是true）
-	if !ds.Enabled && ds.Name != "" {
-		ds.Enabled = DefaultDataSourceConfig.Enabled
 	}
 }
 
@@ -285,7 +274,8 @@ func (msc *MultiSourceConfig) ValidateAll() error {
 	return nil
 }
 
-// ApplyAllDefaults 为所有数据源应用默认值
+// ApplyAllDefaults 为全局配置及每个数据源应用默认值。
+// 此逻辑优先保留用户显式设置的值，仅在字段缺失或为零值时补齐缺省配置。
 func (msc *MultiSourceConfig) ApplyAllDefaults() {
 	// 应用全局默认值
 	if msc.ListenAddress == "" {
@@ -319,7 +309,7 @@ func (msc *MultiSourceConfig) ApplyAllDefaults() {
 
 	// 为每个数据源应用默认值
 	for i := range msc.DataSources {
-		msc.DataSources[i].ApplyDefaults()
+		msc.DataSources[i].applyDefaults()
 	}
 }
 
