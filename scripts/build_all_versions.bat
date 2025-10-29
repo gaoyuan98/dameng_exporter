@@ -36,7 +36,8 @@ cd ..
 
 REM 设置需要打包的配置文件（从docs/config目录获取）
 set CONFIG_FILES=dameng_exporter.toml custom_queries.metrics
-set CONFIG_SOURCE_DIR=..\docs\config
+set CONFIG_SOURCE_DIR=docs\config
+set DASHBOARD_SOURCE_DIR=docs\dashboards
 
 
 REM 编译Windows 64位版本
@@ -60,6 +61,7 @@ move %PROGRAM_NAME%_windows_amd64.exe %TEMP_DIR%\%PROGRAM_NAME%.exe
 for %%f in (%CONFIG_FILES%) do (
     if exist %CONFIG_SOURCE_DIR%\%%f copy %CONFIG_SOURCE_DIR%\%%f %TEMP_DIR%\ >nul
 )
+if exist %DASHBOARD_SOURCE_DIR% xcopy /E /I /Y "%DASHBOARD_SOURCE_DIR%" "%TEMP_DIR%\dashboards\" >nul
 
 REM 打包Windows版本为tar.gz
 tar -czf %PROGRAM_NAME%_%VERSION%_windows_amd64.tar.gz %TEMP_DIR%
@@ -94,6 +96,7 @@ move %PROGRAM_NAME%_linux_amd64 %TEMP_DIR%\%PROGRAM_NAME%
 for %%f in (%CONFIG_FILES%) do (
     if exist %CONFIG_SOURCE_DIR%\%%f copy %CONFIG_SOURCE_DIR%\%%f %TEMP_DIR%\ >nul
 )
+if exist %DASHBOARD_SOURCE_DIR% xcopy /E /I /Y "%DASHBOARD_SOURCE_DIR%" "%TEMP_DIR%\dashboards\" >nul
 
 REM 打包Linux版本为tar.gz
 tar -czf %PROGRAM_NAME%_%VERSION%_linux_amd64.tar.gz %TEMP_DIR%
@@ -130,6 +133,7 @@ move %PROGRAM_NAME%_linux_arm64 %TEMP_DIR%\%PROGRAM_NAME%
 for %%f in (%CONFIG_FILES%) do (
     if exist %CONFIG_SOURCE_DIR%\%%f copy %CONFIG_SOURCE_DIR%\%%f %TEMP_DIR%\ >nul
 )
+if exist %DASHBOARD_SOURCE_DIR% xcopy /E /I /Y "%DASHBOARD_SOURCE_DIR%" "%TEMP_DIR%\dashboards\" >nul
 
 REM 打包Linux ARM版本为tar.gz
 tar -czf %PROGRAM_NAME%_%VERSION%_linux_arm64.tar.gz %TEMP_DIR%
