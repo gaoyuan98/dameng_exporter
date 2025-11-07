@@ -104,7 +104,7 @@ func (c *DmapProcessCollector) Collect(ch chan<- prometheus.Metric) {
 	if c.lastPID != dbInstanceInfo.PID {
 		c.localInstallBinPath, err = getLocalInstallBinPath(dbInstanceInfo.PID)
 		if err != nil {
-			logger.Logger.Errorf("Error getting db install bin path: %v", err)
+			logger.Logger.Warnf("获取数据库安装 bin 路径失败：%v。可能原因：Exporter 未部署在数据库主机、目标进程已退出或当前系统不支持 /proc 文件系统。若无需采集主机进程，可在配置文件的单个数据源registerHostMetrics设置为 false 关闭该功能。", err)
 			c.localInstallBinPath = ""
 			return
 		}
