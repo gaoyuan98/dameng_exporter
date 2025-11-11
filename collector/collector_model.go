@@ -50,6 +50,8 @@ const (
 	dmdbms_arch_send_diff_value         string = "dmdbms_arch_send_diff_value"
 	dmdbms_arch_queue_waiting_info      string = "dmdbms_arch_queue_waiting_info"
 	dmdbms_start_day                    string = "dmdbms_start_day"
+	dmdbms_redo_switch_last_time        string = "dmdbms_redo_switch_last_time_seconds"
+	dmdbms_redo_switch_interval         string = "dmdbms_redo_switch_interval_seconds"
 	dmdbms_rapply_sys_task_mem_used     string = "dmdbms_rapply_sys_task_mem_used"
 	dmdbms_rapply_sys_task_num          string = "dmdbms_rapply_sys_task_num"
 	dmdbms_rapply_time_diff             string = "dmdbms_rapply_time_diff"

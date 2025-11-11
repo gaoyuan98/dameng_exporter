@@ -188,4 +188,7 @@ GROUP BY
 
 	// 查询归档队列等待信息
 	QueryArchQueueWaitingSql = `SELECT /*+DM_EXPORTER*/ ARCH_TYPE, WAITING FROM V$ARCH_QUEUE`
+
+	// 查询redo日志切换历史
+	QueryRedoLogHistorySql = `SELECT /*+DM_EXPORTER*/ RECTIME FROM V$LOG_HISTORY ORDER BY RECTIME DESC LIMIT ?`
 )
