@@ -3983,11 +3983,137 @@
         "type": "prometheus",
         "uid": "jvJjnkC7k"
       },
+      "description": "查询V$SYSTEM_EVENT的EVENT、TOTAL_WAITS",
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
         "y": 119
+      },
+      "id": 201,
+      "panels": [],
+      "title": "系统事件等待",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$SYSTEM_EVENT的EVENT、TOTAL_WAITS",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 120
+      },
+      "id": 202,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "field": "Value"
+          }
+        ]
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "sum by (event, instance, datasource, env, region, cluster) (dmdbms_system_event_waits_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"})",
+          "format": "table",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "系统事件等待统计",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "job": true
+            },
+            "indexByName": {
+              "Value": 1,
+              "cluster": 6,
+              "datasource": 3,
+              "env": 4,
+              "event": 0,
+              "instance": 2,
+              "region": 5
+            },
+            "renameByName": {
+              "Value": "等待次数",
+              "cluster": "集群",
+              "datasource": "数据源",
+              "env": "环境",
+              "event": "事件名称",
+              "instance": "实例",
+              "region": "区域"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jvJjnkC7k"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 128
       },
       "id": 23,
       "panels": [],
