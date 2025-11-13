@@ -65,7 +65,7 @@ func NewDBInstanceRunningInfoCollector(db *sql.DB) MetricCollector {
 			nil,
 		),
 		trxNumDesc: prometheus.NewDesc(
-			dmdbms_trx_info,
+			dmdbms_trx_num_info,
 			"Number of transactions",
 			[]string{}, // 移除host_name标签
 			nil,

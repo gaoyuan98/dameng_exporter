@@ -20,7 +20,7 @@ const (
 	dmdbms_start_time_info            string = "dmdbms_start_time_info"
 	dmdbms_status_info                string = "dmdbms_status_info"
 	dmdbms_mode_info                  string = "dmdbms_mode_info"
-	dmdbms_trx_info                   string = "dmdbms_trx_info"
+	dmdbms_trx_num_info               string = "dmdbms_trx_num_info"
 	dmdbms_dead_lock_num_info         string = "dmdbms_dead_lock_num_info"
 	dmdbms_thread_num_info            string = "dmdbms_thread_num_info"
 	dmdbms_switching_occurs           string = "dmdbms_switching_occurs"

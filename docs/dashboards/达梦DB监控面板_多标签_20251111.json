@@ -474,7 +474,7 @@
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
-      "description": "查询V$LOCK WHERE BLOCKED=1的记录数",
+      "description": "查询SELECT COUNT(*) FROM V$TRXWAIT的记录数",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -529,7 +529,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "dmdbms_dead_lock_num_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "expr": "dmdbms_trx_num_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
           "instant": true,
           "interval": "",
           "legendFormat": "",

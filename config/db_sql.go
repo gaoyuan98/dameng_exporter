@@ -7,7 +7,7 @@ const (
                CASE STATUS$ WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS STATUS,
                CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,
                (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,
-               (SELECT COUNT(*) FROM V$LOCK WHERE BLOCKED=1) DEADLOCKNUM,
+               (SELECT COUNT(*) FROM V$DEADLOCK_HISTORY) DEADLOCKNUM,
                (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,
                DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY
         FROM V$INSTANCE`
@@ -98,7 +98,7 @@ GROUP BY
 	//查询监视器信息
 	QueryMonitorInfoSqlStr = `SELECT /*+DM_EXPORTER*/ TO_CHAR(DW_CONN_TIME,'YYYY-MM-DD HH24:MI:SS') AS DW_CONN_TIME,MON_CONFIRM,MON_ID,MON_IP,MON_VERSION,MID FROM V$DMMONITOR`
 	//查询数据库的语句执行次数
-	QuerySqlExecuteCountSqlStr = `select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count')`
+	QuerySqlExecuteCountSqlStr = `select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count','transaction deadlock count')`
 	//查询数据库参数
 	QueryParameterInfoSql = `select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM')`
 	//查询检查点信息
