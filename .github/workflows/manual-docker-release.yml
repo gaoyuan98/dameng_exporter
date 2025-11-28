@@ -1,0 +1,84 @@
+# 仅在手动触发时运行
+name: 手动发布多架构镜像
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: "可选：指定镜像版本，留空则读取代码中的 Version 常量"
+        required: false
+        type: string
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出源码
+        uses: actions/checkout@v4
+
+      - name: 设置 QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: 设置 Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 登录 Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 准备版本信息
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${{ github.event.inputs.release_version }}" ]; then
+            VERSION="${{ github.event.inputs.release_version }}"
+          else
+            VERSION=$(grep 'const Version' dameng_exporter.go | awk '{print $4}' | tr -d '"')
+          fi
+          if [ -z "$VERSION" ]; then
+            echo "版本号解析失败" >&2
+            exit 1
+          fi
+          GIT_REVISION=$(git rev-parse HEAD)
+          GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "git_revision=$GIT_REVISION" >> "$GITHUB_OUTPUT"
+          echo "git_branch=$GIT_BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: 构建并推送 Linux 镜像
+        shell: bash
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          GIT_REVISION: ${{ steps.meta.outputs.git_revision }}
+          GIT_BRANCH: ${{ steps.meta.outputs.git_branch }}
+        run: |
+          set -euo pipefail
+          for ARCH in amd64 arm64; do
+            docker buildx build \
+              --platform "linux/${ARCH}" \
+              --build-arg "GIT_REVISION=${GIT_REVISION}" \
+              --build-arg "GIT_BRANCH=${GIT_BRANCH}" \
+              --build-arg "GOARCH=${ARCH}" \
+              --push \
+              -t "gaoyuan98/dameng_exporter:${VERSION}-linux-${ARCH}" \
+              -t "gaoyuan98/dameng_exporter:latest-linux-${ARCH}" \
+              .
+          done
+
+      - name: 创建多架构清单
+        shell: bash
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create \
+            --tag "gaoyuan98/dameng_exporter:${VERSION}" \
+            "gaoyuan98/dameng_exporter:${VERSION}-linux-amd64" \
+            "gaoyuan98/dameng_exporter:${VERSION}-linux-arm64"
+          docker buildx imagetools create \
+            --tag "gaoyuan98/dameng_exporter:latest" \
+            "gaoyuan98/dameng_exporter:latest-linux-amd64" \
+            "gaoyuan98/dameng_exporter:latest-linux-arm64"
