@@ -134,7 +134,7 @@ func (m *DBPoolManager) InitPools() error {
 		// 初始化成功：放入健康列表供业务使用
 		m.pools[dsConfig.Name] = pool
 
-		m.logger.Info("Successfully created pool for datasource",
+		m.logger.Info("成功创建数据源连接池",
 			zap.String("datasource", dsConfig.Name),
 			zap.String("host", dsConfig.DbHost))
 	}
@@ -460,6 +460,45 @@ func (m *DBPoolManager) demoteToFailed(pool *DataSourcePool, reason error) {
 			m.logger.Error("关闭异常数据源连接失败",
 				zap.String("datasource", pool.Name),
 				zap.Error(err))
+		}
+	}
+}
+
+// MarkDatasourceFailed 将指定数据源标记为失败状态，供采集器检测失败时快速降级
+func (m *DBPoolManager) MarkDatasourceFailed(name string, reason error) {
+	if m == nil || name == "" {
+		return
+	}
+
+	// 优先尝试从健康列表中取出现有连接，若存在则执行标准降级流程
+	m.mu.RLock()
+	pool, exists := m.pools[name]
+	m.mu.RUnlock()
+	if exists && pool != nil {
+		if reason != nil {
+			m.logger.Warn("采集器检测到连接异常，执行快速降级",
+				zap.String("datasource", name),
+				zap.Error(reason))
+		} else {
+			m.logger.Warn("采集器检测到连接异常，执行快速降级",
+				zap.String("datasource", name))
+		}
+		m.demoteToFailed(pool, reason)
+		return
+	}
+
+	// 如果健康列表中不存在，说明已降级或尚未初始化，补充失败记录以便后台重试
+	if m.config != nil {
+		if cfg := m.config.GetDataSourceByName(name); cfg != nil {
+			if reason != nil {
+				m.logger.Warn("采集器检测到连接异常，记录失败等待自动恢复",
+					zap.String("datasource", name),
+					zap.Error(reason))
+			} else {
+				m.logger.Warn("采集器检测到连接异常，记录失败等待自动恢复",
+					zap.String("datasource", name))
+			}
+			m.noteFailedDataSource(cfg, reason)
 		}
 	}
 }
