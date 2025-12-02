@@ -23,6 +23,7 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 
 	// 系统级收集器（不依赖数据库）
 	collectors = append(collectors, NewBuildInfoCollector())
+	collectors = append(collectors, NewDatasourceHealthCollector(poolManager))
 
 	// 如果poolManager为nil，报错
 	if poolManager == nil {

@@ -81,6 +81,8 @@ const (
 
 	// 数据字典缓存指标
 	dmdbms_dict_cache_total string = "dmdbms_dict_cache_total"
+
+	dmdb_up string = "dmdb_up"
 )
 
 // MetricCollector 接口
