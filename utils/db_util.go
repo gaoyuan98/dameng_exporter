@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
 	"database/sql"
@@ -22,21 +21,29 @@ func CheckDBConnectionWithSource(dbConn *sql.DB, dataSource string) error {
 		return err
 	}
 
-	timeoutSeconds := config.DefaultDataSourceConfig.QueryTimeout
-	if config.GlobalMultiConfig != nil {
-		if cfg := config.GlobalMultiConfig.GetDataSourceByName(dataSource); cfg != nil && cfg.QueryTimeout > 0 {
-			timeoutSeconds = cfg.QueryTimeout
-		}
+	manager := db.GlobalPoolManager
+	if manager == nil {
+		return nil
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSeconds)*time.Second)
-	defer cancel()
-	//ping一下连接是否可用
-	if err := dbConn.PingContext(ctx); err != nil {
-		logger.Logger.Errorf("[%s] 数据库连接不可用: %v", dataSource, err)
-		if manager := db.GlobalPoolManager; manager != nil {
-			manager.MarkDatasourceFailed(dataSource, err)
-		}
+
+	status := manager.GetDatasourceHealthStatus(dataSource)
+	if !status.Registered {
+		err := fmt.Errorf("数据源[%s]未注册或已禁用", dataSource)
+		logger.Logger.Warn(err.Error())
 		return err
+	}
+
+	if !status.Healthy {
+		lastCheck := "未知"
+		if !status.LastCheck.IsZero() {
+			lastCheck = status.LastCheck.Format(time.DateTime)
+		}
+		if status.LastError != "" {
+			logger.Logger.Warnf("[%s] 数据源处于不可用状态，最近检查: %s，最近错误: %s", dataSource, lastCheck, status.LastError)
+		} else {
+			logger.Logger.Warnf("[%s] 数据源处于不可用状态，最近检查: %s", dataSource, lastCheck)
+		}
+		return fmt.Errorf("数据源[%s]当前不可用", dataSource)
 	}
 
 	return nil

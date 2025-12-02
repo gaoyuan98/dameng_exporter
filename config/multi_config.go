@@ -86,7 +86,7 @@ var DefaultMultiSourceConfig = MultiSourceConfig{
 	EnableBasicAuth:      false,
 	BasicAuthUsername:    "",
 	BasicAuthPassword:    "",
-	RetryIntervalSeconds: 60,
+	RetryIntervalSeconds: 10,
 
 	// 全局超时控制默认值
 	GlobalTimeoutSeconds: 5, // 默认5秒全局超时
@@ -101,7 +101,7 @@ var DefaultDataSourceConfig = DataSourceConfig{
 	Enabled: true,
 
 	// 连接池默认值
-	QueryTimeout:    10,
+	QueryTimeout:    5,
 	MaxOpenConns:    10,
 	MaxIdleConns:    5,
 	ConnMaxLifetime: 30,

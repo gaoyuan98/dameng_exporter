@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	_ "github.com/gaoyuan98/dm"
@@ -17,11 +18,57 @@ import (
 
 // DataSourcePool 数据源连接池
 type DataSourcePool struct {
-	Name   string                   // 数据源名称
-	DB     *sql.DB                  // 数据库连接
-	Config *config.DataSourceConfig // 数据源配置
-	Labels map[string]string        // 标签
-	mu     sync.RWMutex             // 读写锁
+	Name            string                   // 数据源名称
+	DB              *sql.DB                  // 数据库连接
+	Config          *config.DataSourceConfig // 数据源配置
+	Labels          map[string]string        // 标签
+	mu              sync.RWMutex             // 读写锁
+	healthy         atomic.Bool              // 健康状态标志
+	lastHealthCheck atomic.Int64             // 最近一次健康检查的时间戳（Unix 秒）
+}
+
+// markHealthy 更新健康状态为健康并记录时间
+func (p *DataSourcePool) markHealthy(ts time.Time) {
+	if p == nil {
+		return
+	}
+	if ts.IsZero() {
+		ts = time.Now()
+	}
+	p.healthy.Store(true)
+	p.lastHealthCheck.Store(ts.Unix())
+}
+
+// markUnhealthy 更新健康状态为不可用并记录时间
+func (p *DataSourcePool) markUnhealthy(ts time.Time) {
+	if p == nil {
+		return
+	}
+	if ts.IsZero() {
+		ts = time.Now()
+	}
+	p.healthy.Store(false)
+	p.lastHealthCheck.Store(ts.Unix())
+}
+
+// IsHealthy 返回当前健康标志
+func (p *DataSourcePool) IsHealthy() bool {
+	if p == nil {
+		return false
+	}
+	return p.healthy.Load()
+}
+
+// LastHealthCheck 获取最近一次健康检查的时间
+func (p *DataSourcePool) LastHealthCheck() time.Time {
+	if p == nil {
+		return time.Time{}
+	}
+	ts := p.lastHealthCheck.Load()
+	if ts == 0 {
+		return time.Time{}
+	}
+	return time.Unix(ts, 0)
 }
 
 // FailedDataSource 失败列表中的数据源信息
@@ -30,6 +77,14 @@ type FailedDataSource struct {
 	FailedAt    time.Time                // 首次检测到失败的时间
 	LastAttempt time.Time                // 最近一次尝试恢复的时间
 	LastError   string                   // 最近一次失败的错误信息
+}
+
+// DatasourceHealthStatus 描述数据源的健康状态
+type DatasourceHealthStatus struct {
+	Healthy    bool      // 是否健康
+	LastCheck  time.Time // 最近一次健康检查时间
+	LastError  string    // 最近一次错误信息
+	Registered bool      // 是否注册过（存在于健康或失败列表）
 }
 
 // DBPoolManager 连接池管理器
@@ -168,7 +223,11 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 	db.SetConnMaxLifetime(time.Duration(dsConfig.ConnMaxLifetime) * time.Minute)
 
 	// 步骤4：执行带超时的 Ping 验证，确保连接可达
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	timeoutSeconds := dsConfig.QueryTimeout
+	if timeoutSeconds <= 0 {
+		timeoutSeconds = config.DefaultDataSourceConfig.QueryTimeout
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSeconds)*time.Second)
 	defer cancel()
 
 	if err := db.PingContext(ctx); err != nil {
@@ -183,6 +242,7 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 		Config: dsConfig,
 		Labels: dsConfig.ParseLabels(),
 	}
+	pool.markHealthy(time.Now())
 
 	// 步骤6：追加标准化标签，便于指标及日志 tracing
 	pool.Labels["datasource"] = dsConfig.Name
@@ -211,7 +271,14 @@ func (m *DBPoolManager) buildDSN(dsConfig *config.DataSourceConfig) string {
 	if queryParams != "" {
 		dsn += queryParams
 	} else {
-		dsn += "?autoCommit=true"
+		timeoutSeconds := dsConfig.QueryTimeout
+		if timeoutSeconds <= 0 {
+			timeoutSeconds = config.DefaultDataSourceConfig.QueryTimeout
+		}
+		socketTimeout := timeoutSeconds
+		connectTimeout := timeoutSeconds * 1000
+		dsn += fmt.Sprintf("?autoCommit=true&socketTimeout=%d&connectTimeout=%d",
+			socketTimeout, connectTimeout)
 	}
 
 	return dsn
@@ -396,6 +463,7 @@ func (m *DBPoolManager) promoteToHealthy(cfg *config.DataSourceConfig, pool *Dat
 	}
 
 	// 将新连接加入健康列表并移除失败记录
+	pool.markHealthy(time.Now())
 	m.pools[cfg.Name] = pool
 	delete(m.failedSources, cfg.Name)
 	return true
@@ -424,6 +492,7 @@ func (m *DBPoolManager) checkHealthyPools() {
 		err := pool.DB.PingContext(ctx)
 		cancel()
 		if err == nil {
+			pool.markHealthy(time.Now())
 			continue
 		}
 
@@ -431,6 +500,7 @@ func (m *DBPoolManager) checkHealthyPools() {
 		m.logger.Warn("健康数据源心跳检测失败，已转移至失败列表",
 			zap.String("datasource", pool.Name),
 			zap.Error(err))
+		pool.markUnhealthy(time.Now())
 		m.demoteToFailed(pool, err)
 	}
 }
@@ -446,6 +516,7 @@ func (m *DBPoolManager) demoteToFailed(pool *DataSourcePool, reason error) {
 	var dbToClose *sql.DB
 
 	m.mu.Lock()
+	pool.markUnhealthy(now)
 	delete(m.pools, pool.Name)
 
 	if pool.DB != nil {
@@ -503,6 +574,40 @@ func (m *DBPoolManager) MarkDatasourceFailed(name string, reason error) {
 	}
 }
 
+// GetDatasourceHealthStatus 返回指定数据源的健康状态快照
+func (m *DBPoolManager) GetDatasourceHealthStatus(name string) DatasourceHealthStatus {
+	status := DatasourceHealthStatus{}
+	if m == nil || name == "" {
+		return status
+	}
+
+	m.mu.RLock()
+	if pool, ok := m.pools[name]; ok && pool != nil {
+		status.Healthy = pool.IsHealthy()
+		status.LastCheck = pool.LastHealthCheck()
+		status.Registered = true
+		m.mu.RUnlock()
+		return status
+	}
+
+	if failed, ok := m.failedSources[name]; ok && failed != nil {
+		status.Healthy = false
+		status.LastCheck = failed.LastAttempt
+		status.LastError = failed.LastError
+		status.Registered = true
+		m.mu.RUnlock()
+		return status
+	}
+
+	m.mu.RUnlock()
+	return status
+}
+
+// IsDatasourceHealthy 判断指定数据源是否健康
+func (m *DBPoolManager) IsDatasourceHealthy(name string) bool {
+	return m.GetDatasourceHealthStatus(name).Healthy
+}
+
 // GetPool 获取指定名称的连接池
 func (m *DBPoolManager) GetPool(name string) *DataSourcePool {
 	m.mu.RLock()
@@ -517,7 +622,7 @@ func (m *DBPoolManager) GetPools() []*DataSourcePool {
 
 	pools := make([]*DataSourcePool, 0, len(m.pools))
 	for _, pool := range m.pools {
-		if pool != nil && pool.Config != nil && pool.Config.Enabled {
+		if pool != nil && pool.Config != nil && pool.Config.Enabled && pool.IsHealthy() {
 			pools = append(pools, pool)
 		}
 	}
