@@ -138,15 +138,15 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "实例(点击链接跳转)"
+              "options": "数据源(点击链接跳转)"
             },
             "properties": [
               {
                 "id": "links",
                 "value": [
                   {
-                    "title": "link",
-                    "url": "/d/BdP6cQr7z/da-meng-jian-kong-mian-ban-wan-zheng-ban?orgId=1&refresh=10s&var-env=${env}&var-region=${region}&var-cluster=${cluster}&var-datasource=${__data.fields.datasource}"
+                    "title": "查看该数据源",
+                    "url": "/d/${__dashboard.uid}/${__dashboard.slug}?var-env=${env}&var-region=${region}&var-cluster=${cluster}&var-datasource=${__value.raw}"
                   }
                 ]
               }
@@ -293,7 +293,7 @@
               "Value #B": "内存大小",
               "coreNum": "核数",
               "host_name": "主机名",
-              "instance": "实例(点击链接跳转)",
+              "instance": "实例",
               "job": "",
               "memSize": "内存",
               "osName": "操作系统类型",
@@ -303,13 +303,30 @@
               "total_phy_size": "物理内存",
               "total_vir_size": "虚拟内存",
               "total_disk_size": "磁盘空间",
-              "datasource": "数据源"
+              "datasource": "数据源(点击链接跳转)"
             }
           }
         }
       ],
       "type": "table",
       "description": "查询V$SYSTEMINFO的N_CPU、TOTAL_PHY_SIZE、TOTAL_VIR_SIZE、TOTAL_DISK_SIZE"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jvJjnkC7k"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 23,
+      "panels": [],
+      "title": "数据源:$datasource",
+      "type": "row"
     },
     {
       "datasource": {
@@ -609,10 +626,10 @@
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull",
-            "firstNotNull",
             "min",
-            "mean"
+            "max",
+            "mean",
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -683,6 +700,19 @@
           "legendFormat": "ddl",
           "range": true,
           "refId": "ddl"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"transaction total count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "hide": false,
+          "legendFormat": "TPS",
+          "range": true,
+          "refId": "TPS"
         }
       ],
       "title": "SQL语句类型执行情况(min)",
@@ -755,9 +785,10 @@
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull",
+            "min",
+            "max",
             "mean",
-            "max"
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -916,11 +947,14 @@
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull",
-            "max"
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
           ],
           "displayMode": "table",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
@@ -1493,7 +1527,15 @@
               "cluster_name": true,
               "host_name": true,
               "instance": true,
-              "job": true
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
             },
             "includeByName": {},
             "indexByName": {},
@@ -1675,8 +1717,8 @@
           "calcs": [
             "min",
             "max",
-            "lastNotNull",
-            "mean"
+            "mean",
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -2008,7 +2050,15 @@
               "cluster_name": true,
               "host_name": true,
               "instance": true,
-              "job": true
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
             },
             "indexByName": {
               "Time": 0,
@@ -2238,7 +2288,15 @@
               "cluster_name": true,
               "host_name": true,
               "instance": true,
-              "job": true
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
             },
             "indexByName": {},
             "renameByName": {
@@ -2321,8 +2379,13 @@
       "id": 2,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
@@ -2342,7 +2405,7 @@
           "expr": "dmdbms_session_type_info{session_type=~\"TOTAL\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
           "instant": false,
           "interval": "",
-          "legendFormat": "{{instance}}_session_total",
+          "legendFormat": "{{session_type}}",
           "refId": "会话总数"
         },
         {
@@ -2355,7 +2418,7 @@
           "hide": false,
           "instant": false,
           "interval": "",
-          "legendFormat": "{{instance}}_session_active",
+          "legendFormat": "{{session_type}}",
           "refId": "会话活跃数"
         },
         {
@@ -2368,7 +2431,7 @@
           "hide": false,
           "instant": false,
           "interval": "",
-          "legendFormat": "{{instance}}_session_idle",
+          "legendFormat": "{{session_type}}",
           "refId": "会话失效数"
         }
       ],
@@ -2650,7 +2713,15 @@
               "cluster_name": true,
               "host_name": true,
               "instance": true,
-              "job": true
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
             },
             "indexByName": {},
             "renameByName": {
@@ -2760,7 +2831,15 @@
               "cluster_name": true,
               "host_name": true,
               "instance": true,
-              "job": true
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
             },
             "includeByName": {},
             "indexByName": {
@@ -2796,105 +2875,6 @@
       ],
       "type": "table",
       "description": "联合查询DBA_USERS和SYSUSERS，排除SYS、SYSSSO、SYSAUDITOR用户"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 11,
-        "x": 0,
-        "y": 59
-      },
-      "id": 44,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "firstNotNull",
-            "max",
-            "min"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "expr": "rate(dmdbms_statement_type_total{statement_name=\"transaction total count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
-          "range": true,
-          "refId": "TPS值"
-        }
-      ],
-      "title": "TPS数量(min)",
-      "type": "timeseries",
-      "description": "查询V$SYSSTAT WHERE name='transaction total count'"
     },
     {
       "datasource": {
@@ -2971,10 +2951,10 @@
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull",
-            "firstNotNull",
+            "min",
             "max",
-            "min"
+            "mean",
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -2997,13 +2977,30 @@
           "exemplar": false,
           "expr": "dmdbms_bufferpool_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}  -0",
           "instant": false,
-          "legendFormat": "{{instance}}",
+          "legendFormat": "FAST命中率",
           "range": true,
           "refId": "TPS值"
         }
       ],
       "title": "FAST缓冲池的命中率",
       "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jvJjnkC7k"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 126
+      },
+      "id": 401,
+      "panels": [],
+      "title": "集群相关指标",
+      "type": "row"
     },
     {
       "datasource": {
@@ -3041,9 +3038,9 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 11,
+        "w": 12,
         "x": 0,
-        "y": 68
+        "y": 127
       },
       "id": 50,
       "options": {
@@ -3094,14 +3091,16 @@
           "id": "organize",
           "options": {
             "excludeByName": {
-              "instance": true
-            },
-            "indexByName": {},
-            "renameByName": {
-              "dw_conn_time": "连接时间",
-              "instance": "ip地址",
-              "mon_confirm": "监视器模式",
-              "mon_ip": "ip地址"
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "job": true,
+              "region": true,
+              "cluster_name": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
             }
           }
         }
@@ -3179,10 +3178,10 @@
       "options": {
         "legend": {
           "calcs": [
-            "lastNotNull",
-            "firstNotNull",
+            "min",
             "max",
-            "min"
+            "mean",
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -3206,7 +3205,7 @@
           "expr": "dmdbms_purge_objects_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} ",
           "instant": false,
           "interval": "",
-          "legendFormat": "__auto",
+          "legendFormat": "待PURGE事务数",
           "range": true,
           "refId": "TPS值"
         }
@@ -3284,8 +3283,13 @@
       "id": 48,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
         },
@@ -3301,10 +3305,11 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "expr": "rate(dmdbms_ckpttime_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
-          "refId": "A"
+          "refId": "A",
+          "legendFormat": "检查点耗时(min)"
         }
       ],
-      "title": "数据库检查点耗时(ms)",
+      "title": "数据库检查点耗时(min)",
       "type": "timeseries"
     },
     {
@@ -3375,8 +3380,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 103
+        "x": 0,
+        "y": 134
       },
       "id": 35,
       "options": {
@@ -3384,8 +3389,8 @@
           "calcs": [
             "min",
             "max",
-            "lastNotNull",
-            "mean"
+            "mean",
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -3406,7 +3411,7 @@
           "exemplar": true,
           "expr": "dmdbms_rapply_sys_task_mem_used{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}  -0",
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{datasource}}",
           "range": true,
           "refId": "备库重演内存堆积"
         }
@@ -3451,7 +3456,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "归档发送状态（）"
+              "options": "归档发送状态"
             },
             "properties": [
               {
@@ -3524,7 +3529,15 @@
               "cluster_name": true,
               "host_name": true,
               "instance": true,
-              "job": true
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
             },
             "includeByName": {},
             "indexByName": {
@@ -3624,8 +3637,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 103
+        "x": 12,
+        "y": 134
       },
       "id": 36,
       "options": {
@@ -3633,8 +3646,8 @@
           "calcs": [
             "min",
             "max",
-            "lastNotNull",
-            "mean"
+            "mean",
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -3655,7 +3668,7 @@
           "exemplar": true,
           "expr": "dmdbms_rapply_sys_task_num{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}  -0",
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{datasource}}",
           "range": true,
           "refId": "备库重演线程数"
         }
@@ -3712,10 +3725,10 @@
         ]
       },
       "gridPos": {
-        "h": 6,
-        "w": 11,
-        "x": 0,
-        "y": 97
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 127
       },
       "id": 56,
       "options": {
@@ -3939,7 +3952,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 111
+        "y": 97
       },
       "id": 83,
       "options": {
@@ -3947,8 +3960,8 @@
           "calcs": [
             "min",
             "max",
-            "lastNotNull",
-            "mean"
+            "mean",
+            "lastNotNull"
           ],
           "displayMode": "table",
           "placement": "bottom",
@@ -3969,31 +3982,13 @@
           "exemplar": true,
           "expr": "dmdbms_redo_switch_interval_seconds{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
           "instant": false,
-          "legendFormat": "{{instance}}",
+          "legendFormat": "切换间隔(秒)",
           "range": true,
           "refId": "A"
         }
       ],
       "title": "Redo日志切换间隔趋势",
       "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "jvJjnkC7k"
-      },
-      "description": "查询V$SYSTEM_EVENT的EVENT、TOTAL_WAITS",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 119
-      },
-      "id": 201,
-      "panels": [],
-      "title": "系统事件等待",
-      "type": "row"
     },
     {
       "datasource": {
@@ -4004,16 +3999,39 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
           },
           "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            "inspect": false
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
-          "decimals": 0,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -4021,37 +4039,39 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
               }
             ]
-          },
-          "unit": "short"
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 21,
         "w": 24,
         "x": 0,
-        "y": 120
+        "y": 105
       },
       "id": 202,
       "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
           ],
-          "show": false
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "field": "Value"
-          }
-        ]
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "pluginVersion": "10.4.1",
       "targets": [
@@ -4062,63 +4082,17 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "sum by (event, instance, datasource, env, region, cluster) (dmdbms_system_event_waits_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"})",
-          "format": "table",
-          "instant": true,
+          "expr": "rate(dmdbms_system_event_waits_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\",event!=\"network idle wait\"}[$interval]) * 60",
+          "format": "time_series",
+          "instant": false,
           "interval": "",
-          "legendFormat": "",
-          "refId": "A"
+          "legendFormat": "{{event}}",
+          "refId": "A",
+          "range": true
         }
       ],
       "title": "系统事件等待统计",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "job": true
-            },
-            "indexByName": {
-              "Value": 1,
-              "cluster": 6,
-              "datasource": 3,
-              "env": 4,
-              "event": 0,
-              "instance": 2,
-              "region": 5
-            },
-            "renameByName": {
-              "Value": "等待次数",
-              "cluster": "集群",
-              "datasource": "数据源",
-              "env": "环境",
-              "event": "事件名称",
-              "instance": "实例",
-              "region": "区域"
-            }
-          }
-        }
-      ],
-      "type": "table"
-    },
-    {
-      "collapsed": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "jvJjnkC7k"
-      },
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 128
-      },
-      "id": 23,
-      "panels": [],
-      "title": "主机名:$instance",
-      "type": "row"
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
