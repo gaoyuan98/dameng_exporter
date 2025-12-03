@@ -18,13 +18,13 @@ groups:
       description: "主机：{{ $labels.instance }} 数据库模式切换"
       summary: "主机：{{ $labels.instance }}:数据库发生模式切换，疑似发生集群切换请核实"
   - alert: DatabaseStateTransition
-    expr: dmdbms_db_status_occurs == 0
+    expr: dmdbms_status_info != 1
     for: 15s
     labels:
       severity: WARNING
     annotations:
-      description: "主机：{{ $labels.instance }} 数据库状态转换"
-      summary: "主机：{{ $labels.instance }}:数据库OPEN状态变化，疑似发生状态转换请核实"
+      description: "主机：{{ $labels.instance }} 数据库状态已脱离OPEN"
+      summary: "主机：{{ $labels.instance }}:数据库状态不为OPEN，请立即核实"
   - alert: DatabaseConnectionsIsTooHigh
     expr: dmdbms_session_percentage*100 > 80
     for: 15s
