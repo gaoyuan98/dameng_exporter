@@ -33,14 +33,22 @@ groups:
     annotations:
       description: "主机：{{ $labels.instance }} 数据库连接数过高"
       summary: "主机：{{ $labels.instance }}:数据库的连接数超过80%，请确认是否正常"
-  - alert: 数据库存在锁等待
-    expr: dmdbms_dead_lock_num_info >0
+  - alert: 数据库死锁数新增
+    expr: increase(dmdbms_dead_lock_num_total[1m]) > 0
     for: 15s
     labels:
       severity: 警告
     annotations:
-      description: "主机：{{ $labels.instance }} 数据库存在锁等待"
-      summary: "主机：{{ $labels.instance }}:数据库存在锁等待，请确认是否正常"    
+      description: "主机：{{ $labels.instance }} 死锁累计值相比上一周期新增"
+      summary: "主机：{{ $labels.instance }}:近1分钟新增死锁事件，请确认是否存在锁等待"
+  - alert: 数据库存在事务阻塞
+    expr: dmdbms_trx_num_info > 0
+    for: 15s
+    labels:
+      severity: 警告
+    annotations:
+      description: "主机：{{ $labels.instance }} 数据库存在事务阻塞等待"
+      summary: "主机：{{ $labels.instance }}:存在事务阻塞，请及时处理"    
   - alert: cpu使用率过高
     expr: 100 * (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[2m])) by(instance)) > 80
     for: 15s

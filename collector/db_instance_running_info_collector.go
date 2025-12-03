@@ -71,7 +71,7 @@ func NewDBInstanceRunningInfoCollector(db *sql.DB) MetricCollector {
 			nil,
 		),
 		deadlockDesc: prometheus.NewDesc(
-			dmdbms_dead_lock_num_info,
+			dmdbms_dead_lock_num_total,
 			"Number of deadlocks",
 			[]string{}, // 移除host_name标签
 			nil,

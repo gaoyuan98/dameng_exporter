@@ -21,7 +21,7 @@ const (
 	dmdbms_status_info                string = "dmdbms_status_info"
 	dmdbms_mode_info                  string = "dmdbms_mode_info"
 	dmdbms_trx_num_info               string = "dmdbms_trx_num_info"
-	dmdbms_dead_lock_num_info         string = "dmdbms_dead_lock_num_info"
+	dmdbms_dead_lock_num_total        string = "dmdbms_dead_lock_num_total"
 	dmdbms_thread_num_info            string = "dmdbms_thread_num_info"
 	dmdbms_switching_occurs           string = "dmdbms_switching_occurs"
 	dmdbms_db_status_occurs           string = "dmdbms_db_status_occurs"
