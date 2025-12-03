@@ -86,9 +86,9 @@
       },
       "id": 25,
       "panels": [],
-      "title": "主机资源列表",
+      "title": "数据源资源列表",
       "type": "row",
-      "description": "查询V$SYSTEMINFO的N_CPU、TOTAL_PHY_SIZE、TOTAL_VIR_SIZE、TOTAL_DISK_SIZE"
+      "description": "展示所有数据源的基础资源信息"
     },
     {
       "datasource": {
@@ -241,7 +241,7 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 23,
+        "w": 18,
         "x": 0,
         "y": 1
       },
@@ -276,7 +276,7 @@
           "refId": "A"
         }
       ],
-      "title": "主机资源",
+      "title": "数据源资源列表",
       "transformations": [
         {
           "id": "organize",
@@ -328,6 +328,93 @@
       ],
       "type": "table",
       "description": "查询V$SYSTEMINFO的N_CPU、TOTAL_PHY_SIZE、TOTAL_VIR_SIZE、TOTAL_DISK_SIZE"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "异常",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "正常",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 604,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "dmdb_up{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "refId": "A",
+          "format": "table"
+        }
+      ],
+      "title": "数据源健康状态",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "env": true,
+              "region": true,
+              "job": true,
+              "instance": true
+            },
+            "renameByName": {
+              "datasource": "数据源",
+              "cluster": "集群",
+              "Value": "状态"
+            }
+          }
+        }
+      ],
+      "type": "table"
     },
     {
       "collapsed": false,
@@ -2862,7 +2949,7 @@
             "includeByName": {},
             "indexByName": {
               "Time": 0,
-              "user_name": 1,
+              "username": 1,
               "account_status": 2,
               "read_only": 3,
               "default_tablespace": 4,
@@ -2880,7 +2967,7 @@
               "host_name": "",
               "job": "",
               "read_only": "是否只读",
-              "user_name": "用户名"
+              "username": "用户名"
             }
           }
         }
@@ -4182,8 +4269,8 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "editorMode": "code",
-          "expr": "dmdbms_dead_lock_num_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
-          "legendFormat": "死锁数",
+          "expr": "rate(dmdbms_dead_lock_num_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "死锁数(min)",
           "range": true,
           "refId": "B"
         }
