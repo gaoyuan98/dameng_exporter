@@ -20,8 +20,10 @@ func NewLabelInjectorFromPool(pool *db.DataSourcePool) *LabelInjector {
 		labels[k] = v
 	}
 
-	// 确保包含数据源名称
-	labels["datasource"] = pool.Name
+	// 确保包含数据源名称，优先使用注入的 datasource 标签
+	if dsLabel, ok := labels["datasource"]; !ok || dsLabel == "" {
+		labels["datasource"] = pool.Name
+	}
 
 	return &LabelInjector{
 		dataSourceName: pool.Name,

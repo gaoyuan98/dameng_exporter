@@ -6,6 +6,7 @@ import (
 	"dameng_exporter/logger"
 	"database/sql"
 	"fmt"
+	"net"
 	"net/url"
 	"strings"
 	"sync"
@@ -235,6 +236,9 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 		return nil, fmt.Errorf("测试数据库连接失败: %w", err)
 	}
 
+	// 解析 host、port，供后续标签注入使用
+	cleanHost, hostLabel, portLabel := normalizeDBHost(dsConfig.DbHost)
+
 	// 步骤5：封装成 DataSourcePool 统一管理
 	pool := &DataSourcePool{
 		Name:   dsConfig.Name,
@@ -245,7 +249,15 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 	pool.markHealthy(time.Now())
 
 	// 步骤6：追加标准化标签，便于指标及日志 tracing
-	pool.Labels["datasource"] = dsConfig.Name
+	datasourceLabel := dsConfig.Name
+	hostForDatasource := formatHostPortLabel(hostLabel, portLabel)
+	if hostForDatasource == "" {
+		hostForDatasource = cleanHost
+	}
+	if hostForDatasource != "" {
+		datasourceLabel = fmt.Sprintf("%s@%s", dsConfig.Name, hostForDatasource)
+	}
+	pool.Labels["datasource"] = datasourceLabel
 
 	return pool, nil
 }
@@ -282,6 +294,67 @@ func (m *DBPoolManager) buildDSN(dsConfig *config.DataSourceConfig) string {
 	}
 
 	return dsn
+}
+
+// normalizeDBHost 解析并归一化 dbHost，支持 IPv4/IPv6 以及带查询串的写法
+func normalizeDBHost(rawHost string) (cleanHost string, host string, port string) {
+	cleanHost = strings.TrimSpace(rawHost)
+	if cleanHost == "" {
+		return "", "", ""
+	}
+
+	if idx := strings.Index(cleanHost, "?"); idx != -1 {
+		cleanHost = strings.TrimSpace(cleanHost[:idx])
+	}
+
+	host = cleanHost
+	if strings.HasPrefix(host, "[") && strings.HasSuffix(host, "]") {
+		host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
+	}
+
+	if parsedHost, parsedPort, err := net.SplitHostPort(cleanHost); err == nil {
+		return cleanHost, parsedHost, parsedPort
+	}
+
+	// 兜底处理未加方括号的 IPv6:port 写法，尝试以最后一个冒号切分
+	if strings.Count(cleanHost, ":") >= 2 {
+		if idx := strings.LastIndex(cleanHost, ":"); idx != -1 && idx < len(cleanHost)-1 {
+			pHost := cleanHost[:idx]
+			pPort := cleanHost[idx+1:]
+			if isNumericPort(pPort) {
+				host = strings.TrimSuffix(strings.TrimPrefix(pHost, "["), "]")
+				port = pPort
+				return cleanHost, host, port
+			}
+		}
+	}
+
+	return cleanHost, host, port
+}
+
+func isNumericPort(port string) bool {
+	if port == "" {
+		return false
+	}
+	for _, r := range port {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func formatHostPortLabel(host, port string) string {
+	if host == "" {
+		return ""
+	}
+	if port == "" {
+		return host
+	}
+	if strings.Contains(host, ":") {
+		return fmt.Sprintf("[%s]:%s", host, port)
+	}
+	return fmt.Sprintf("%s:%s", host, port)
 }
 
 // noteFailedDataSourceLocked 在持有锁的情况下登记失败数据源
