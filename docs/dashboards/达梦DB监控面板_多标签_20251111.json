@@ -391,10 +391,31 @@
           "instant": true,
           "refId": "A",
           "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "dmdbms_version{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "format": "table",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "B"
         }
       ],
       "title": "数据源健康状态",
       "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "datasource"
+          }
+        },
         {
           "id": "organize",
           "options": {
@@ -404,12 +425,16 @@
               "env": true,
               "region": true,
               "job": true,
-              "instance": true
+              "instance": true,
+              "Value #B": true
             },
             "renameByName": {
               "datasource": "数据源",
               "cluster": "集群",
-              "Value": "状态"
+              "Value": "状态",
+              "db_version_str": "数据库版本",
+              "build_type": "构建类型",
+              "inner_ver": "内核版本"
             }
           }
         }
@@ -565,110 +590,6 @@
       ],
       "title": "备库重做任务线程数(备库节点)",
       "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 17
-      },
-      "id": 57,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true
-      },
-      "pluginVersion": "10.4.1",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "editorMode": "code",
-          "exemplar": false,
-          "expr": "dmdbms_version{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
-          "format": "table",
-          "instant": true,
-          "interval": "",
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "数据库版本",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "Value": true,
-              "__name__": true,
-              "cluster_name": true,
-              "host_name": true,
-              "instance": true,
-              "job": true,
-              "cluster": true,
-              "datasource": true,
-              "env": true,
-              "region": true,
-              "datasource_name": true,
-              "env_name": true,
-              "job_name": true,
-              "region_name": true
-            },
-            "includeByName": {},
-            "indexByName": {},
-            "renameByName": {
-              "db_version_str": "数据库版本"
-            }
-          }
-        }
-      ],
-      "type": "table",
-      "description": "查询V$VERSION视图"
     },
     {
       "datasource": {
@@ -1478,7 +1399,7 @@
         "h": 15,
         "w": 12,
         "x": 0,
-        "y": 26
+        "y": 41
       },
       "id": 46,
       "options": {
@@ -1637,7 +1558,7 @@
         "h": 15,
         "w": 12,
         "x": 12,
-        "y": 26
+        "y": 41
       },
       "id": 147,
       "options": {
@@ -1806,7 +1727,7 @@
         "h": 15,
         "w": 12,
         "x": 0,
-        "y": 41
+        "y": 71
       },
       "id": 29,
       "options": {
@@ -1929,7 +1850,7 @@
         "h": 15,
         "w": 12,
         "x": 12,
-        "y": 41
+        "y": 71
       },
       "id": 59,
       "options": {
@@ -2034,7 +1955,7 @@
         "h": 15,
         "w": 12,
         "x": 0,
-        "y": 56
+        "y": 26
       },
       "id": 2,
       "options": {
@@ -2155,7 +2076,7 @@
         "h": 15,
         "w": 12,
         "x": 12,
-        "y": 56
+        "y": 86
       },
       "id": 53,
       "options": {
@@ -2259,7 +2180,7 @@
         "h": 15,
         "w": 12,
         "x": 0,
-        "y": 71
+        "y": 86
       },
       "id": 54,
       "options": {
@@ -2365,7 +2286,7 @@
         "h": 15,
         "w": 12,
         "x": 12,
-        "y": 71
+        "y": 101
       },
       "id": 48,
       "options": {
@@ -2467,7 +2388,7 @@
         "h": 15,
         "w": 12,
         "x": 0,
-        "y": 86
+        "y": 101
       },
       "id": 83,
       "options": {
@@ -2567,8 +2488,8 @@
       "gridPos": {
         "h": 15,
         "w": 12,
-        "x": 12,
-        "y": 86
+        "x": 0,
+        "y": 56
       },
       "id": 202,
       "options": {
@@ -2646,8 +2567,8 @@
       "gridPos": {
         "h": 15,
         "w": 12,
-        "x": 0,
-        "y": 101
+        "x": 12,
+        "y": 26
       },
       "id": 602,
       "options": {
@@ -2758,7 +2679,7 @@
         "h": 15,
         "w": 12,
         "x": 12,
-        "y": 101
+        "y": 56
       },
       "id": 608,
       "options": {
@@ -2960,7 +2881,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 118
+        "y": 134
       },
       "id": 10,
       "options": {
@@ -3261,7 +3182,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 118
+        "y": 126
       },
       "id": 6,
       "options": {
@@ -3730,8 +3651,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 126
+        "x": 0,
+        "y": 118
       },
       "id": 51,
       "options": {
@@ -3880,8 +3801,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 134
+        "x": 12,
+        "y": 118
       },
       "id": 58,
       "options": {
