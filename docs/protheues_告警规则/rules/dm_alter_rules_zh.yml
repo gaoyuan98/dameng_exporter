@@ -34,7 +34,7 @@ groups:
       description: "数据源：{{ $labels.datasource }} 数据库状态非OPEN状态"
       summary: "数据源：{{ $labels.datasource }}:数据库状态不为OPEN，请立即核实"
   - alert: 数据库连接数过高
-    expr: dmdbms_session_percentage*100 > 80
+    expr: ((((sum by (datasource,env,region,cluster) (dmdbms_session_type_info)) * 100) / on(datasource,env,region,cluster) dmdbms_parameter_info{param_name="MAX_SESSIONS"}) > 80) and on(datasource,env,region,cluster) dmdbms_parameter_info{param_name="MAX_SESSIONS"} > 0
     for: 15s
     labels:
       severity: 警告

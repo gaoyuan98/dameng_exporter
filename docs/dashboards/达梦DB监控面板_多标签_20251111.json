@@ -426,7 +426,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 7
       },
       "id": 605,
       "panels": [],
@@ -462,7 +462,7 @@
         "h": 3,
         "w": 6,
         "x": 6,
-        "y": 16
+        "y": 14
       },
       "id": 33,
       "options": {
@@ -528,7 +528,7 @@
         "h": 3,
         "w": 6,
         "x": 12,
-        "y": 16
+        "y": 14
       },
       "id": 34,
       "options": {
@@ -604,7 +604,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 41
+        "y": 17
       },
       "id": 57,
       "options": {
@@ -707,7 +707,7 @@
         "h": 3,
         "w": 6,
         "x": 0,
-        "y": 10
+        "y": 8
       },
       "hideTimeOverride": true,
       "id": 14,
@@ -789,7 +789,7 @@
         "h": 3,
         "w": 6,
         "x": 6,
-        "y": 10
+        "y": 8
       },
       "id": 32,
       "options": {
@@ -860,7 +860,7 @@
         "h": 3,
         "w": 6,
         "x": 12,
-        "y": 10
+        "y": 8
       },
       "id": 20,
       "options": {
@@ -926,7 +926,7 @@
         "h": 3,
         "w": 6,
         "x": 18,
-        "y": 10
+        "y": 8
       },
       "id": 21,
       "options": {
@@ -1018,7 +1018,7 @@
         "h": 3,
         "w": 6,
         "x": 0,
-        "y": 13
+        "y": 11
       },
       "id": 18,
       "options": {
@@ -1108,7 +1108,7 @@
         "h": 3,
         "w": 6,
         "x": 6,
-        "y": 13
+        "y": 11
       },
       "id": 55,
       "options": {
@@ -1187,7 +1187,7 @@
         "h": 3,
         "w": 6,
         "x": 12,
-        "y": 13
+        "y": 11
       },
       "id": 52,
       "options": {
@@ -1280,7 +1280,7 @@
         "h": 3,
         "w": 6,
         "x": 18,
-        "y": 13
+        "y": 11
       },
       "id": 16,
       "options": {
@@ -1357,7 +1357,7 @@
         "h": 3,
         "w": 6,
         "x": 0,
-        "y": 16
+        "y": 14
       },
       "id": 81,
       "options": {
@@ -1407,7 +1407,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 25
       },
       "id": 606,
       "panels": [],
@@ -1475,10 +1475,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 15,
         "w": 12,
         "x": 0,
-        "y": 11
+        "y": 26
       },
       "id": 46,
       "options": {
@@ -1634,10 +1634,10 @@
       },
       "description": "查询V$SYSSTAT的解析、执行计划、读写相关统计信息",
       "gridPos": {
-        "h": 10,
+        "h": 15,
         "w": 12,
         "x": 12,
-        "y": 11
+        "y": 26
       },
       "id": 147,
       "options": {
@@ -1803,10 +1803,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 15,
         "w": 12,
         "x": 0,
-        "y": 21
+        "y": 41
       },
       "id": 29,
       "options": {
@@ -1926,10 +1926,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 15,
         "w": 12,
         "x": 12,
-        "y": 21
+        "y": 41
       },
       "id": 59,
       "options": {
@@ -2031,10 +2031,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 15,
         "w": 12,
         "x": 0,
-        "y": 31
+        "y": 56
       },
       "id": 2,
       "options": {
@@ -2062,37 +2062,25 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "dmdbms_session_type_info{session_type=~\"TOTAL\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "expr": "dmdbms_session_type_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
           "instant": false,
           "interval": "",
           "legendFormat": "{{session_type}}",
-          "refId": "会话总数"
+          "refId": "会话状态"
         },
         {
           "datasource": {
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
+          "editorMode": "code",
           "exemplar": false,
-          "expr": "dmdbms_session_type_info{session_type=~\"ACTIVE\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "expr": "dmdbms_parameter_info{param_name=\"MAX_SESSIONS\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
           "hide": false,
           "instant": false,
           "interval": "",
-          "legendFormat": "{{session_type}}",
-          "refId": "会话活跃数"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "exemplar": true,
-          "expr": "dmdbms_session_type_info{session_type=~\"IDLE\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
-          "hide": false,
-          "instant": false,
-          "interval": "",
-          "legendFormat": "{{session_type}}",
-          "refId": "会话失效数"
+          "legendFormat": "MAX_SESSIONS",
+          "refId": "会话上限"
         }
       ],
       "title": "数据库会话状态",
@@ -2164,10 +2152,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 15,
         "w": 12,
         "x": 12,
-        "y": 31
+        "y": 56
       },
       "id": 53,
       "options": {
@@ -2268,10 +2256,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 15,
         "w": 12,
         "x": 0,
-        "y": 41
+        "y": 71
       },
       "id": 54,
       "options": {
@@ -2374,10 +2362,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 15,
         "w": 12,
         "x": 12,
-        "y": 41
+        "y": 71
       },
       "id": 48,
       "options": {
@@ -2476,10 +2464,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 24,
+        "h": 15,
+        "w": 12,
         "x": 0,
-        "y": 52
+        "y": 86
       },
       "id": 83,
       "options": {
@@ -2577,10 +2565,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 62
+        "h": 15,
+        "w": 12,
+        "x": 12,
+        "y": 86
       },
       "id": 202,
       "options": {
@@ -2656,10 +2644,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 24,
+        "h": 15,
+        "w": 12,
         "x": 0,
-        "y": 72
+        "y": 101
       },
       "id": 602,
       "options": {
@@ -2707,6 +2695,139 @@
       "type": "timeseries"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "基于dmdbms_rlog_lsn_total指标，展示各类LSN每分钟推进速率",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 12,
+        "y": 101
+      },
+      "id": 608,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_rlog_lsn_total{lsn_type=\"CKPT_LSN\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "CKPT_LSN",
+          "range": true,
+          "refId": "ckpt"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_rlog_lsn_total{lsn_type=\"FILE_LSN\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "FILE_LSN",
+          "range": true,
+          "refId": "file"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_rlog_lsn_total{lsn_type=\"FLUSH_LSN\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "FLUSH_LSN",
+          "range": true,
+          "refId": "flush"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_rlog_lsn_total{lsn_type=\"CUR_LSN\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "CUR_LSN",
+          "range": true,
+          "refId": "current"
+        }
+      ],
+      "title": "LSN推进速率(min)",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "datasource": {
         "type": "prometheus",
@@ -2716,7 +2837,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 172
+        "y": 117
       },
       "id": 607,
       "panels": [],
@@ -2838,8 +2959,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 41
+        "x": 0,
+        "y": 118
       },
       "id": 10,
       "options": {
@@ -3139,8 +3260,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 49
+        "x": 12,
+        "y": 118
       },
       "id": 6,
       "options": {
@@ -3158,7 +3279,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "表空间空闲大小"
+            "displayName": "表空间使用率"
           }
         ]
       },
@@ -3455,8 +3576,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 49
+        "x": 0,
+        "y": 126
       },
       "id": 30,
       "options": {
@@ -3474,7 +3595,7 @@
         "sortBy": [
           {
             "desc": true,
-            "displayName": "表空间空闲大小"
+            "displayName": "表空间使用率"
           }
         ]
       },
@@ -3609,8 +3730,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 57
+        "x": 12,
+        "y": 126
       },
       "id": 51,
       "options": {
@@ -3759,8 +3880,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 57
+        "x": 0,
+        "y": 134
       },
       "id": 58,
       "options": {
@@ -3854,7 +3975,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 216
+        "y": 142
       },
       "id": 401,
       "panels": [],
@@ -3899,7 +4020,7 @@
         "h": 11,
         "w": 12,
         "x": 0,
-        "y": 174
+        "y": 143
       },
       "id": 50,
       "options": {
@@ -4019,7 +4140,7 @@
         "h": 11,
         "w": 12,
         "x": 12,
-        "y": 185
+        "y": 143
       },
       "id": 56,
       "options": {
@@ -4167,7 +4288,7 @@
         "h": 12,
         "w": 12,
         "x": 0,
-        "y": 196
+        "y": 154
       },
       "id": 35,
       "options": {
@@ -4274,7 +4395,7 @@
         "h": 12,
         "w": 12,
         "x": 12,
-        "y": 208
+        "y": 154
       },
       "id": 36,
       "options": {

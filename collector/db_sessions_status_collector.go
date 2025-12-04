@@ -13,10 +13,9 @@ import (
 
 // DBSessionsStatusCollector 结构体
 type DBSessionsStatusCollector struct {
-	db                    *sql.DB
-	sessionTypeDesc       *prometheus.Desc
-	sessionPercentageDesc *prometheus.Desc
-	dataSource            string // 数据源名称
+	db              *sql.DB
+	sessionTypeDesc *prometheus.Desc
+	dataSource      string // 数据源名称
 }
 
 // DBSessionsStatusInfo 结构体
@@ -40,19 +39,12 @@ func NewDBSessionsStatusCollector(db *sql.DB) MetricCollector {
 			[]string{"session_type"},
 			nil,
 		),
-		sessionPercentageDesc: prometheus.NewDesc(
-			dmdbms_session_percentage,
-			"Number of database sessions type percentage,method: total/max_session * 100%",
-			[]string{},
-			nil,
-		),
 	}
 }
 
 // Describe 方法
 func (c *DBSessionsStatusCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.sessionTypeDesc
-	ch <- c.sessionPercentageDesc
 }
 
 func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
@@ -86,26 +78,9 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 		logger.Logger.Error("Error with rows", zap.Error(err))
 	}
 
-	var maxSession float64 = 0
-	var totalSession float64 = 0
 	// 发送数据到 Prometheus
 	for _, info := range sessionsStatusInfos {
-		if info.stateType.Valid && info.stateType.String == "MAX_SESSION" {
-			maxSession = utils.NullFloat64ToFloat64(info.countVal)
-		} else if info.stateType.Valid && info.stateType.String == "TOTAL" {
-			totalSession = utils.NullFloat64ToFloat64(info.countVal)
-		}
 		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, utils.NullFloat64ToFloat64(info.countVal), utils.NullStringToString(info.stateType))
 	}
-
-	div := float64(0)
-	if maxSession != 0 {
-		div = totalSession / float64(maxSession)
-	}
-	if maxSession == 0 || div == 0 {
-		div = 0
-	}
-	//eg：计算百分比，此处没有计算百分比
-	ch <- prometheus.MustNewConstMetric(c.sessionPercentageDesc, prometheus.GaugeValue, div)
 
 }
