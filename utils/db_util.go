@@ -93,3 +93,22 @@ func NullFloat64ToString(n sql.NullFloat64) string {
 	}
 	return "0"
 }
+
+// NullStringTimeToUnixSeconds 将时间字符串（YYYY-MM-DD HH24:MI:SS）转换为 Unix 秒
+func NullStringTimeToUnixSeconds(n sql.NullString) (float64, error) {
+	if !n.Valid {
+		return 0, nil
+	}
+
+	value := n.String
+	if value == "" {
+		return 0, nil
+	}
+
+	parsedTime, err := time.ParseInLocation("2006-01-02 15:04:05", value, time.Local)
+	if err != nil {
+		return 0, err
+	}
+
+	return float64(parsedTime.Unix()), nil
+}

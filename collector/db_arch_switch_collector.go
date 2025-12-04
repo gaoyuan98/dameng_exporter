@@ -13,17 +13,16 @@ import (
 	"go.uber.org/zap"
 )
 
-// DbArchSwitchRateInfo 归档切换频率信息
-type DbArchSwitchRateInfo struct {
-	minusDiff sql.NullFloat64
+// DbArchLatestCreateTimeInfo 最新归档创建时间信息
+type DbArchLatestCreateTimeInfo struct {
+	createTime sql.NullString
 }
 
 // DbArchSwitchCollector 归档切换监控采集器
 type DbArchSwitchCollector struct {
-	db                       *sql.DB
-	archSwitchRateDesc       *prometheus.Desc // 归档切换频率
-	archSwitchRateDetailInfo *prometheus.Desc // 归档切换频率详情
-	dataSource               string           // 数据源名称
+	db                     *sql.DB
+	archLastCreateTimeDesc *prometheus.Desc // 最新归档创建时间
+	dataSource             string           // 数据源名称
 }
 
 // SetDataSource 实现DataSourceAware接口
@@ -35,15 +34,9 @@ func (c *DbArchSwitchCollector) SetDataSource(name string) {
 func NewDbArchSwitchCollector(db *sql.DB) MetricCollector {
 	return &DbArchSwitchCollector{
 		db: db,
-		archSwitchRateDesc: prometheus.NewDesc(
-			dmdbms_arch_switch_rate,
-			"Information about DM database archive switch rate，Always output the most recent piece of data",
-			[]string{},
-			nil,
-		),
-		archSwitchRateDetailInfo: prometheus.NewDesc(
-			dmdbms_arch_switch_rate_detail_info,
-			"Information about DM database archive switch rate info, return MAX_SEND_LSN - LAST_SEND_LSN = diffValue",
+		archLastCreateTimeDesc: prometheus.NewDesc(
+			dmdbms_arch_last_create_time_seconds,
+			"Latest archive log creation time in Unix seconds; zero when archive logs are unavailable",
 			[]string{},
 			nil,
 		),
@@ -51,8 +44,7 @@ func NewDbArchSwitchCollector(db *sql.DB) MetricCollector {
 }
 
 func (c *DbArchSwitchCollector) Describe(ch chan<- *prometheus.Desc) {
-	ch <- c.archSwitchRateDesc
-	ch <- c.archSwitchRateDetailInfo
+	ch <- c.archLastCreateTimeDesc
 }
 
 func (c *DbArchSwitchCollector) Collect(ch chan<- prometheus.Metric) {
@@ -67,34 +59,30 @@ func (c *DbArchSwitchCollector) Collect(ch chan<- prometheus.Metric) {
 	if !c.isArchiveEnabled(ctx) {
 		// 归档未开启时返回默认值0
 		ch <- prometheus.MustNewConstMetric(
-			c.archSwitchRateDesc,
+			c.archLastCreateTimeDesc,
 			prometheus.GaugeValue,
 			0,
 		)
 		return
 	}
 
-	// 查询归档切换频率
-	dbArchSwitchRateInfo, err := c.getDbArchSwitchRate(ctx, c.db)
+	// 查询最新归档创建时间
+	dbArchLatestCreateTimeInfo, err := c.getLatestArchCreateTime(ctx, c.db)
 	if err != nil {
-		logger.Logger.Warnf("[%s] Failed to get archive switch rate: %v", c.dataSource, err)
+		logger.Logger.Warnf("[%s] Failed to get latest archive create time: %v", c.dataSource, err)
 		return
 	}
 
-	minusDiff := utils.NullFloat64ToFloat64(dbArchSwitchRateInfo.minusDiff)
-
-	// 归档切换频率指标（用于折线图）
+	lastCreateTime, err := utils.NullStringTimeToUnixSeconds(dbArchLatestCreateTimeInfo.createTime)
+	if err != nil {
+		logger.Logger.Warnf("[%s] Failed to parse archive create time %q: %v", c.dataSource, utils.NullStringToString(dbArchLatestCreateTimeInfo.createTime), err)
+		lastCreateTime = 0
+	}
+	// 最新归档创建时间指标
 	ch <- prometheus.MustNewConstMetric(
-		c.archSwitchRateDesc,
+		c.archLastCreateTimeDesc,
 		prometheus.GaugeValue,
-		minusDiff,
-	)
-
-	// 归档切换详细信息（优化后：不包含额外标签）
-	ch <- prometheus.MustNewConstMetric(
-		c.archSwitchRateDetailInfo,
-		prometheus.GaugeValue,
-		minusDiff,
+		lastCreateTime,
 	)
 }
 
@@ -124,25 +112,23 @@ func (c *DbArchSwitchCollector) isArchiveEnabled(ctx context.Context) bool {
 	return archStatus == "1"
 }
 
-// getDbArchSwitchRate 查询归档切换频率
-func (c *DbArchSwitchCollector) getDbArchSwitchRate(ctx context.Context, db *sql.DB) (DbArchSwitchRateInfo, error) {
-	var dbArchSwitchRateInfo DbArchSwitchRateInfo
+// getLatestArchCreateTime 查询最新归档创建时间
+func (c *DbArchSwitchCollector) getLatestArchCreateTime(ctx context.Context, db *sql.DB) (DbArchLatestCreateTimeInfo, error) {
+	var dbArchLatestCreateTimeInfo DbArchLatestCreateTimeInfo
 
-	rows, err := db.QueryContext(ctx, config.QueryArchiveSwitchRateSql)
+	rows, err := db.QueryContext(ctx, config.QueryArchiveLatestCreateTimeSql)
 	if err != nil {
 		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
-		return dbArchSwitchRateInfo, err
+		return dbArchLatestCreateTimeInfo, err
 	}
 	defer rows.Close()
 
 	if rows.Next() {
-		// 跳过不需要的字段，只扫描最后的 minusDiff
-		var status, createTime, path, clsn, srcDbMagic sql.NullString
-		if err := rows.Scan(&status, &createTime, &path, &clsn, &srcDbMagic, &dbArchSwitchRateInfo.minusDiff); err != nil {
+		if err := rows.Scan(&dbArchLatestCreateTimeInfo.createTime); err != nil {
 			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
-			return dbArchSwitchRateInfo, err
+			return dbArchLatestCreateTimeInfo, err
 		}
 	}
 
-	return dbArchSwitchRateInfo, nil
+	return dbArchLatestCreateTimeInfo, nil
 }
