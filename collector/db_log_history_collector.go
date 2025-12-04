@@ -31,13 +31,13 @@ func NewDbLogHistoryCollector(db *sql.DB) MetricCollector {
 	return &DbLogHistoryCollector{
 		db: db,
 		lastTimeDesc: prometheus.NewDesc(
-			dmdbms_redo_switch_last_time,
+			dmdbms_redo_switch_last_time_seconds,
 			"Unix timestamp of the most recent redo log switch",
 			[]string{},
 			nil,
 		),
 		intervalDesc: prometheus.NewDesc(
-			dmdbms_redo_switch_interval,
+			dmdbms_redo_switch_interval_seconds,
 			"Seconds between the two most recent redo log switches",
 			[]string{},
 			nil,
@@ -90,25 +90,29 @@ func (c *DbLogHistoryCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
+	var validTimes []time.Time
+	for _, item := range history {
+		if item.rectime.Valid {
+			validTimes = append(validTimes, item.rectime.Time)
+			if len(validTimes) == 2 {
+				break
+			}
+		}
+	}
+
 	var lastSwitchTime float64
 	var lastInterval float64
 
 	// 5. 计算最新一次切换时间
-	if len(history) > 0 {
-		if history[0].rectime.Valid {
-			lastSwitchTime = float64(history[0].rectime.Time.Unix())
-		}
+	if len(validTimes) > 0 {
+		lastSwitchTime = float64(validTimes[0].Unix())
 	}
 
 	// 6. 若存在上一条记录，计算最近一次切换间隔
-	if len(history) > 1 {
-		curr := history[0]
-		prev := history[1]
-		if curr.rectime.Valid && prev.rectime.Valid {
-			delta := curr.rectime.Time.Sub(prev.rectime.Time).Seconds()
-			if delta >= 0 {
-				lastInterval = delta
-			}
+	if len(validTimes) > 1 {
+		delta := validTimes[0].Sub(validTimes[1]).Seconds()
+		if delta >= 0 {
+			lastInterval = delta
 		}
 	}
 

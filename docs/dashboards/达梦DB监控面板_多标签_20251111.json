@@ -368,7 +368,25 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "数据源"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "选择该数据源",
+                    "url": "/d/${__dashboard.uid}/${__dashboard.slug}?var-env=${env}&var-region=${region}&var-cluster=${cluster}&var-datasource=${__value.raw}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
@@ -431,7 +449,7 @@
             "renameByName": {
               "datasource": "数据源",
               "cluster": "集群",
-              "Value": "状态",
+              "Value #A": "状态",
               "db_version_str": "数据库版本",
               "build_type": "构建类型",
               "inner_ver": "内核版本"
@@ -455,7 +473,7 @@
       },
       "id": 605,
       "panels": [],
-      "title": "数据源概览",
+      "title": "数据源概览 (${datasource})",
       "type": "row"
     },
     {
@@ -1332,7 +1350,7 @@
       },
       "id": 606,
       "panels": [],
-      "title": "数据库性能监控",
+      "title": "数据库性能监控 (${datasource})",
       "type": "row"
     },
     {
@@ -2762,7 +2780,7 @@
       },
       "id": 607,
       "panels": [],
-      "title": "基础信息",
+      "title": "基础信息 (${datasource})",
       "type": "row"
     },
     {
@@ -3199,8 +3217,8 @@
         "showHeader": true,
         "sortBy": [
           {
-            "desc": true,
-            "displayName": "表空间使用率"
+            "desc": false,
+            "displayName": "表空间空闲大小"
           }
         ]
       },
@@ -3515,8 +3533,8 @@
         "showHeader": true,
         "sortBy": [
           {
-            "desc": true,
-            "displayName": "表空间使用率"
+            "desc": false,
+            "displayName": "表空间空闲大小"
           }
         ]
       },
@@ -3900,7 +3918,7 @@
       },
       "id": 401,
       "panels": [],
-      "title": "集群相关指标",
+      "title": "集群相关指标 (${datasource})",
       "type": "row"
     },
     {
