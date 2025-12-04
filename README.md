@@ -499,6 +499,7 @@ scrape_configs:
 ### v1.2.2 (2025-12)
 - 新增基于 V$RLOG 的 LSN 指标：`dmdbms_rlog_lsn_total{lsn_type="CKPT_LSN|FILE_LSN|FLUSH_LSN|CUR_LSN"}`，统一 Counter 通过标签区分
 - 采集前自动检测 V$RLOG 视图及字段存在性，兼容旧版本数据库
+- 新增基于 V$RLOGFILE 的日志文件列表指标：`dmdbms_rlog_file_size_bytes{file_id="",path="",create_time=""}`，数值来源为 RLOG_SIZE
 
 ### v1.2.1 (2025-10)
 1. 新增集群状态下监控主库发送归档队列堆积指标

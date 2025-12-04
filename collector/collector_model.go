@@ -28,9 +28,10 @@ const (
 	dmdbms_memory_curr_pool_info  string = "dmdbms_memory_curr_pool_info"
 	dmdbms_memory_total_pool_info string = "dmdbms_memory_total_pool_info"
 
-	dmdbms_session_type_Info string = "dmdbms_session_type_info"
-	dmdbms_ckpttime_total    string = "dmdbms_ckpttime_total"
-	dmdbms_rlog_lsn_total    string = "dmdbms_rlog_lsn_total"
+	dmdbms_session_type_Info    string = "dmdbms_session_type_info"
+	dmdbms_ckpttime_total       string = "dmdbms_ckpttime_total"
+	dmdbms_rlog_lsn_total       string = "dmdbms_rlog_lsn_total"
+	dmdbms_rlog_file_size_bytes string = "dmdbms_rlog_file_size_bytes"
 
 	dmdbms_joblog_error_num string = "dmdbms_joblog_error_num"
 
