@@ -103,6 +103,8 @@ GROUP BY
 	QueryParameterInfoSql = `select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM')`
 	//查询检查点信息
 	QueryCheckPointInfoSql = `select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT`
+	//查询redo日志LSN信息
+	QueryRedoLogLsnInfoSql = `SELECT /*+DM_EXPORTER*/ CKPT_LSN,FILE_LSN,FLUSH_LSN,CUR_LSN FROM V$RLOG`
 	//查询用户信息
 	QueryUserInfoSqlStr = `SELECT 
                        /*+DM_EXPORTER*/ 
@@ -200,4 +202,10 @@ GROUP BY
 
 	// 查询redo日志切换历史
 	QueryRedoLogHistorySql = `SELECT /*+DM_EXPORTER*/ RECTIME FROM V$LOG_HISTORY ORDER BY RECTIME DESC LIMIT ?`
+
+	// 检查V$RLOG视图是否存在
+	QueryRlogViewExists = "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$RLOG'"
+
+	// 检查V$RLOG视图中LSN字段是否存在
+	QueryRlogColumnsExist = "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$RLOG' AND COLNAME IN ('CKPT_LSN','FILE_LSN','FLUSH_LSN','CUR_LSN')"
 )

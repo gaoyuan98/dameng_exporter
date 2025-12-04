@@ -31,6 +31,7 @@ const (
 	dmdbms_session_percentage string = "dmdbms_session_percentage"
 	dmdbms_session_type_Info  string = "dmdbms_session_type_info"
 	dmdbms_ckpttime_total     string = "dmdbms_ckpttime_total"
+	dmdbms_rlog_lsn_total     string = "dmdbms_rlog_lsn_total"
 
 	dmdbms_joblog_error_num string = "dmdbms_joblog_error_num"
 
