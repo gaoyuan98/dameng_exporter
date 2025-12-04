@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"dameng_exporter/db"
 	"dameng_exporter/logger"
 	"database/sql"
 	"errors"
@@ -10,20 +11,50 @@ import (
 )
 
 // 统一的数据库连接检查（带数据源标识）
-func CheckDBConnectionWithSource(db *sql.DB, dataSource string) error {
-	if err := db.Ping(); err != nil {
-		logger.Logger.Errorf("[%s] Database connection is not available: %v", dataSource, err)
+func CheckDBConnectionWithSource(dbConn *sql.DB, dataSource string) error {
+	if dbConn == nil {
+		err := fmt.Errorf("数据库连接未初始化")
+		logger.Logger.Errorf("[%s] 数据库连接未初始化，无法执行检查", dataSource)
+		if manager := db.GlobalPoolManager; manager != nil {
+			manager.MarkDatasourceFailed(dataSource, err)
+		}
 		return err
 	}
+
+	manager := db.GlobalPoolManager
+	if manager == nil {
+		return nil
+	}
+
+	status := manager.GetDatasourceHealthStatus(dataSource)
+	if !status.Registered {
+		err := fmt.Errorf("数据源[%s]未注册或已禁用", dataSource)
+		logger.Logger.Warn(err.Error())
+		return err
+	}
+
+	if !status.Healthy {
+		lastCheck := "未知"
+		if !status.LastCheck.IsZero() {
+			lastCheck = status.LastCheck.Format(time.DateTime)
+		}
+		if status.LastError != "" {
+			logger.Logger.Warnf("[%s] 数据源处于不可用状态，最近检查: %s，最近错误: %s", dataSource, lastCheck, status.LastError)
+		} else {
+			logger.Logger.Warnf("[%s] 数据源处于不可用状态，最近检查: %s", dataSource, lastCheck)
+		}
+		return fmt.Errorf("数据源[%s]当前不可用", dataSource)
+	}
+
 	return nil
 }
 
 // 封装通用的错误处理逻辑（带数据源标识）
 func HandleDbQueryErrorWithSource(err error, dataSource string) {
 	if errors.Is(err, context.DeadlineExceeded) {
-		logger.Logger.Errorf("[%s] Query timed out: %v", dataSource, err)
+		logger.Logger.Errorf("[%s] 查询超时: %v", dataSource, err)
 	} else {
-		logger.Logger.Errorf("[%s] Error querying database: %v", dataSource, err)
+		logger.Logger.Errorf("[%s] 查询数据库时发生错误: %v", dataSource, err)
 	}
 }
 
@@ -61,4 +92,23 @@ func NullFloat64ToString(n sql.NullFloat64) string {
 		return fmt.Sprintf("%f", n.Float64)
 	}
 	return "0"
+}
+
+// NullStringTimeToUnixSeconds 将时间字符串（YYYY-MM-DD HH24:MI:SS）转换为 Unix 秒
+func NullStringTimeToUnixSeconds(n sql.NullString) (float64, error) {
+	if !n.Valid {
+		return 0, nil
+	}
+
+	value := n.String
+	if value == "" {
+		return 0, nil
+	}
+
+	parsedTime, err := time.ParseInLocation("2006-01-02 15:04:05", value, time.Local)
+	if err != nil {
+		return 0, err
+	}
+
+	return float64(parsedTime.Unix()), nil
 }

@@ -23,6 +23,7 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 
 	// 系统级收集器（不依赖数据库）
 	collectors = append(collectors, NewBuildInfoCollector())
+	collectors = append(collectors, NewDatasourceHealthCollector(poolManager))
 
 	// 如果poolManager为nil，报错
 	if poolManager == nil {
@@ -81,14 +82,18 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbArchSwitchCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbArchSendCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbArchQueueCollector))
+		collectors = append(collectors, AdaptCollector(poolManager, NewDbLogHistoryCollector))
+		collectors = append(collectors, AdaptCollector(poolManager, NewDbRlogFileCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbRapplySysCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbRapplyTimeDiffCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewPurgeCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewCkptCollector))
+		collectors = append(collectors, AdaptCollector(poolManager, NewDbRedoLogLsnCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbBufferPoolCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbDualCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbDwWatcherInfoCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDBSystemInfoCollector))
+		collectors = append(collectors, AdaptCollector(poolManager, NewDbSystemEventWaitCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbInstanceLogErrorCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbDictCacheCollector))
 	}

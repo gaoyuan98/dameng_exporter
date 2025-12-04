@@ -23,7 +23,6 @@ type DBInstanceRunningInfoCollector struct {
 	trxNumDesc          *prometheus.Desc
 	deadlockDesc        *prometheus.Desc
 	threadNumDesc       *prometheus.Desc
-	statusOccursDesc    *prometheus.Desc
 	switchingOccursDesc *prometheus.Desc
 	dbStartDayDesc      *prometheus.Desc
 	dataSource          string // 数据源名称
@@ -65,13 +64,13 @@ func NewDBInstanceRunningInfoCollector(db *sql.DB) MetricCollector {
 			nil,
 		),
 		trxNumDesc: prometheus.NewDesc(
-			dmdbms_trx_info,
+			dmdbms_trx_num_info,
 			"Number of transactions",
 			[]string{}, // 移除host_name标签
 			nil,
 		),
 		deadlockDesc: prometheus.NewDesc(
-			dmdbms_dead_lock_num_info,
+			dmdbms_dead_lock_num_total,
 			"Number of deadlocks",
 			[]string{}, // 移除host_name标签
 			nil,
@@ -79,12 +78,6 @@ func NewDBInstanceRunningInfoCollector(db *sql.DB) MetricCollector {
 		threadNumDesc: prometheus.NewDesc(
 			dmdbms_thread_num_info,
 			"Number of threads",
-			[]string{}, // 移除host_name标签
-			nil,
-		),
-		statusOccursDesc: prometheus.NewDesc( //这个是数据库状态切换的标识  OPEN
-			dmdbms_db_status_occurs,
-			"status changes status, value info: false is 0 , true is 1",
 			[]string{}, // 移除host_name标签
 			nil,
 		),
@@ -110,7 +103,6 @@ func (c *DBInstanceRunningInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.trxNumDesc
 	ch <- c.deadlockDesc
 	ch <- c.threadNumDesc
-	ch <- c.statusOccursDesc
 	ch <- c.switchingOccursDesc
 	ch <- c.dbStartDayDesc
 }
@@ -170,26 +162,14 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	}
 
-	var statusOccurs = 0
-	//对值进行二次封装处理
-
-	//判断实例状态是否正常，异常时值为0 正常时为1
-	//eg： 此处是为了兼容java版本的报错
-	if status == DB_INSTANCE_STATUS_MOUNT_2 || status == DB_INSTANCE_STATUS_SUSPEND_3 {
-		statusOccurs = 0
-	} else {
-		statusOccurs = 1
-	}
-
 	data := map[string]float64{
-		"startTime":    float64(startTimeUnix),
-		"status":       status,
-		"mode":         mode,
-		"trxNum":       trxNum,
-		"deadlockNum":  deadlockNum,
-		"threadNum":    threadNum,
-		"statusOccurs": float64(statusOccurs),
-		"dbStartDay":   float64(dbStartDay),
+		"startTime":   float64(startTimeUnix),
+		"status":      status,
+		"mode":        mode,
+		"trxNum":      trxNum,
+		"deadlockNum": deadlockNum,
+		"threadNum":   threadNum,
+		"dbStartDay":  float64(dbStartDay),
 	}
 	// 处理数据库模式切换的逻辑（主备集群）
 	c.handleDatabaseModeSwitch(ch, mode)
@@ -205,9 +185,8 @@ func (c *DBInstanceRunningInfoCollector) collectMetrics(ch chan<- prometheus.Met
 	ch <- prometheus.MustNewConstMetric(c.statusDesc, prometheus.GaugeValue, data["status"])
 	ch <- prometheus.MustNewConstMetric(c.modeDesc, prometheus.GaugeValue, data["mode"])
 	ch <- prometheus.MustNewConstMetric(c.trxNumDesc, prometheus.GaugeValue, data["trxNum"])
-	ch <- prometheus.MustNewConstMetric(c.deadlockDesc, prometheus.GaugeValue, data["deadlockNum"])
+	ch <- prometheus.MustNewConstMetric(c.deadlockDesc, prometheus.CounterValue, data["deadlockNum"])
 	ch <- prometheus.MustNewConstMetric(c.threadNumDesc, prometheus.GaugeValue, data["threadNum"])
-	ch <- prometheus.MustNewConstMetric(c.statusOccursDesc, prometheus.GaugeValue, data["status"])
 	ch <- prometheus.MustNewConstMetric(c.dbStartDayDesc, prometheus.GaugeValue, data["dbStartDay"])
 }
 

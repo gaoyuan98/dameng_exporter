@@ -176,6 +176,7 @@ GRANT SELECT ON V$LICENSE TO MONITOR_USER;
 GRANT SELECT ON V$DATABASE TO MONITOR_USER;
 GRANT SELECT ON V$DM_INI TO MONITOR_USER;
 GRANT SELECT ON V$RLOGFILE TO MONITOR_USER;
+GRANT SELECT ON V$RLOG TO MONITOR_USER;
 GRANT SELECT ON V$TABLESPACE TO MONITOR_USER;
 GRANT SELECT ON V$DATAFILE TO MONITOR_USER;
 GRANT SELECT ON DBA_DATA_FILES TO MONITOR_USER;
@@ -494,6 +495,20 @@ scrape_configs:
 ---
 
 ## 🔄 更新记录
+
+### v1.2.3 (2025-12-04)
+注：必须使用新的grafana面板样式，重大更新
+1. feat: 新增指标dmdbms_system_event_waits_total 收集系统中的事件等待指标信息
+2. feat: 新增后台状态监控协程，定期健康检查与失败重试数据源，支持成功自动恢复与失败降级
+3. feat: 新增dmdb_up指标，来表示每个数据源是否正常 1正常 0不正常
+4. feat: 新增指标dmdbms_rlog_file_size_bytes 展示redo文件的相关信息
+5. feat: 新增计算归档/Redo切换频率的指标
+6. perf: 死锁数量指标名称由dmdbms_dead_lock_num_info调整为dmdbms_dead_lock_num_total，符合grafana的指标命名规范
+7. perf: dmdbms_db_status_occurs指标废弃，原是用来判断数据库状态是否为OPEN做出来的一个指标，现告警时可以直接判断，所以该指标废弃
+8. perf: dmdbms_session_type_Info指标显示所有的会话状态而不是仅显示IDLE、ACTIVE
+9. perf: 废弃dmdbms_session_percentage指标改为表达式计算
+10. perf: 优化datasource标签解决找不到ip的问题,优化指标格式
+11. fix: dmdbms_dead_lock_num_info指标的含义(之前统计的是事务阻塞而非死锁)，事务阻塞指标为dmdbms_trx_info并更名为dmdbms_trx_num_info
 
 ### v1.2.1 (2025-10)
 1. 新增集群状态下监控主库发送归档队列堆积指标

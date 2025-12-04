@@ -1,0 +1,4796 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "10.4.1"
+    },
+    {
+      "type": "datasource",
+      "id": "prometheus",
+      "name": "Prometheus",
+      "version": "1.0.0"
+    },
+    {
+      "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "支持多数据源、多维度标签过滤，包含准确的视图查询说明",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jvJjnkC7k"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 25,
+      "panels": [],
+      "title": "数据源资源列表",
+      "type": "row",
+      "description": "展示所有数据源的基础资源信息"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "内存"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "kbytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "数据源(点击链接跳转)"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "查看该数据源",
+                    "url": "/d/${__dashboard.uid}/${__dashboard.slug}?var-env=${env}&var-region=${region}&var-cluster=${cluster}&var-datasource=${__value.raw}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total_phy_size"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "displayName",
+                "value": "物理内存"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total_vir_size"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "displayName",
+                "value": "虚拟内存"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "total_disk_size"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "displayName",
+                "value": "磁盘空间"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "n_cpu"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "displayName",
+                "value": "CPU核心数"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "集群"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "查看集群",
+                    "url": "/d/${__dashboard.uid}/${__dashboard.slug}?var-env=${env}&var-region=${region}&var-cluster=${__value.raw}&var-datasource=${datasource}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 27,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "dmdbms_system_base_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} - 0",
+          "format": "table",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "数据源资源列表",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "Value #A": true,
+              "job": true,
+              "env": true,
+              "region": true,
+              "role": true,
+              "business": true,
+              "datacenter": true,
+              "db_type": true,
+              "__name__": true
+            },
+            "indexByName": {
+              "Time": 0,
+              "instance": 1,
+              "host_name": 2,
+              "cluster": 3,
+              "datasource": 4,
+              "osName": 5,
+              "osVersion": 6,
+              "Value #A": 7,
+              "Value #B": 8
+            },
+            "renameByName": {
+              "Time": "",
+              "Value #B": "内存大小",
+              "coreNum": "核数",
+              "host_name": "主机名",
+              "instance": "实例",
+              "job": "",
+              "memSize": "内存",
+              "osName": "操作系统类型",
+              "osVersion": "操作系统版本",
+              "rchitecture": "架构",
+              "n_cpu": "CPU核心数",
+              "total_phy_size": "物理内存",
+              "total_vir_size": "虚拟内存",
+              "total_disk_size": "磁盘空间",
+              "datasource": "数据源(点击链接跳转)",
+              "cluster": "集群"
+            }
+          }
+        }
+      ],
+      "type": "table",
+      "description": "查询V$SYSTEMINFO的N_CPU、TOTAL_PHY_SIZE、TOTAL_VIR_SIZE、TOTAL_DISK_SIZE"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "异常",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "正常",
+                  "color": "green"
+                }
+              }
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "数据源"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "选择该数据源",
+                    "url": "/d/${__dashboard.uid}/${__dashboard.slug}?var-env=${env}&var-region=${region}&var-cluster=${cluster}&var-datasource=${__value.raw}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 604,
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "dmdb_up{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "refId": "A",
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "dmdbms_version{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "format": "table",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "B"
+        }
+      ],
+      "title": "数据源健康状态",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "datasource"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "env": true,
+              "region": true,
+              "job": true,
+              "instance": true,
+              "Value #B": true
+            },
+            "renameByName": {
+              "datasource": "数据源",
+              "cluster": "集群",
+              "Value #A": "状态",
+              "db_version_str": "数据库版本",
+              "build_type": "构建类型",
+              "inner_ver": "内核版本"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jvJjnkC7k"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 605,
+      "panels": [],
+      "title": "数据源概览 (${datasource})",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$RAPPLY_SYS.task_mem_used字段",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 12,
+        "y": 14
+      },
+      "id": 33,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_rapply_sys_task_mem_used{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "备库重做日志内存堆积"
+        }
+      ],
+      "title": "备库重做日志内存堆积(备库节点)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$RAPPLY_SYS视图的task_num字段",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 14
+      },
+      "id": 34,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_rapply_sys_task_num {datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "备库重做任务线程数"
+        }
+      ],
+      "title": "备库重做任务线程数(备库节点)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "hideTimeOverride": true,
+      "id": 14,
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "valueSize": 24
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": " sum(time() - dmdbms_start_time_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}) by(instance)",
+          "format": "time_series",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "",
+          "refId": "A",
+          "step": 40
+        }
+      ],
+      "title": "运行时间",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询SYSJOB.SYSJOBHISTORIES2和SYSJOB.SYSSTEPHISTORIES2表中ERRCODE!=0且START_TIME>=(SYSDATE-31)的记录总数",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 10
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 20
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "id": 32,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "dmdbms_joblog_error_num{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "定时作业错误数"
+        }
+      ],
+      "title": "定时作业的错误数",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询SELECT COUNT(*) FROM V$TRXWAIT的记录数",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "id": 20,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_trx_num_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "数据库状态"
+        }
+      ],
+      "title": "活动会话事务等待数",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$THREADS视图的记录总数COUNT(*)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "id": 21,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_thread_num_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "数据库线程数"
+        }
+      ],
+      "title": "线程数",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$INSTANCE.STATUS$字段，OPEN=1, MOUNT=2, SUSPEND=3, 其他=4",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "index": 0,
+                  "text": "OPEN"
+                },
+                "2": {
+                  "index": 1,
+                  "text": "MOUNT"
+                },
+                "3": {
+                  "index": 2,
+                  "text": "SUSPEND"
+                },
+                "4": {
+                  "index": 3,
+                  "text": "OTHER"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 0,
+        "y": 11
+      },
+      "id": 18,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "valueSize": 24
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_status_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "数据库状态"
+        }
+      ],
+      "title": "数据库状态",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$ARCH_STATUS.ARCH_STATUS字段，VALID=1, INVALID=0",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "index": 1,
+                  "text": "正常"
+                },
+                "2": {
+                  "index": 2,
+                  "text": "异常"
+                },
+                "-1": {
+                  "index": 0,
+                  "text": "未开启"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 6,
+        "y": 11
+      },
+      "id": 55,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "valueSize": 24
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_status_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "数据库状态"
+        }
+      ],
+      "title": "归档状态",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$LICENSE.expired_date字段，计算与当前日期的差值",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "-1": {
+                  "index": 0,
+                  "text": "无限制"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "d"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 12,
+        "y": 11
+      },
+      "id": 52,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "dmdbms_license_date{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "数据库授权剩余天数"
+        }
+      ],
+      "title": "数据库授权剩余天数",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$INSTANCE.MODE$字段，PRIMARY=1, NORMAL=2, STANDBY=3, 其他=4",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "index": 0,
+                  "text": "PRIMARY"
+                },
+                "2": {
+                  "index": 1,
+                  "text": "NORMAL"
+                },
+                "3": {
+                  "index": 2,
+                  "text": "STANDBY"
+                },
+                "4": {
+                  "index": 3,
+                  "text": "OTHER"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 11
+      },
+      "id": 16,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "valueSize": 24
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_mode_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "数据库状态"
+        }
+      ],
+      "title": "数据库模式",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "基于V$LOG_HISTORY 导出的最新 RECTIME（dmdbms_redo_last_switch_time_seconds），使用 time()-指标值 计算距上次 redo 日志切换的秒数；当指标为0或缺失时显示为0。",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 0,
+        "y": 14
+      },
+      "id": 81,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "valueSize": 24
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "((time() - dmdbms_redo_last_switch_time_seconds{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}) unless (dmdbms_redo_last_switch_time_seconds{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} == 0)) or vector(0)",
+          "format": "time_series",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "距上次Redo日志切换(秒)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "基于V$ARCH_FILE中最新的归档日志CREATE_TIME（dmdbms_arch_last_create_time_seconds），使用 time()-指标值 计算距上次归档日志切换的秒数；当指标为0或缺失时显示为0。",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 6,
+        "y": 14
+      },
+      "id": 82,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "valueSize": 24
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "((time() - max by (datasource, env, region, cluster, instance) (dmdbms_arch_last_create_time_seconds{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"})) * on(datasource, env, region, cluster, instance) (max by (datasource, env, region, cluster, instance) (dmdbms_arch_last_create_time_seconds{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} > bool 0)))",
+          "format": "time_series",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "距上次归档日志切换(秒)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "对Redo与归档日志的最近切换时间取差值，观测两个指标随时间的变化趋势。",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 0,
+        "y": 101
+      },
+      "id": 808,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "((time() - dmdbms_redo_last_switch_time_seconds{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}) unless (dmdbms_redo_last_switch_time_seconds{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} == 0)) or vector(0)",
+          "legendFormat": "Redo日志切换间隔",
+          "range": true,
+          "refId": "redo_gap"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "((time() - max by (datasource, env, region, cluster, instance) (dmdbms_arch_last_create_time_seconds{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"})) * on(datasource, env, region, cluster, instance) (max by (datasource, env, region, cluster, instance) (dmdbms_arch_last_create_time_seconds{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} > bool 0)))",
+          "legendFormat": "归档日志切换间隔",
+          "range": true,
+          "refId": "arch_gap"
+        }
+      ],
+      "title": "Redo/归档日志切换间隔趋势",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jvJjnkC7k"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 606,
+      "panels": [],
+      "title": "数据库性能监控 (${datasource})",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$SYSSTAT的select/insert/delete/update/ddl statements等指标",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 0,
+        "y": 41
+      },
+      "id": 46,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"select statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "select",
+          "range": true,
+          "refId": "SELECT语句"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"delete statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "hide": false,
+          "legendFormat": "delete",
+          "range": true,
+          "refId": "DELETE语句"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"insert statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "hide": false,
+          "legendFormat": "insert",
+          "range": true,
+          "refId": "INSERT"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"update statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "hide": false,
+          "legendFormat": "update",
+          "range": true,
+          "refId": "UPDATE"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"ddl statements\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "hide": false,
+          "legendFormat": "ddl",
+          "range": true,
+          "refId": "ddl"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"transaction total count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "hide": false,
+          "legendFormat": "TPS",
+          "range": true,
+          "refId": "TPS"
+        }
+      ],
+      "title": "SQL语句类型执行情况(min)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "description": "查询V$SYSSTAT的解析、执行计划、读写相关统计信息",
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 12,
+        "y": 41
+      },
+      "id": 147,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"parse count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "解析次数",
+          "range": true,
+          "refId": "parse_count"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"hard parse count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "硬解析次数",
+          "range": true,
+          "refId": "hard_parse"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"plan total count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "执行计划总数",
+          "range": true,
+          "refId": "plan_total"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"plan cache hit count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "计划缓存命中数",
+          "range": true,
+          "refId": "cache_hit"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"logic read count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "逻辑读次数",
+          "range": true,
+          "refId": "logic_read"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"physical read count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "物理读次数",
+          "range": true,
+          "refId": "physical_read"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_statement_type_total{statement_name=\"physical write count\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "物理写次数",
+          "range": true,
+          "refId": "physical_write"
+        }
+      ],
+      "title": "SQL解析和执行统计(min)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 7,
+            "scaleDistribution": {
+              "log": 2,
+              "type": "log"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 0,
+        "y": 71
+      },
+      "id": 29,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "dmdbms_memory_curr_pool_info{pool_type=\"HAGR ZONE\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}  -0",
+          "instant": false,
+          "legendFormat": "HAGR ZONE",
+          "range": true,
+          "refId": "HAGR ZONE"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "dmdbms_memory_curr_pool_info{pool_type=\"SORT ZONE\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}  -0",
+          "hide": false,
+          "legendFormat": "SORT ZONE",
+          "range": true,
+          "refId": "SORT ZONE"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "dmdbms_memory_curr_pool_info{ pool_type=\"HJ ZONE\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}  -0",
+          "hide": false,
+          "legendFormat": "HJ ZONE",
+          "range": true,
+          "refId": "HJ ZONE"
+        }
+      ],
+      "title": "数据库内存池监测",
+      "type": "timeseries",
+      "description": "查询V$SYSSTAT特定ID：HJ ZONE(114,115,144,145)，HAGR ZONE(116,142,143)，SORT ZONE(177,178)"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 12,
+        "y": 71
+      },
+      "id": 59,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "8.5.27",
+      "targets": [
+        {
+          "expr": "rate(dmdbms_dict_cache_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\",dict_cache_type=\"lru_discard\"}[$interval]) * 60",
+          "legendFormat": "LRU淘汰次数",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(dmdbms_dict_cache_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\",dict_cache_type=\"ddl_discard\"}[$interval]) * 60",
+          "legendFormat": "DDL淘汰次数",
+          "refId": "B"
+        },
+        {
+          "expr": "dmdbms_dict_cache_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\",dict_cache_type=\"disabled_dict_num\"}",
+          "legendFormat": "淘汰对象总数",
+          "refId": "C"
+        }
+      ],
+      "title": "数据字典缓存信息",
+      "description": "查询V$DB_CACHE视图：LRU_DISCARD(缓存满淘汰次数)、DDL_DISCARD(DDL操作淘汰次数)、DISABLED_DICT_NUM(淘汰对象总数)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$SESSIONS视图，按STATE(IDLE/ACTIVE)分组统计",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "hue",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
+            "pointSize": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "dmdbms_session_type_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "{{session_type}}",
+          "refId": "会话状态"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "dmdbms_parameter_info{param_name=\"MAX_SESSIONS\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "MAX_SESSIONS",
+          "refId": "会话上限"
+        }
+      ],
+      "title": "数据库会话状态",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$BUFFERPOOL WHERE NAME='FAST'，计算ROUND(SUM(RAT_HIT)/COUNT(*),4)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "displayMode": "basic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 12,
+        "y": 86
+      },
+      "id": 53,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "maxHeight": 1,
+          "maxWidth": 0,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "dmdbms_bufferpool_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}  -0",
+          "instant": false,
+          "legendFormat": "FAST命中率",
+          "range": true,
+          "refId": "TPS值"
+        }
+      ],
+      "title": "FAST缓冲池的命中率",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$PURGE视图的OBJ_NUM字段",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 0,
+        "y": 86
+      },
+      "id": 54,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "maxHeight": 1,
+          "maxWidth": 0,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "dmdbms_purge_objects_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} ",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "待PURGE事务数",
+          "range": true,
+          "refId": "TPS值"
+        }
+      ],
+      "title": "待PURGE的事务个数",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$CKPT.CKPT_TIME_USED字段，单位毫秒",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 12,
+        "y": 101
+      },
+      "id": 48,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "expr": "rate(dmdbms_ckpttime_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "refId": "A",
+          "legendFormat": "检查点耗时(min)"
+        }
+      ],
+      "title": "数据库检查点耗时(min)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$SYSTEM_EVENT的EVENT、TOTAL_WAITS",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 0,
+        "y": 56
+      },
+      "id": 202,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "rate(dmdbms_system_event_waits_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\",event!=\"network idle wait\"}[$interval]) * 60",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "{{event}}",
+          "refId": "A",
+          "range": true
+        }
+      ],
+      "title": "系统事件等待统计",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "事务阻塞数为查询SELECT COUNT(*) FROM V$TRXWAIT的记录数，死锁数查询SELECT COUNT(*) FROM V$DEADLOCK_HISTORY",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "auto"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "id": 602,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "dmdbms_trx_num_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "legendFormat": "事务阻塞数",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_dead_lock_num_total{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "死锁数(min)",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "事务阻塞与死锁趋势",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "基于dmdbms_rlog_lsn_total指标，展示各类LSN每分钟推进速率",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 4,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 12,
+        "x": 12,
+        "y": 56
+      },
+      "id": 608,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_rlog_lsn_total{lsn_type=\"CKPT_LSN\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "CKPT_LSN",
+          "range": true,
+          "refId": "ckpt"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_rlog_lsn_total{lsn_type=\"FILE_LSN\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "FILE_LSN",
+          "range": true,
+          "refId": "file"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_rlog_lsn_total{lsn_type=\"FLUSH_LSN\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "FLUSH_LSN",
+          "range": true,
+          "refId": "flush"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "rate(dmdbms_rlog_lsn_total{lsn_type=\"CUR_LSN\",datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}[$interval]) * 60",
+          "legendFormat": "CUR_LSN",
+          "range": true,
+          "refId": "current"
+        }
+      ],
+      "title": "LSN推进速率(min)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jvJjnkC7k"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 117
+      },
+      "id": 607,
+      "panels": [],
+      "title": "基础信息 (${datasource})",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$SYSSTAT特定ID的STAT_VAL值计算内存使用",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "使用率"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "max",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "总量"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 73
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "已使用"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 88
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "名称"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 107
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 134
+      },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "enablePagination": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "使用率"
+          }
+        ]
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "dmdbms_memory_total_pool_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} - 0",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_memory_curr_pool_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} - 0",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "((dmdbms_memory_curr_pool_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}-0)/dmdbms_memory_total_pool_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}-0)*100",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "使用率",
+          "refId": "C"
+        }
+      ],
+      "title": "数据内存池使用情况",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "cluster_name": true,
+              "host_name": true,
+              "instance": true,
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value #A": "总量",
+              "Value #B": "已使用",
+              "Value #C": "使用率",
+              "instance": "实例名",
+              "pool_type": "名称"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "基于V$RLOGFILE统计dmdbms_rlog_file_size_bytes指标，展示各Redo日志文件的路径、大小及创建时间。",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "日志文件大小"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "日志路径"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": null
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "创建时间"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": null
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "文件ID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": null
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 134
+      },
+      "id": 610,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "日志文件大小"
+          }
+        ]
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "expr": "dmdbms_rlog_file_size_bytes{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} - 0",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Redo日志文件列表",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "cluster": true,
+              "cluster_name": true,
+              "datasource": true,
+              "datasource_name": true,
+              "env": true,
+              "env_name": true,
+              "host_name": true,
+              "instance": true,
+              "job": true,
+              "job_name": true,
+              "region": true,
+              "region_name": true
+            },
+            "renameByName": {
+              "Value": "日志文件大小",
+              "create_time": "创建时间",
+              "file_id": "文件ID",
+              "path": "日志路径"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "表空间总大小"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "custom.width",
+                "value": 116
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "表空间空闲大小"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              },
+              {
+                "id": "custom.width",
+                "value": 177
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "表空间使用率"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.width"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "super-light-yellow",
+                      "value": 60
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": "auto"
+              },
+              {
+                "id": "max",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "扩充尺寸(M)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "mbytes"
+              },
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "扩充上限(M)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "mbytes"
+              },
+              {
+                "id": "custom.width",
+                "value": 104
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "自动扩充"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 99
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "index": 1,
+                        "text": "关闭"
+                      },
+                      "1": {
+                        "index": 0,
+                        "text": "打开"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "表空间名称"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 160
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 126
+      },
+      "id": 6,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "表空间空闲大小"
+          }
+        ]
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "builder",
+          "exemplar": true,
+          "expr": "dmdbms_tablespace_file_total_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} - 0",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_tablespace_file_free_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} - 0",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "((dmdbms_tablespace_file_total_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} - dmdbms_tablespace_file_free_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"})/dmdbms_tablespace_file_total_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}-0)*100",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "C"
+        }
+      ],
+      "title": "数据文件详情",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "auto_extend": false,
+              "cluster_name": true,
+              "host_name": true,
+              "instance": true,
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
+            },
+            "indexByName": {
+              "Time": 0,
+              "Value #A": 7,
+              "Value #B": 8,
+              "Value #C": 9,
+              "auto_extend": 4,
+              "host_name": 2,
+              "instance": 1,
+              "job": 10,
+              "max_size": 6,
+              "next_size": 5,
+              "tablespace_name": 3
+            },
+            "renameByName": {
+              "Value #A": "表空间总大小",
+              "Value #B": "表空间空闲大小",
+              "Value #C": "表空间使用率",
+              "auto_extend": "自动扩充",
+              "host_name": "",
+              "max_size": "扩充上限(M)",
+              "next_size": "扩充尺寸(M)",
+              "tablespace_name": "表空间名称"
+            }
+          }
+        }
+      ],
+      "type": "table",
+      "description": "查询V$DATAFILE的PATH、TOTAL_SIZE*PAGE、FREE_SIZE*PAGE等"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "联合查询DBA_DATA_FILES(总大小)和DBA_FREE_SPACE(空闲大小)，使用V$DM_INI.GLOBAL_PAGE_SIZE参数",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "表空间总大小"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decmbytes"
+              },
+              {
+                "id": "custom.width"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "表空间空闲大小"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decmbytes"
+              },
+              {
+                "id": "custom.width"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "表空间使用率"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.width"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "super-light-yellow",
+                      "value": 60
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": "auto"
+              },
+              {
+                "id": "max",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "扩充尺寸(M)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "mbytes"
+              },
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "扩充上限(M)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "mbytes"
+              },
+              {
+                "id": "custom.width",
+                "value": 104
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "自动扩充"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 99
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "index": 1,
+                        "text": "关闭"
+                      },
+                      "1": {
+                        "index": 0,
+                        "text": "打开"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "表空间名称"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 115
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 126
+      },
+      "id": 30,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "表空间空闲大小"
+          }
+        ]
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_tablespace_size_total_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} - 0",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "dmdbms_tablespace_size_free_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} - 0",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "exemplar": true,
+          "expr": "((dmdbms_tablespace_size_total_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"} - dmdbms_tablespace_size_free_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"})/dmdbms_tablespace_size_total_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}-0)*100",
+          "format": "table",
+          "hide": false,
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "C"
+        }
+      ],
+      "title": "表空间详情",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "cluster_name": true,
+              "host_name": true,
+              "instance": true,
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Value #A": "表空间总大小",
+              "Value #B": "表空间空闲大小",
+              "Value #C": "表空间使用率",
+              "tablespace_name": "表空间名称"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 205
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 118
+      },
+      "id": 51,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "dmdbms_user_list_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "format": "table",
+          "instant": true,
+          "legendFormat": "__auto",
+          "range": false,
+          "refId": "用户信息"
+        }
+      ],
+      "title": "用户信息",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "cluster_name": true,
+              "host_name": true,
+              "instance": true,
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "username": 1,
+              "account_status": 2,
+              "read_only": 3,
+              "default_tablespace": 4,
+              "create_time": 5,
+              "expiry_date": 6,
+              "expiry_date_day": 7
+            },
+            "renameByName": {
+              "account_status": "用户状态",
+              "cluster_name": "",
+              "create_time": "创建时间",
+              "default_tablespace": "默认表空间",
+              "expiry_date": "用户过期时间",
+              "expiry_date_day": "用户过期剩余天数",
+              "host_name": "",
+              "job": "",
+              "read_only": "是否只读",
+              "username": "用户名"
+            }
+          }
+        }
+      ],
+      "type": "table",
+      "description": "联合查询DBA_USERS和SYSUSERS，排除SYS、SYSSSO、SYSAUDITOR用户"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$ARCH_STATUS.ARCH_STATUS字段，VALID=1, INVALID=0",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "归档发送状态"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "index": 1,
+                        "text": "无效"
+                      },
+                      "1": {
+                        "index": 0,
+                        "text": "有效"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 118
+      },
+      "id": 58,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "dmdbms_arch_status_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "归档状态信息",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": false,
+              "__name__": true,
+              "arch_src": true,
+              "cluster_name": true,
+              "host_name": true,
+              "instance": true,
+              "job": true,
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "region": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value": 9,
+              "__name__": 1,
+              "arch_dest": 2,
+              "arch_src": 8,
+              "arch_type": 3,
+              "cluster_name": 4,
+              "host_name": 5,
+              "instance": 6,
+              "job": 7
+            },
+            "renameByName": {
+              "Value": "归档发送状态",
+              "__name__": "",
+              "arch_dest": "归档路径",
+              "arch_src": "远程归档为远程节点实例名，其他归档类型为本地实例名",
+              "arch_type": "归档类型",
+              "last_end_time": "最近一次日志发送的结束时间",
+              "last_send_code": "最近一次日志发送的错误码",
+              "last_send_desc": "最近一次日志发送的描述信息",
+              "last_send_time": "最近一次日志发送耗时(微妙)",
+              "last_start_time": "最近一次日志发送的起始时间"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jvJjnkC7k"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 142
+      },
+      "id": 401,
+      "panels": [],
+      "title": "集群相关指标 (${datasource})",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 0,
+        "y": 143
+      },
+      "id": 50,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "dmdbms_monitor_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "监视器信息",
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "dw_conn_time",
+                "instance",
+                "mon_confirm",
+                "mon_ip"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "cluster": true,
+              "datasource": true,
+              "env": true,
+              "job": true,
+              "region": true,
+              "cluster_name": true,
+              "datasource_name": true,
+              "env_name": true,
+              "job_name": true,
+              "region_name": true
+            }
+          }
+        }
+      ],
+      "type": "table",
+      "description": "查询V$DMMONITOR视图的监控器连接信息"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "V$ARCH_SEND_INFO此视图用于在主库上查询各备库的日志发送统计信息",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "归档类型"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 114
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 143
+      },
+      "id": 56,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "10.4.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": false,
+          "expr": "dmdbms_arch_send_detail_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "主库向各备库的日志发送统计信息",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "cluster_name": true,
+              "host_name": true,
+              "instance": true,
+              "job": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "Time": 0,
+              "Value": 13,
+              "__name__": 1,
+              "arch_dest": 2,
+              "arch_type": 3,
+              "cluster_name": 4,
+              "host_name": 5,
+              "instance": 6,
+              "job": 7,
+              "last_end_time": 9,
+              "last_send_code": 10,
+              "last_send_desc": 11,
+              "last_send_time": 12,
+              "last_start_time": 8
+            },
+            "renameByName": {
+              "Value": "LSN号差值",
+              "__name__": "",
+              "arch_dest": "归档目标实例名",
+              "arch_type": "归档类型",
+              "last_end_time": "最近一次日志发送的结束时间",
+              "last_send_code": "最近一次日志发送的错误码",
+              "last_send_desc": "最近一次日志发送的描述信息",
+              "last_send_time": "最近一次日志发送耗时(微妙)",
+              "last_start_time": "最近一次日志发送的起始时间"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$RAPPLY_SYS.task_mem_used字段",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 7,
+            "scaleDistribution": {
+              "log": 2,
+              "type": "log"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 0,
+        "y": 154
+      },
+      "id": 35,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "dmdbms_rapply_sys_task_mem_used{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}  -0",
+          "instant": false,
+          "legendFormat": "{{datasource}}",
+          "range": true,
+          "refId": "备库重演内存堆积"
+        }
+      ],
+      "title": "备库重做日志内存堆积(备库节点)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "查询V$RAPPLY_SYS视图的task_num字段",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 2,
+            "pointSize": 7,
+            "scaleDistribution": {
+              "log": 2,
+              "type": "log"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 12,
+        "x": 12,
+        "y": 154
+      },
+      "id": 36,
+      "options": {
+        "legend": {
+          "calcs": [
+            "min",
+            "max",
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "dmdbms_rapply_sys_task_num{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}  -0",
+          "instant": false,
+          "legendFormat": "{{datasource}}",
+          "range": true,
+          "refId": "备库重演线程数"
+        }
+      ],
+      "title": "备库重演线程数(备库节点)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(dmdbms_system_base_info, env)",
+        "description": "环境选择",
+        "hide": 0,
+        "includeAll": true,
+        "label": "环境",
+        "multi": false,
+        "name": "env",
+        "options": [],
+        "query": {
+          "query": "label_values(dmdbms_system_base_info, env)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query",
+        "allValue": ".*"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(dmdbms_system_base_info{env=~\"$env\"}, region)",
+        "description": "区域选择",
+        "hide": 0,
+        "includeAll": true,
+        "label": "区域",
+        "multi": false,
+        "name": "region",
+        "options": [],
+        "query": {
+          "query": "label_values(dmdbms_system_base_info{env=~\"$env\"}, region)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query",
+        "allValue": ".*"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(dmdbms_system_base_info{env=~\"$env\",region=~\"$region\"}, cluster)",
+        "description": "集群选择",
+        "hide": 0,
+        "includeAll": true,
+        "label": "集群",
+        "multi": false,
+        "name": "cluster",
+        "options": [],
+        "query": {
+          "query": "label_values(dmdbms_system_base_info{env=~\"$env\",region=~\"$region\"}, cluster)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query",
+        "allValue": ".*"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(dmdbms_system_base_info{env=~\"$env\",region=~\"$region\",cluster=~\"$cluster\"}, datasource)",
+        "description": "数据源选择",
+        "hide": 0,
+        "includeAll": true,
+        "label": "数据源",
+        "multi": true,
+        "name": "datasource",
+        "options": [],
+        "query": {
+          "query": "label_values(dmdbms_system_base_info{env=~\"$env\",region=~\"$region\",cluster=~\"$cluster\"}, datasource)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query",
+        "allValue": ".*"
+      },
+      {
+        "auto": false,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "selected": false,
+          "text": "1m",
+          "value": "1m"
+        },
+        "description": "时间间隔",
+        "hide": 0,
+        "label": "时间间隔",
+        "name": "interval",
+        "options": [
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h"
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h"
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d"
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d"
+          }
+        ],
+        "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "queryValue": "",
+        "refresh": 2,
+        "skipUrlSync": false,
+        "type": "interval"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "达梦监控面板_20251204",
+  "uid": "BdP6cQr7z_20251204",
+  "version": 35,
+  "weekStart": ""
+}

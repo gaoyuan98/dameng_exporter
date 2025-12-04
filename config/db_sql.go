@@ -7,7 +7,7 @@ const (
                CASE STATUS$ WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS STATUS,
                CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,
                (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,
-               (SELECT COUNT(*) FROM V$LOCK WHERE BLOCKED=1) DEADLOCKNUM,
+               (SELECT COUNT(*) FROM V$DEADLOCK_HISTORY) DEADLOCKNUM,
                (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,
                DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY
         FROM V$INSTANCE`
@@ -59,13 +59,8 @@ FROM (
 
 	//查询数据库的会话状态
 	QueryDBSessionsStatusSqlStr = `SELECT /*+DM_EXPORTER*/
-        DECODE(STATE, NULL, 'TOTAL', STATE) AS STATE_TYPE,
-        COUNT(SESS_ID) AS COUNT_VAL
-FROM V$SESSIONS
-WHERE
-        STATE IN ('IDLE', 'ACTIVE')
-GROUP BY
-        ROLLUP(STATE) union all  select /*+DM_EXPORTER*/ 'MAX_SESSION' STATE_TYPE,para_value from v$dm_ini where para_name = 'MAX_SESSIONS'`
+        DECODE(STATE, NULL, 'UNKNOWN', STATE) AS STATE_TYPE,
+        COUNT(SESS_ID) AS COUNT_VAL FROM V$SESSIONS GROUP BY STATE`
 
 	//查询数据库定时任务错误数量的SQL
 	QueryDbJobRunningInfoSqlStr = ` SELECT /*+DM_EXPORTER*/ COUNT(*) error_num FROM (SELECT NAME,ERRINFO FROM SYSJOB.SYSJOBHISTORIES2 WHERE ERRCODE !=0 AND START_TIME >= (SYSDATE-31) AND NAME  IN (SELECT SYSJOBS.NAME
@@ -98,11 +93,15 @@ GROUP BY
 	//查询监视器信息
 	QueryMonitorInfoSqlStr = `SELECT /*+DM_EXPORTER*/ TO_CHAR(DW_CONN_TIME,'YYYY-MM-DD HH24:MI:SS') AS DW_CONN_TIME,MON_CONFIRM,MON_ID,MON_IP,MON_VERSION,MID FROM V$DMMONITOR`
 	//查询数据库的语句执行次数
-	QuerySqlExecuteCountSqlStr = `select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count')`
+	QuerySqlExecuteCountSqlStr = `select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count','transaction deadlock count')`
 	//查询数据库参数
 	QueryParameterInfoSql = `select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM')`
 	//查询检查点信息
 	QueryCheckPointInfoSql = `select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT`
+	//查询redo日志LSN信息
+	QueryRedoLogLsnInfoSql = `SELECT /*+DM_EXPORTER*/ CKPT_LSN,FILE_LSN,FLUSH_LSN,CUR_LSN FROM V$RLOG`
+	// 查询RLOG日志文件列表
+	QueryRlogFileListSql = "SELECT /*+DM_EXPORTER*/ FILE_ID,PATH,CREATE_TIME,RLOG_SIZE FROM V$RLOGFILE"
 	//查询用户信息
 	QueryUserInfoSqlStr = `SELECT 
                        /*+DM_EXPORTER*/ 
@@ -124,8 +123,8 @@ GROUP BY
 	//新增需求 20250311
 	//查询守护进程的状态信息
 	QueryDwWatcherInfoSql = `SELECT /*+DMDB_CHECK_FLAG*/ WATCHER.DW_MODE,WATCHER.DW_STATUS,WATCHER.AUTO_RESTART,CASE WATCHER.DW_STATUS WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS DW_STATUS_TO_NUM FROM V$DMWATCHER WATCHER LEFT JOIN  V$INSTANCE INSTANCE ON INSTANCE.INSTANCE_NAME = WATCHER.INST_NAME;`
-	//计算归档的切换频率
-	QueryArchiveSwitchRateSql = `SELECT /*+DM_EXPORTER*/ STATUS,TO_CHAR(CREATE_TIME,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME,PATH,CLSN,SRC_DB_MAGIC,DATEDIFF(MINUTE,LEAD(CREATE_TIME) OVER (ORDER BY create_time desc) ,create_time) MINUS_DIFF FROM V$ARCH_FILE order by create_time desc LIMIT 1;`
+	//查询最新归档创建时间
+	QueryArchiveLatestCreateTimeSql = `SELECT /*+DM_EXPORTER*/ TO_CHAR(CREATE_TIME,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME FROM V$ARCH_FILE  WHERE STATUS = 'ACTIVE' ORDER BY create_time DESC LIMIT 1;`
 	//查询实例的异常日志(近5分钟内)
 	QueryInstanceErrorLogSql = `SELECT /*+DM_EXPORTER*/ TO_CHAR(LOG_TIME,'YYYY-MM-DD HH24:MI:SS') AS LOG_TIME,PID,LEVEL$ AS LEVEL,TXT FROM V$INSTANCE_LOG_HISTORY WHERE DATEDIFF(MINUTE, LOG_TIME, GETDATE()) <= 5 AND LEVEL$ NOT IN ('INFO','WARN') ORDER BY SEQNO DESC;`
 	//新增需求 20250401
@@ -155,6 +154,15 @@ GROUP BY
 	// 系统信息查询（合并的完整查询，包含CPU、物理内存、虚拟内存、磁盘大小）
 	QuerySystemInfoSqlStr = `SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE,TOTAL_VIR_SIZE,TOTAL_DISK_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1`
 
+	// 系统事件等待次数查询
+	QuerySystemEventWaitsSqlStr = `SELECT /*+DM_EXPORTER*/ EVENT, TOTAL_WAITS FROM V$SYSTEM_EVENT`
+
+	// 检查系统事件视图是否存在
+	QuerySystemEventViewExistsSqlStr = "SELECT  /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$SYSTEM_EVENT'"
+
+	// 检查系统事件视图字段是否存在
+	QuerySystemEventColumnsExistSqlStr = "SELECT  /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$SYSTEM_EVENT' AND COLNAME IN ('EVENT','TOTAL_WAITS')"
+
 	// 版本信息查询
 	QueryVersionInfoSqlStr = `SELECT /*+DAMENG_EXPORTER*/ ID_CODE
       ,BUILD_TYPE
@@ -169,10 +177,10 @@ GROUP BY
 
 	// 检查视图和字段是否存在的SQL
 	// 检查V$ARCH_APPLY_INFO视图是否存在
-	QueryArchApplyInfoExists = "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO'"
+	QueryArchApplyInfoExists = "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO'"
 
 	// 检查V$ARCH_SEND_INFO视图中的特定字段是否存在
-	QueryArchSendInfoFieldsExist = "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_SEND_INFO' AND COLNAME IN ('LAST_SEND_CODE','LAST_SEND_DESC')"
+	QueryArchSendInfoFieldsExist = "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_SEND_INFO' AND COLNAME IN ('LAST_SEND_CODE','LAST_SEND_DESC')"
 
 	// 备库的同步延迟监控
 	QueryRapplyTimeDiffSql = `SELECT /*+DM_EXPORTER*/ NVL(TIMESTAMPDIFF(SQL_TSI_SECOND, APPLY_CMT_TIME, LAST_CMT_TIME), 0) TIMEDIFF FROM V$RAPPLY_STAT`
@@ -181,11 +189,20 @@ GROUP BY
 	QueryDictCacheInfoSql = `SELECT /*+DM_EXPORTER*/ LRU_DISCARD, DDL_DISCARD, DISABLED_DICT_NUM FROM V$DB_CACHE`
 
 	// 检查V$DB_CACHE视图中的字段是否存在
-	QueryDictCacheFieldsExist = `SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME IN ('LRU_DISCARD', 'DDL_DISCARD', 'DISABLED_DICT_NUM')`
+	QueryDictCacheFieldsExist = `SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME IN ('LRU_DISCARD', 'DDL_DISCARD', 'DISABLED_DICT_NUM')`
 
 	// 检查V$ARCH_QUEUE视图的WAITING字段是否存在
 	QueryArchQueueWaitingFieldExists = `SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_QUEUE' AND COLNAME = 'WAITING'`
 
 	// 查询归档队列等待信息
 	QueryArchQueueWaitingSql = `SELECT /*+DM_EXPORTER*/ ARCH_TYPE, WAITING FROM V$ARCH_QUEUE`
+
+	// 查询redo日志最新切换时间
+	QueryRedoLogHistorySql = `SELECT /*+DM_EXPORTER*/ TO_CHAR(RECTIME,'YYYY-MM-DD HH24:MI:SS') AS RECTIME FROM V$LOG_HISTORY ORDER BY RECTIME DESC LIMIT 1`
+
+	// 检查V$RLOG视图是否存在
+	QueryRlogViewExists = "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$RLOG'"
+
+	// 检查V$RLOG视图中LSN字段是否存在
+	QueryRlogColumnsExist = "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$RLOG' AND COLNAME IN ('CKPT_LSN','FILE_LSN','FLUSH_LSN','CUR_LSN')"
 )

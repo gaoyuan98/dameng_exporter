@@ -69,6 +69,7 @@ type rawMultiSourceConfig struct {
 	BasicAuthPassword    string                `toml:"basicAuthPassword"`
 	GlobalTimeoutSeconds int                   `toml:"globalTimeoutSeconds"`
 	CollectionMode       string                `toml:"collectionMode"`
+	RetryIntervalSeconds int                   `toml:"retryIntervalSeconds"`
 	DataSources          []rawDataSourceConfig `toml:"datasource"`
 }
 
@@ -110,6 +111,9 @@ func (raw rawMultiSourceConfig) toConfig() *MultiSourceConfig {
 	}
 	if raw.CollectionMode != "" {
 		cfg.CollectionMode = raw.CollectionMode
+	}
+	if raw.RetryIntervalSeconds != 0 {
+		cfg.RetryIntervalSeconds = raw.RetryIntervalSeconds
 	}
 
 	cfg.DataSources = make([]DataSourceConfig, len(raw.DataSources))

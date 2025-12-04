@@ -11,18 +11,19 @@ var GlobalMultiConfig *MultiSourceConfig
 // MultiSourceConfig 多数据源配置结构
 type MultiSourceConfig struct {
 	// 全局系统级配置（不可下沉）
-	ConfigFile        string `toml:"-"` // 配置文件路径，不从配置文件读取
-	ListenAddress     string `toml:"listenAddress"`
-	MetricPath        string `toml:"metricPath"`
-	Version           string `toml:"version"`
-	LogMaxSize        int    `toml:"logMaxSize"`
-	LogMaxBackups     int    `toml:"logMaxBackups"`
-	LogMaxAge         int    `toml:"logMaxAge"`
-	LogLevel          string `toml:"logLevel"`
-	EncodeConfigPwd   bool   `toml:"encodeConfigPwd"`
-	EnableBasicAuth   bool   `toml:"enableBasicAuth"`
-	BasicAuthUsername string `toml:"basicAuthUsername"`
-	BasicAuthPassword string `toml:"basicAuthPassword"`
+	ConfigFile           string `toml:"-"` // 配置文件路径，不从配置文件读取
+	ListenAddress        string `toml:"listenAddress"`
+	MetricPath           string `toml:"metricPath"`
+	Version              string `toml:"version"`
+	LogMaxSize           int    `toml:"logMaxSize"`
+	LogMaxBackups        int    `toml:"logMaxBackups"`
+	LogMaxAge            int    `toml:"logMaxAge"`
+	LogLevel             string `toml:"logLevel"`
+	EncodeConfigPwd      bool   `toml:"encodeConfigPwd"`
+	EnableBasicAuth      bool   `toml:"enableBasicAuth"`
+	BasicAuthUsername    string `toml:"basicAuthUsername"`
+	BasicAuthPassword    string `toml:"basicAuthPassword"`
+	RetryIntervalSeconds int    `toml:"retryIntervalSeconds"`
 
 	// 全局超时控制配置
 	GlobalTimeoutSeconds int `toml:"globalTimeoutSeconds"` // 全局超时时间（秒）
@@ -75,16 +76,17 @@ type DataSourceConfig struct {
 // DefaultMultiSourceConfig 默认多数据源配置
 var DefaultMultiSourceConfig = MultiSourceConfig{
 	// 全局默认值
-	ListenAddress:     ":9200",
-	MetricPath:        "/metrics",
-	LogMaxSize:        10,
-	LogMaxBackups:     3,
-	LogMaxAge:         30,
-	LogLevel:          "info",
-	EncodeConfigPwd:   false,
-	EnableBasicAuth:   false,
-	BasicAuthUsername: "",
-	BasicAuthPassword: "",
+	ListenAddress:        ":9200",
+	MetricPath:           "/metrics",
+	LogMaxSize:           10,
+	LogMaxBackups:        3,
+	LogMaxAge:            30,
+	LogLevel:             "info",
+	EncodeConfigPwd:      false,
+	EnableBasicAuth:      false,
+	BasicAuthUsername:    "",
+	BasicAuthPassword:    "",
+	RetryIntervalSeconds: 10,
 
 	// 全局超时控制默认值
 	GlobalTimeoutSeconds: 5, // 默认5秒全局超时
@@ -99,7 +101,7 @@ var DefaultDataSourceConfig = DataSourceConfig{
 	Enabled: true,
 
 	// 连接池默认值
-	QueryTimeout:    10,
+	QueryTimeout:    5,
 	MaxOpenConns:    10,
 	MaxIdleConns:    5,
 	ConnMaxLifetime: 30,
@@ -306,6 +308,9 @@ func (msc *MultiSourceConfig) ApplyAllDefaults() {
 	if msc.CollectionMode == "" {
 		msc.CollectionMode = DefaultMultiSourceConfig.CollectionMode
 	}
+	if msc.RetryIntervalSeconds == 0 {
+		msc.RetryIntervalSeconds = DefaultMultiSourceConfig.RetryIntervalSeconds
+	}
 
 	// 为每个数据源应用默认值
 	for i := range msc.DataSources {
@@ -336,8 +341,8 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 		authInfo, msc.EncodeConfigPwd))
 
 	// 性能配置 - 使用完整参数名
-	sb.WriteString(fmt.Sprintf("[Performance] globalTimeoutSeconds=%ds, collectionMode=%s\n",
-		msc.GlobalTimeoutSeconds, msc.CollectionMode))
+	sb.WriteString(fmt.Sprintf("[Performance] globalTimeoutSeconds=%ds, collectionMode=%s, retryIntervalSeconds=%ds\n",
+		msc.GlobalTimeoutSeconds, msc.CollectionMode, msc.RetryIntervalSeconds))
 
 	// 数据源摘要 - 一行
 	enabledCount := 0
@@ -401,6 +406,14 @@ func (msc *MultiSourceConfig) GetCollectionMode() string {
 		return "blocking" // 默认阻塞模式
 	}
 	return msc.CollectionMode
+}
+
+// GetRetryIntervalSeconds 返回配置的重试间隔秒数，确保非零
+func (msc *MultiSourceConfig) GetRetryIntervalSeconds() int {
+	if msc.RetryIntervalSeconds <= 0 {
+		return DefaultMultiSourceConfig.RetryIntervalSeconds
+	}
+	return msc.RetryIntervalSeconds
 }
 
 // IsBlockingMode 判断是否为阻塞模式

@@ -9,38 +9,54 @@ groups:
     annotations:  
       description: "主机：{{ $labels.instance }} 服务宕机"
       summary: "主机：{{ $labels.instance }}:服务器超过1m无法连接"
+  - alert: 数据库实例不可用
+    expr: dmdb_up == 0
+    for: 15s
+    labels:
+      severity: 严重
+    annotations:
+      description: "数据源：{{ $labels.datasource }} 数据库实例不可用"
+      summary: "数据源：{{ $labels.datasource }}:dmdb_up=0，数据库实例宕机，请立即处理"
   - alert: 集群发生切换
     expr: dmdbms_switching_occurs == 0
     for: 15s
     labels:
       severity: 严重
     annotations:
-      description: "主机：{{ $labels.instance }} 数据库模式切换"
-      summary: "主机：{{ $labels.instance }}:数据库发生模式切换，疑似发生集群切换请核实"
+      description: "数据源：{{ $labels.datasource }} 数据库模式切换"
+      summary: "数据源：{{ $labels.datasource }}:数据库发生模式切换，疑似发生集群切换请核实"
   - alert: 数据库状态转换
-    expr: dmdbms_db_status_occurs == 0
+    expr: dmdbms_status_info != 1
     for: 15s
     labels:
       severity: 警告
     annotations:
-      description: "主机：{{ $labels.instance }} 数据库状态转换"
-      summary: "主机：{{ $labels.instance }}:数据库OPEN状态变化，疑似发生状态转换请核实"
+      description: "数据源：{{ $labels.datasource }} 数据库状态非OPEN状态"
+      summary: "数据源：{{ $labels.datasource }}:数据库状态不为OPEN，请立即核实"
   - alert: 数据库连接数过高
-    expr: dmdbms_session_percentage*100 > 80
+    expr: ((((sum by (datasource,env,region,cluster) (dmdbms_session_type_info)) * 100) / on(datasource,env,region,cluster) dmdbms_parameter_info{param_name="MAX_SESSIONS"}) > 80) and on(datasource,env,region,cluster) dmdbms_parameter_info{param_name="MAX_SESSIONS"} > 0
     for: 15s
     labels:
       severity: 警告
     annotations:
-      description: "主机：{{ $labels.instance }} 数据库连接数过高"
-      summary: "主机：{{ $labels.instance }}:数据库的连接数超过80%，请确认是否正常"
-  - alert: 数据库存在锁等待
-    expr: dmdbms_dead_lock_num_info >0
+      description: "数据源：{{ $labels.datasource }} 数据库连接数过高"
+      summary: "数据源：{{ $labels.datasource }}:数据库的连接数超过80%，请确认是否正常"
+  - alert: 数据库死锁数新增
+    expr: increase(dmdbms_dead_lock_num_total[1m]) > 0
     for: 15s
     labels:
       severity: 警告
     annotations:
-      description: "主机：{{ $labels.instance }} 数据库存在锁等待"
-      summary: "主机：{{ $labels.instance }}:数据库存在锁等待，请确认是否正常"    
+      description: "数据源：{{ $labels.datasource }} 死锁累计值相比上一周期新增"
+      summary: "数据源：{{ $labels.datasource }}:近1分钟新增死锁事件，请确认是否存在锁等待"
+  - alert: 数据库存在事务阻塞
+    expr: dmdbms_trx_num_info > 0
+    for: 15s
+    labels:
+      severity: 警告
+    annotations:
+      description: "数据源：{{ $labels.datasource }} 数据库存在事务阻塞等待"
+      summary: "数据源：{{ $labels.datasource }}:存在事务阻塞，请及时处理"    
   - alert: cpu使用率过高
     expr: 100 * (1 - avg(irate(node_cpu_seconds_total{mode="idle"}[2m])) by(instance)) > 80
     for: 15s
@@ -63,8 +79,8 @@ groups:
     labels:
       severity: 警告
     annotations:
-      description: "主机：{{ $labels.instance }} 内存池使用率过高"
-      summary: "主机：{{ $labels.instance }}:内存池使用率过高，超过80%"
+      description: "数据源：{{ $labels.datasource }} 内存池使用率过高"
+      summary: "数据源：{{ $labels.datasource }}:内存池使用率过高，超过80%"
   - alert: 磁盘分区使用率超过80%
     expr: (node_filesystem_size_bytes{fstype=~"ext.*|xfs|nfs",mountpoint !~".*(pod|docker).*"}-node_filesystem_free_bytes{fstype=~"ext.*|xfs|nfs",mountpoint !~".*(pod|docker).*"}) *100/(node_filesystem_avail_bytes {fstype=~"ext.*|xfs|nfs",mountpoint !~".*(pod|docker).*"}+(node_filesystem_size_bytes{fstype=~"ext.*|xfs|nfs",mountpoint !~".*(pod|docker).*"}-node_filesystem_free_bytes{fstype=~"ext.*|xfs|nfs",mountpoint !~".*(pod|docker).*"})) >90
     for: 15s
@@ -74,26 +90,26 @@ groups:
       description: "主机：{{ $labels.instance }} 磁盘分区使用率超过90%"
       summary: "主机：{{ $labels.instance }}: 磁盘分区使用率超过90%，请核实"
   - alert: 备库重做日志内存堆积过高
-    expr: dmdbms_rapply_sys_task_mem_used >= 860000000
+    expr: (((dmdbms_rapply_sys_task_mem_used * 100) / on(datasource,env,region,cluster) (dmdbms_parameter_info{param_name="REDOS_BUF_SIZE"} * 1024 * 1024)) > 95) and on(datasource,env,region,cluster) dmdbms_parameter_info{param_name="REDOS_BUF_SIZE"} > 0
     for: 15s
     labels:
       severity: 警告
     annotations:
-      description: "主机：{{ $labels.instance }} 备库重做日志内存堆积过高"
-      summary: "主机：{{ $labels.instance }}:备库重做日志内存堆积过高，请确认是否正常"
+      description: "数据源：{{ $labels.datasource }} 备库重做日志内存堆积使用率超过95%"
+      summary: "数据源：{{ $labels.datasource }}:备库重做日志内存堆积使用率超95%，请确认是否正常"
   - alert: 备库重做日志线程数
-    expr: dmdbms_rapply_sys_task_num >= 4096
+    expr: (((dmdbms_rapply_sys_task_num * 100) / on(datasource,env,region,cluster) dmdbms_parameter_info{param_name="REDOS_BUF_NUM"}) > 95) and on(datasource,env,region,cluster) dmdbms_parameter_info{param_name="REDOS_BUF_NUM"} > 0
     for: 15s
     labels:
       severity: 警告
     annotations:
-      description: "主机：{{ $labels.instance }} 备库重做日志线程数过高"
-      summary: "主机：{{ $labels.instance }}:备库重做日志线程数过高，请确认是否正常"
+      description: "数据源：{{ $labels.datasource }} 备库重做日志线程数使用率超过95%"
+      summary: "数据源：{{ $labels.datasource }}:备库重做日志线程数使用率超95%，请确认是否正常"
   - alert: 表空间使用率超过95%
     expr: ((dmdbms_tablespace_size_total_info{tablespace_name!~"SYSTEM|TEMP|ROLL"} - dmdbms_tablespace_size_free_info{tablespace_name!~"SYSTEM|TEMP|ROLL"}) / dmdbms_tablespace_size_total_info{tablespace_name!~"SYSTEM|TEMP|ROLL"}) * 100 > 95
     for: 15s
     labels:
       severity: 警告
     annotations:
-      description: "主机：{{ $labels.instance }} 存在表空间使用率超过95%"
-      summary: "主机：{{ $labels.instance }}: 存在表空间使用率超过95%，请核实"
+      description: "数据源：{{ $labels.datasource }} 存在表空间使用率超过95%"
+      summary: "数据源：{{ $labels.datasource }}: 存在表空间使用率超过95%，请核实"
