@@ -83,6 +83,7 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbArchSendCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbArchQueueCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbLogHistoryCollector))
+		collectors = append(collectors, AdaptCollector(poolManager, NewDbRlogFileCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbRapplySysCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewDbRapplyTimeDiffCollector))
 		collectors = append(collectors, AdaptCollector(poolManager, NewPurgeCollector))

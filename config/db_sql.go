@@ -100,6 +100,8 @@ FROM (
 	QueryCheckPointInfoSql = `select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT`
 	//查询redo日志LSN信息
 	QueryRedoLogLsnInfoSql = `SELECT /*+DM_EXPORTER*/ CKPT_LSN,FILE_LSN,FLUSH_LSN,CUR_LSN FROM V$RLOG`
+	// 查询RLOG日志文件列表
+	QueryRlogFileListSql = "SELECT /*+DM_EXPORTER*/ FILE_ID,PATH,CREATE_TIME,RLOG_SIZE FROM V$RLOGFILE"
 	//查询用户信息
 	QueryUserInfoSqlStr = `SELECT 
                        /*+DM_EXPORTER*/ 
