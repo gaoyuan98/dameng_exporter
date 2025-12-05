@@ -34,6 +34,13 @@ set LDFLAGS=-s -w -X "dameng_exporter/collector.GitRevision=%GIT_REVISION%" -X "
 REM 切换到上级目录执行编译
 cd ..
 
+REM 同步 README 下载说明
+go run scripts\update_readme_downloads.go
+if %errorlevel% neq 0 (
+    echo Error syncing README download section
+    exit /b 1
+)
+
 REM 设置需要打包的配置文件（从docs/config目录获取）
 set CONFIG_FILES=dameng_exporter.toml custom_queries.metrics
 set CONFIG_SOURCE_DIR=docs\config

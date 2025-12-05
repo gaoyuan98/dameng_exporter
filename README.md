@@ -82,22 +82,24 @@ dameng_exporter/
 
 ### 下载安装
 
+<!-- AUTO_UPDATING_DOWNLOADS_START -->
 #### 方式一：下载预编译版本（推荐）
 
 访问 [Releases](https://github.com/gaoyuan98/dameng_exporter/releases) 页面下载对应平台的版本：
 
 ```bash
 # Linux AMD64
-wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.0/dameng_exporter_v1.2.0_linux_amd64.tar.gz
-tar -xzf dameng_exporter_v1.2.0_linux_amd64.tar.gz
+wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.3/dameng_exporter_v1.2.3_linux_amd64.tar.gz
+tar -xzf dameng_exporter_v1.2.3_linux_amd64.tar.gz
 
 # Linux ARM64
-wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.0/dameng_exporter_v1.2.0_linux_arm64.tar.gz
-tar -xzf dameng_exporter_v1.2.0_linux_arm64.tar.gz
+wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.3/dameng_exporter_v1.2.3_linux_arm64.tar.gz
+tar -xzf dameng_exporter_v1.2.3_linux_arm64.tar.gz
 
 # Windows AMD64
-# 下载 dameng_exporter_v1.2.0_windows_amd64.tar.gz 并解压
+# 下载 dameng_exporter_v1.2.3_windows_amd64.tar.gz 并解压
 ```
+<!-- AUTO_UPDATING_DOWNLOADS_END -->
 
 #### 方式二：Docker 部署
 
