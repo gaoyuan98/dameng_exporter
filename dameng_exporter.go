@@ -18,7 +18,7 @@ import (
 )
 
 // Version 定义版本号
-const Version = "v1.2.3"
+const Version = "v1.2.4"
 
 // parseFlags 解析命令行参数
 func parseFlags() *config.CmdArgs {

@@ -90,15 +90,15 @@ dameng_exporter/
 
 ```bash
 # Linux AMD64
-wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.3/dameng_exporter_v1.2.3_linux_amd64.tar.gz
-tar -xzf dameng_exporter_v1.2.3_linux_amd64.tar.gz
+wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.4/dameng_exporter_v1.2.4_linux_amd64.tar.gz
+tar -xzf dameng_exporter_v1.2.4_linux_amd64.tar.gz
 
 # Linux ARM64
-wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.3/dameng_exporter_v1.2.3_linux_arm64.tar.gz
-tar -xzf dameng_exporter_v1.2.3_linux_arm64.tar.gz
+wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.4/dameng_exporter_v1.2.4_linux_arm64.tar.gz
+tar -xzf dameng_exporter_v1.2.4_linux_arm64.tar.gz
 
 # Windows AMD64
-# 下载 dameng_exporter_v1.2.3_windows_amd64.tar.gz 并解压
+# 下载 dameng_exporter_v1.2.4_windows_amd64.tar.gz 并解压
 ```
 <!-- AUTO_UPDATING_DOWNLOADS_END -->
 
@@ -500,6 +500,9 @@ scrape_configs:
 ---
 
 ## 🔄 更新记录
+## v1.2.4 (2026-01-09)
+1. 新增enableHealthPing参数,控制健康的数据源是否定期进行探活，（探活间隔受RetryIntervalSeconds参数控制 默认30s一次）
+2. 完善配置文件加密后的重复写文件逻辑
 
 ### v1.2.3 (2025-12-04)
 注：必须使用新的grafana面板样式，重大更新
