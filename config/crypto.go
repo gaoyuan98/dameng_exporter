@@ -62,7 +62,7 @@ func CheckAndEncryptConfigPasswords(multiConfig *MultiSourceConfig, configFile s
 		return multiConfig, fmt.Errorf("failed to read config file for password check: %v", err)
 	}
 
-	rawConfig := &MultiSourceConfig{}
+	rawConfig := &rawMultiSourceConfig{}
 	if _, err := toml.Decode(string(rawContent), rawConfig); err != nil {
 		return multiConfig, fmt.Errorf("failed to decode config for password check: %v", err)
 	}
@@ -83,7 +83,7 @@ func CheckAndEncryptConfigPasswords(multiConfig *MultiSourceConfig, configFile s
 
 	// 如果有密码被加密，更新配置文件
 	if needUpdate {
-		if err := SaveMultiSourceConfig(rawConfig, configFile); err != nil {
+		if err := SaveMultiSourceConfig(rawConfig.toConfig(), configFile); err != nil {
 			return multiConfig, fmt.Errorf("failed to update config file with encrypted passwords: %v", err)
 		}
 		fmt.Println("Config file updated with encrypted passwords successfully")
