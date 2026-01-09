@@ -2,6 +2,8 @@
 # 全局配置
 # ========================================
 logLevel = "debug"
+# 是否启用数据源心跳检查（探活间隔受RetryIntervalSeconds参数控制 默认30s一次）
+enableHealthPing = true
 [[datasource]]
 name = "prod_primary_01"
 description = "生产环境主库-订单系统"

@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -57,6 +58,16 @@ func HandleDbQueryErrorWithSource(err error, dataSource string) {
 	} else {
 		logger.Logger.Errorf("[%s] 查询数据库时发生错误: %v", dataSource, err)
 	}
+	if dataSource == "" || err == nil {
+		return
+	}
+
+	// 针对网络故障等致命错误直接触发降级，避免所有采集器在同一轮内重复阻塞
+	if shouldForceDegrade(err) {
+		triggerFastDegrade(dataSource, err)
+		return
+	}
+
 	triggerHealthCheckOnError(dataSource)
 }
 
@@ -88,6 +99,67 @@ func triggerHealthCheckOnError(dataSource string) {
 		logger.Logger.Warnf("[%s] 确认性健康检查失败，标记数据源不可用: %v", dataSource, err)
 		manager.MarkDatasourceFailed(dataSource, err)
 	}
+}
+
+// shouldForceDegrade 判断错误是否足以触发立即降级
+func shouldForceDegrade(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, sql.ErrConnDone) {
+		return true
+	}
+
+	message := err.Error()
+	lowerMessage := strings.ToLower(message)
+	if containsAny(message, []string{
+		"网络通信异常",
+	}) {
+		return true
+	}
+	if containsAny(lowerMessage, []string{
+		"error 6001",
+		"database is closed",
+		"bad connection",
+	}) {
+		return true
+	}
+
+	return false
+}
+
+// triggerFastDegrade 在确认数据源仍处于健康状态时，直接标记为失败
+func triggerFastDegrade(dataSource string, reason error) {
+	if dataSource == "" {
+		return
+	}
+
+	manager := db.GlobalPoolManager
+	if manager == nil {
+		return
+	}
+
+	status := manager.GetDatasourceHealthStatus(dataSource)
+	if status.Registered && !status.Healthy {
+		return
+	}
+
+	manager.MarkDatasourceFailed(dataSource, reason)
+}
+
+// containsAny 判断字符串是否包含关键字列表中的任意一个
+func containsAny(source string, keywords []string) bool {
+	if source == "" || len(keywords) == 0 {
+		return false
+	}
+
+	for _, key := range keywords {
+		if key != "" && strings.Contains(source, key) {
+			return true
+		}
+	}
+	return false
 }
 
 func NullStringToString(ns sql.NullString) string {

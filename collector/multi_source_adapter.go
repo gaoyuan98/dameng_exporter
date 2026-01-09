@@ -4,6 +4,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"reflect"
@@ -106,6 +107,13 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 
 			// 如果采集器支持数据源感知，设置数据源名称
 			SetDataSourceIfSupported(collector, p.Name)
+
+			// 快速检查数据源是否已降级，避免无谓查询
+			if err := utils.CheckDBConnectionWithSource(p.DB, p.Name); err != nil {
+				logger.Logger.Warnf("[%s] %s skipped (datasource unavailable): %v",
+					p.Name, a.collectorName, err)
+				return
+			}
 
 			// 创建标签注入器
 			labelInjector := NewLabelInjectorFromPool(p)
