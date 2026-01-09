@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
 	"database/sql"
@@ -55,6 +56,37 @@ func HandleDbQueryErrorWithSource(err error, dataSource string) {
 		logger.Logger.Errorf("[%s] 查询超时: %v", dataSource, err)
 	} else {
 		logger.Logger.Errorf("[%s] 查询数据库时发生错误: %v", dataSource, err)
+	}
+	triggerHealthCheckOnError(dataSource)
+}
+
+// triggerHealthCheckOnError 在禁用周期探活时补充一次点对点健康检查
+func triggerHealthCheckOnError(dataSource string) {
+	if dataSource == "" || config.Global.GetEnableHealthPing() {
+		return
+	}
+
+	manager := db.GlobalPoolManager
+	if manager == nil {
+		return
+	}
+
+	pool := manager.GetPool(dataSource)
+	if pool == nil || pool.DB == nil || pool.Config == nil {
+		return
+	}
+
+	timeoutSeconds := pool.Config.QueryTimeout
+	if timeoutSeconds <= 0 {
+		timeoutSeconds = config.DefaultDataSourceConfig.QueryTimeout
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSeconds)*time.Second)
+	defer cancel()
+
+	if err := pool.DB.PingContext(ctx); err != nil {
+		logger.Logger.Warnf("[%s] 确认性健康检查失败，标记数据源不可用: %v", dataSource, err)
+		manager.MarkDatasourceFailed(dataSource, err)
 	}
 }
 

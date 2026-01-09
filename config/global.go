@@ -144,6 +144,16 @@ func (g *GlobalSettings) GetGlobalTimeoutSeconds() int {
 	return g.config.GlobalTimeoutSeconds
 }
 
+// GetEnableHealthPing 获取是否启用周期性健康检查
+func (g *GlobalSettings) GetEnableHealthPing() bool {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	if g.config == nil {
+		return DefaultMultiSourceConfig.EnableHealthPing
+	}
+	return g.config.IsHealthPingEnabled()
+}
+
 // GetDefaultDataSource 获取默认数据源配置（用于兼容旧代码）
 func (g *GlobalSettings) GetDefaultDataSource() *DataSourceConfig {
 	g.mu.RLock()

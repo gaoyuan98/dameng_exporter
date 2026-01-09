@@ -41,6 +41,7 @@ Dameng Exporter 是一个专为达梦数据库（DM8）设计的 Prometheus 监�
 - 🔒 **安全特性** - 支持配置文件中的密码自动加密、Basic Auth 认证
 - ⚡ **高性能** - 支持并发采集、智能缓存机制
 - 🔧 **灵活配置** - 支持 TOML 配置文件和命令行参数
+- 🩺 **可控探活** - `enableHealthPing` 可关闭周期性 Ping，仅在 SQL 报错时触发确认并自动重试
 - 📝 **自定义指标** - 支持通过 SQL 定义自定义监控指标
 - 🐳 **容器化部署** - 提供 Docker 镜像，支持 amd64/arm64 架构
 
@@ -240,6 +241,8 @@ labels = "env=test,region=shanghai"  # 可选：用于 Grafana 面板过滤
 
 # 如需更多配置选项，请参考：docs/documents/参数配置指南.md
 ```
+
+> 💡 如果希望减少对目标数据库的周期性 Ping，可在全局配置中设置 `enableHealthPing = false`。Exporter 仅会在 SQL 报错时对对应数据源补一次确认性 Ping，失败后自动降级并交给后台重试，`dmdb_up` 指标仍然准确。
 2. 启动服务：
 
 ```bash

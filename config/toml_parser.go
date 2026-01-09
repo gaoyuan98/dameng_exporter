@@ -70,6 +70,7 @@ type rawMultiSourceConfig struct {
 	GlobalTimeoutSeconds int                   `toml:"globalTimeoutSeconds"`
 	CollectionMode       string                `toml:"collectionMode"`
 	RetryIntervalSeconds int                   `toml:"retryIntervalSeconds"`
+	EnableHealthPing     *bool                 `toml:"enableHealthPing"`
 	DataSources          []rawDataSourceConfig `toml:"datasource"`
 }
 
@@ -114,6 +115,10 @@ func (raw rawMultiSourceConfig) toConfig() *MultiSourceConfig {
 	}
 	if raw.RetryIntervalSeconds != 0 {
 		cfg.RetryIntervalSeconds = raw.RetryIntervalSeconds
+	}
+	if raw.EnableHealthPing != nil {
+		cfg.EnableHealthPing = *raw.EnableHealthPing
+		cfg.healthPingConfigured = true
 	}
 
 	cfg.DataSources = make([]DataSourceConfig, len(raw.DataSources))
@@ -266,6 +271,10 @@ func MergeMultiSourceConfigFromCmdArgs(config *MultiSourceConfig, args *CmdArgs)
 		config.BasicAuthPassword = *args.BasicAuthPassword
 		config.GlobalTimeoutSeconds = *args.GlobalTimeoutSeconds
 		config.CollectionMode = *args.CollectionMode
+		if args.EnableHealthPing != nil {
+			config.EnableHealthPing = *args.EnableHealthPing
+			config.healthPingConfigured = true
+		}
 	}
 	// 配置文件模式：不覆盖，保持配置文件的值
 

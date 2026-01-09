@@ -178,6 +178,7 @@ func (m *DBPoolManager) InitPools() error {
 		// 尝试建立真实连接
 		pool, err := m.createPool(dsConfig)
 		if err != nil {
+
 			m.logger.Error("创建数据源连接池失败",
 				zap.String("datasource", dsConfig.Name),
 				zap.Error(err))
@@ -437,8 +438,13 @@ func (m *DBPoolManager) startBackgroundMonitor() {
 	m.monitorOnce.Do(func() {
 		// 读取配置的 RetryIntervalSeconds 作为统一的调度周期
 		retrySeconds := 60
+		healthPingEnabled := true
 		if m.config != nil {
 			retrySeconds = m.config.GetRetryIntervalSeconds()
+			healthPingEnabled = m.config.IsHealthPingEnabled()
+		}
+		if !healthPingEnabled {
+			m.logger.Info("已禁用周期性健康检查，仅在查询报错时触发降级与自动重试")
 		}
 
 		interval := time.Duration(retrySeconds) * time.Second
@@ -455,7 +461,9 @@ func (m *DBPoolManager) startBackgroundMonitor() {
 			defer ticker.Stop()
 
 			// 初始化阶段立刻执行一次健康检查和失败重试，保证状态立即收敛
-			m.checkHealthyPools()
+			if healthPingEnabled {
+				m.checkHealthyPools()
+			}
 			m.retryFailedDataSources()
 
 			for {
@@ -465,7 +473,9 @@ func (m *DBPoolManager) startBackgroundMonitor() {
 					return
 				case <-ticker.C:
 					// 每个周期依次处理健康检测与失败重连
-					m.checkHealthyPools()
+					if healthPingEnabled {
+						m.checkHealthyPools()
+					}
 					m.retryFailedDataSources()
 				}
 			}
