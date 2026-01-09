@@ -18,7 +18,7 @@ import (
 )
 
 // Version 定义版本号
-const Version = "v1.2.3"
+const Version = "v1.2.4"
 
 // parseFlags 解析命令行参数
 func parseFlags() *config.CmdArgs {
@@ -59,6 +59,9 @@ func parseFlags() *config.CmdArgs {
 
 		// 采集模式参数
 		CollectionMode: kingpin.Flag("collectionMode", "Collection mode: blocking (default) or fast").Default(config.DefaultMultiSourceConfig.CollectionMode).String(),
+
+		// 健康检查参数
+		EnableHealthPing: kingpin.Flag("enableHealthPing", "Enable periodic health ping for datasource pools").Default(strconv.FormatBool(config.DefaultMultiSourceConfig.EnableHealthPing)).Bool(),
 	}
 	kingpin.Parse()
 	return args

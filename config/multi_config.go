@@ -24,6 +24,7 @@ type MultiSourceConfig struct {
 	BasicAuthUsername    string `toml:"basicAuthUsername"`
 	BasicAuthPassword    string `toml:"basicAuthPassword"`
 	RetryIntervalSeconds int    `toml:"retryIntervalSeconds"`
+	EnableHealthPing     bool   `toml:"enableHealthPing"`
 
 	// 全局超时控制配置
 	GlobalTimeoutSeconds int `toml:"globalTimeoutSeconds"` // 全局超时时间（秒）
@@ -35,6 +36,9 @@ type MultiSourceConfig struct {
 
 	// 数据源列表
 	DataSources []DataSourceConfig `toml:"datasource"`
+
+	// 运行时辅助标记（不参与序列化）
+	healthPingConfigured bool
 }
 
 // DataSourceConfig 数据源配置
@@ -86,7 +90,8 @@ var DefaultMultiSourceConfig = MultiSourceConfig{
 	EnableBasicAuth:      false,
 	BasicAuthUsername:    "",
 	BasicAuthPassword:    "",
-	RetryIntervalSeconds: 10,
+	RetryIntervalSeconds: 30,
+	EnableHealthPing:     true,
 
 	// 全局超时控制默认值
 	GlobalTimeoutSeconds: 5, // 默认5秒全局超时
@@ -311,6 +316,9 @@ func (msc *MultiSourceConfig) ApplyAllDefaults() {
 	if msc.RetryIntervalSeconds == 0 {
 		msc.RetryIntervalSeconds = DefaultMultiSourceConfig.RetryIntervalSeconds
 	}
+	if !msc.healthPingConfigured {
+		msc.EnableHealthPing = DefaultMultiSourceConfig.EnableHealthPing
+	}
 
 	// 为每个数据源应用默认值
 	for i := range msc.DataSources {
@@ -341,8 +349,8 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 		authInfo, msc.EncodeConfigPwd))
 
 	// 性能配置 - 使用完整参数名
-	sb.WriteString(fmt.Sprintf("[Performance] globalTimeoutSeconds=%ds, collectionMode=%s, retryIntervalSeconds=%ds\n",
-		msc.GlobalTimeoutSeconds, msc.CollectionMode, msc.RetryIntervalSeconds))
+	sb.WriteString(fmt.Sprintf("[Performance] globalTimeoutSeconds=%ds, collectionMode=%s, retryIntervalSeconds=%ds, enableHealthPing=%v\n",
+		msc.GlobalTimeoutSeconds, msc.CollectionMode, msc.RetryIntervalSeconds, msc.IsHealthPingEnabled()))
 
 	// 数据源摘要 - 一行
 	enabledCount := 0
@@ -414,6 +422,17 @@ func (msc *MultiSourceConfig) GetRetryIntervalSeconds() int {
 		return DefaultMultiSourceConfig.RetryIntervalSeconds
 	}
 	return msc.RetryIntervalSeconds
+}
+
+// IsHealthPingEnabled 返回是否启用周期性健康检查
+func (msc *MultiSourceConfig) IsHealthPingEnabled() bool {
+	if msc == nil {
+		return DefaultMultiSourceConfig.EnableHealthPing
+	}
+	if !msc.healthPingConfigured && !msc.EnableHealthPing {
+		return DefaultMultiSourceConfig.EnableHealthPing
+	}
+	return msc.EnableHealthPing
 }
 
 // IsBlockingMode 判断是否为阻塞模式

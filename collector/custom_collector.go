@@ -4,13 +4,14 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
+	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
-	"github.com/duke-git/lancet/v2/convertor"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"strings"
 	"time"
+
+	"github.com/duke-git/lancet/v2/convertor"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // CustomMetrics 结构体，封装多个 Prometheus Collectors
@@ -85,10 +86,7 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 	}
 	logger.Logger.Debugf("[%s] Collecting custom metrics...", dsName)
 
-	if err := cm.db.Ping(); err != nil {
-		logger.Logger.Error("Database connection is not available",
-			zap.String("datasource", dsName),
-			zap.Error(err))
+	if err := utils.CheckDBConnectionWithSource(cm.db, dsName); err != nil {
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
@@ -98,10 +96,7 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 	for _, metric := range cm.sqlConfig.Metrics {
 		results, err := queryDynamicDatabase(ctx, cm.db, metric.Request)
 		if err != nil {
-			logger.Logger.Error("查询数据库错误",
-				zap.String("datasource", dsName),
-				zap.String("context", metric.Context),
-				zap.Error(err))
+			utils.HandleDbQueryErrorWithSource(err, dsName)
 			continue
 		}
 

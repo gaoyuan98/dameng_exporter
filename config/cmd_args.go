@@ -38,6 +38,9 @@ type CmdArgs struct {
 
 	// 采集模式参数
 	CollectionMode *string
+
+	// 健康检查参数
+	EnableHealthPing *bool
 }
 
 // MergeConfig 函数已移除，使用 MergeMultiSourceConfig 代替
