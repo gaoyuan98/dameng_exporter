@@ -139,7 +139,7 @@ type rawDataSourceConfig struct {
 	DbPwd                   string `toml:"dbPwd"`
 	QueryTimeout            int    `toml:"queryTimeout"`
 	MaxOpenConns            int    `toml:"maxOpenConns"`
-	MaxIdleConns            int    `toml:"maxIdleConns"`
+	MaxIdleConns            int    `toml:"maxIdleConns"` // Deprecated
 	ConnMaxLifetime         int    `toml:"connMaxLifetime"`
 	BigKeyDataCacheTime     int    `toml:"bigKeyDataCacheTime"`
 	AlarmKeyCacheTime       int    `toml:"alarmKeyCacheTime"`
@@ -171,9 +171,6 @@ func (raw rawDataSourceConfig) toConfig() DataSourceConfig {
 	}
 	if raw.MaxOpenConns != 0 {
 		cfg.MaxOpenConns = raw.MaxOpenConns
-	}
-	if raw.MaxIdleConns != 0 {
-		cfg.MaxIdleConns = raw.MaxIdleConns
 	}
 	if raw.ConnMaxLifetime != 0 {
 		cfg.ConnMaxLifetime = raw.ConnMaxLifetime
@@ -210,6 +207,11 @@ func (raw rawDataSourceConfig) toConfig() DataSourceConfig {
 
 	cfg.ApplyDefaults()
 
+	if raw.MaxIdleConns != 0 {
+		fmt.Printf("警告：数据源 %s 的 maxIdleConns 参数已废弃，将强制使用 maxOpenConns=%d（原配置值=%d）\n",
+			cfg.Name, cfg.MaxOpenConns, raw.MaxIdleConns)
+	}
+
 	return cfg
 }
 
@@ -233,7 +235,6 @@ func MergeMultiSourceConfigFromCmdArgs(config *MultiSourceConfig, args *CmdArgs)
 			DbPwd:                   *args.DbPwd,
 			QueryTimeout:            *args.QueryTimeout,
 			MaxOpenConns:            *args.MaxOpenConns,
-			MaxIdleConns:            *args.MaxIdleConns,
 			ConnMaxLifetime:         *args.ConnMaxLife,
 			BigKeyDataCacheTime:     *args.BigKeyDataCacheTime,
 			AlarmKeyCacheTime:       *args.AlarmKeyCacheTime,

@@ -54,7 +54,6 @@ type DataSourceConfig struct {
 	DbPwd           string `toml:"dbPwd"` // 支持明文和ENC()加密格式
 	QueryTimeout    int    `toml:"queryTimeout"`
 	MaxOpenConns    int    `toml:"maxOpenConns"`
-	MaxIdleConns    int    `toml:"maxIdleConns"`
 	ConnMaxLifetime int    `toml:"connMaxLifetime"`
 
 	// 缓存配置
@@ -108,7 +107,6 @@ var DefaultDataSourceConfig = DataSourceConfig{
 	// 连接池默认值
 	QueryTimeout:    5,
 	MaxOpenConns:    10,
-	MaxIdleConns:    5,
 	ConnMaxLifetime: 30,
 
 	// 缓存默认值
@@ -143,9 +141,6 @@ func (ds *DataSourceConfig) applyDefaults() {
 	}
 	if ds.MaxOpenConns == 0 {
 		ds.MaxOpenConns = DefaultDataSourceConfig.MaxOpenConns
-	}
-	if ds.MaxIdleConns == 0 {
-		ds.MaxIdleConns = DefaultDataSourceConfig.MaxIdleConns
 	}
 	if ds.ConnMaxLifetime == 0 {
 		ds.ConnMaxLifetime = DefaultDataSourceConfig.ConnMaxLifetime
@@ -374,8 +369,8 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 				ds.DbHost, ds.DbUser, ds.Enabled))
 
 			// 连接池配置 - 使用完整参数名
-			sb.WriteString(fmt.Sprintf("  maxOpenConns=%d, maxIdleConns=%d, connMaxLifetime=%dmin, queryTimeout=%ds\n",
-				ds.MaxOpenConns, ds.MaxIdleConns, ds.ConnMaxLifetime, ds.QueryTimeout))
+			sb.WriteString(fmt.Sprintf("  maxOpenConns=%d, connMaxLifetime=%dmin, queryTimeout=%ds\n",
+				ds.MaxOpenConns, ds.ConnMaxLifetime, ds.QueryTimeout))
 
 			// 缓存配置 - 使用完整参数名
 			sb.WriteString(fmt.Sprintf("  bigKeyDataCacheTime=%dmin, alarmKeyCacheTime=%dmin\n",

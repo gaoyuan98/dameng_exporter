@@ -11,7 +11,6 @@ type CmdArgs struct {
 	DbName                  *string
 	QueryTimeout            *int
 	MaxOpenConns            *int
-	MaxIdleConns            *int
 	ConnMaxLife             *int
 	CheckSlowSQL            *bool
 	SlowSqlTime             *int

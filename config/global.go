@@ -177,12 +177,6 @@ func (g *GlobalSettings) GetMaxOpenConns() int {
 	return ds.MaxOpenConns
 }
 
-// GetMaxIdleConns 获取最大空闲连接数（从第一个数据源）
-func (g *GlobalSettings) GetMaxIdleConns() int {
-	ds := g.GetDefaultDataSource()
-	return ds.MaxIdleConns
-}
-
 // GetConnMaxLifetime 获取连接最大生命周期（从第一个数据源）
 func (g *GlobalSettings) GetConnMaxLifetime() int {
 	ds := g.GetDefaultDataSource()
