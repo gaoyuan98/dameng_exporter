@@ -32,7 +32,6 @@ func parseFlags() *config.CmdArgs {
 		DbName:                  kingpin.Flag("dbName", "Name for the database (optional, defaults to generated name)").String(),
 		QueryTimeout:            kingpin.Flag("queryTimeout", "Timeout for queries (Second)").Default(fmt.Sprint(config.DefaultDataSourceConfig.QueryTimeout)).Int(),
 		MaxOpenConns:            kingpin.Flag("maxOpenConns", "Maximum open connections (number)").Default(fmt.Sprint(config.DefaultDataSourceConfig.MaxOpenConns)).Int(),
-		MaxIdleConns:            kingpin.Flag("maxIdleConns", "Maximum idle connections (number)").Default(fmt.Sprint(config.DefaultDataSourceConfig.MaxIdleConns)).Int(),
 		ConnMaxLife:             kingpin.Flag("connMaxLifetime", "Connection maximum lifetime (Minute)").Default(fmt.Sprint(config.DefaultDataSourceConfig.ConnMaxLifetime)).Int(),
 		CheckSlowSQL:            kingpin.Flag("checkSlowSql", "Check slow SQL,default:"+strconv.FormatBool(config.DefaultDataSourceConfig.CheckSlowSQL)).Default(strconv.FormatBool(config.DefaultDataSourceConfig.CheckSlowSQL)).Bool(),
 		SlowSqlTime:             kingpin.Flag("slowSqlTime", "Slow SQL time (Millisecond)").Default(fmt.Sprint(config.DefaultDataSourceConfig.SlowSqlTime)).Int(),

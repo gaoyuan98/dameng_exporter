@@ -221,7 +221,7 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 
 	// 步骤3：设置连接池参数，确保与配置保持一致
 	db.SetMaxOpenConns(dsConfig.MaxOpenConns)
-	db.SetMaxIdleConns(dsConfig.MaxIdleConns)
+	db.SetMaxIdleConns(dsConfig.MaxOpenConns)
 	db.SetConnMaxLifetime(time.Duration(dsConfig.ConnMaxLifetime) * time.Minute)
 
 	// 步骤4：执行带超时的 Ping 验证，确保连接可达
