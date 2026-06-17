@@ -22,10 +22,22 @@ type DataSourceAware interface {
 	SetDataSource(name string)
 }
 
+// NodeTypeAware 接口，用于标识支持数据库节点类型感知的采集器
+type NodeTypeAware interface {
+	SetNodeType(nodeType string)
+}
+
 // SetDataSourceIfSupported 用于设置采集器的数据源名称
 func SetDataSourceIfSupported(collector MetricCollector, dataSource string) {
 	if dsa, ok := collector.(DataSourceAware); ok {
 		dsa.SetDataSource(dataSource)
+	}
+}
+
+// SetNodeTypeIfSupported 用于设置采集器的数据库节点类型
+func SetNodeTypeIfSupported(collector MetricCollector, nodeType string) {
+	if nta, ok := collector.(NodeTypeAware); ok {
+		nta.SetNodeType(nodeType)
 	}
 }
 
@@ -107,6 +119,7 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 
 			// 如果采集器支持数据源感知，设置数据源名称
 			SetDataSourceIfSupported(collector, p.Name)
+			SetNodeTypeIfSupported(collector, p.GetNodeType())
 
 			// 快速检查数据源是否已降级，避免无谓查询
 			if err := utils.CheckDBConnectionWithSource(p.DB, p.Name); err != nil {

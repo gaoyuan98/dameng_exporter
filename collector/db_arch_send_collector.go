@@ -3,6 +3,7 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
+	dmdb "dameng_exporter/db"
 	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
@@ -33,6 +34,7 @@ type DbArchSendCollector struct {
 	// archSendLastCode 暴露 LAST_SEND_CODE 原始返回码。
 	archSendLastCode *prometheus.Desc
 	dataSource       string
+	nodeType         string
 
 	archSendFieldsCheckOnce sync.Once
 	archSendFieldsExist     bool
@@ -43,6 +45,11 @@ type DbArchSendCollector struct {
 // SetDataSource 实现 DataSourceAware 接口。
 func (c *DbArchSendCollector) SetDataSource(name string) {
 	c.dataSource = name
+}
+
+// SetNodeType 实现 NodeTypeAware 接口。
+func (c *DbArchSendCollector) SetNodeType(nodeType string) {
+	c.nodeType = nodeType
 }
 
 // NewDbArchSendCollector 初始化归档发送采集器。
@@ -176,7 +183,11 @@ func (c *DbArchSendCollector) getDbArchSendDetailInfo(ctx context.Context, db *s
 	// 记录当前版本是否支持 LAST_SEND_CODE/LAST_SEND_DESC 字段。
 	hasLastSendFields := c.checkArchSendInfoFields(ctx)
 	if c.checkArchApplyInfoExists(ctx) {
-		querySql = config.QueryArchSendDetailInfo2
+		if c.nodeType == string(dmdb.NodeTypeDSC) {
+			querySql = config.QueryArchSendDetailInfoDsc
+		} else {
+			querySql = config.QueryArchSendDetailInfo2
+		}
 	} else {
 		querySql = config.QueryArchSendDetailInfo
 	}
