@@ -13,14 +13,20 @@ import (
 )
 
 type SessionInfoCollector struct {
-	db              *sql.DB
-	slowSQLInfoDesc *prometheus.Desc
-	dataSource      string // 数据源名称
+	db               *sql.DB
+	slowSQLInfoDesc  *prometheus.Desc
+	dataSource       string // 数据源名称
+	dataSourceConfig *config.DataSourceConfig
 }
 
 // SetDataSource 实现DataSourceAware接口
 func (c *SessionInfoCollector) SetDataSource(name string) {
 	c.dataSource = name
+}
+
+// SetDataSourceConfig 设置当前采集器对应的数据源配置
+func (c *SessionInfoCollector) SetDataSourceConfig(dataSourceConfig *config.DataSourceConfig) {
+	c.dataSourceConfig = dataSourceConfig
 }
 
 // 定义数据结构
@@ -51,7 +57,12 @@ func (c *SessionInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	if !config.Global.GetCheckSlowSQL() {
+	dataSourceConfig := c.dataSourceConfig
+	if dataSourceConfig == nil {
+		dataSourceConfig = config.Global.GetDefaultDataSource()
+	}
+
+	if dataSourceConfig == nil || !dataSourceConfig.CheckSlowSQL {
 		logger.Logger.Debugf("[%s] CheckSlowSQL is false, skip collecting slow SQL info", c.dataSource)
 		return
 	}
@@ -60,10 +71,10 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(dataSourceConfig.QueryTimeout)*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, config.Global.GetSlowSqlTime(), config.Global.GetSlowSqlMaxRows())
+	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, dataSourceConfig.SlowSqlTime, dataSourceConfig.SlowSqlMaxRows)
 	if err != nil {
 		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return

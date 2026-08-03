@@ -22,6 +22,11 @@ type DataSourceAware interface {
 	SetDataSource(name string)
 }
 
+// DataSourceConfigAware 接口，用于向采集器注入当前数据源配置
+type DataSourceConfigAware interface {
+	SetDataSourceConfig(dataSourceConfig *config.DataSourceConfig)
+}
+
 // NodeTypeAware 接口，用于标识支持数据库节点类型感知的采集器
 type NodeTypeAware interface {
 	SetNodeType(nodeType string)
@@ -31,6 +36,13 @@ type NodeTypeAware interface {
 func SetDataSourceIfSupported(collector MetricCollector, dataSource string) {
 	if dsa, ok := collector.(DataSourceAware); ok {
 		dsa.SetDataSource(dataSource)
+	}
+}
+
+// SetDataSourceConfigIfSupported 用于设置采集器的数据源配置
+func SetDataSourceConfigIfSupported(collector MetricCollector, dataSourceConfig *config.DataSourceConfig) {
+	if dsca, ok := collector.(DataSourceConfigAware); ok {
+		dsca.SetDataSourceConfig(dataSourceConfig)
 	}
 }
 
@@ -119,6 +131,7 @@ func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
 
 			// 如果采集器支持数据源感知，设置数据源名称
 			SetDataSourceIfSupported(collector, p.Name)
+			SetDataSourceConfigIfSupported(collector, p.Config)
 			SetNodeTypeIfSupported(collector, p.GetNodeType())
 
 			// 快速检查数据源是否已降级，避免无谓查询
