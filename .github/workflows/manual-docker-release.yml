@@ -1,13 +1,21 @@
 # 仅在手动触发时运行
-name: 手动发布多架构镜像
+name: 手动发布多架构镜像和安装包
 
 on:
   workflow_dispatch:
     inputs:
       release_version:
-        description: "可选：指定镜像版本，留空则读取代码中的 Version 常量"
+        description: "可选：仅指定 Docker 镜像版本，留空则读取代码中的 Version 常量"
         required: false
         type: string
+      publish_release:
+        description: "同时发布 Linux、Windows、macOS 安装包到 GitHub Release（版本读取源码）"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
 
 jobs:
   build-and-push:
@@ -31,10 +39,12 @@ jobs:
       - name: 准备版本信息
         id: meta
         shell: bash
+        env:
+          RELEASE_VERSION: ${{ inputs.release_version }}
         run: |
           set -euo pipefail
-          if [ -n "${{ github.event.inputs.release_version }}" ]; then
-            VERSION="${{ github.event.inputs.release_version }}"
+          if [ -n "$RELEASE_VERSION" ]; then
+            VERSION="$RELEASE_VERSION"
           else
             VERSION=$(grep 'const Version' dameng_exporter.go | awk '{print $4}' | tr -d '"')
           fi
@@ -82,3 +92,105 @@ jobs:
             --tag "gaoyuan98/dameng_exporter:latest" \
             "gaoyuan98/dameng_exporter:latest-linux-amd64" \
             "gaoyuan98/dameng_exporter:latest-linux-arm64"
+
+  publish-release:
+    if: ${{ inputs.publish_release }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: ${{ github.workflow }}-release
+      cancel-in-progress: false
+    steps:
+      - name: 检出源码和版本标签
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 确定安装包版本和构建源码
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(sed -nE 's/^const Version = "([^"]+)"$/\1/p' dameng_exporter.go)
+          if [[ ! "$VERSION" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+            echo "源码 Version 为空或格式不合法" >&2
+            exit 1
+          fi
+          RELEASE_TAG="${VERSION%%_*}"
+          git check-ref-format "refs/tags/$RELEASE_TAG"
+
+          # 已有版本必须使用标签中的源码，避免把当前分支的新代码混入历史版本。
+          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            git checkout --detach "refs/tags/$RELEASE_TAG"
+            TAG_VERSION=$(sed -nE 's/^const Version = "([^"]+)"$/\1/p' dameng_exporter.go)
+            if [ "$TAG_VERSION" != "$VERSION" ]; then
+              echo "标签 $RELEASE_TAG 的 Version 与当前源码不同，请更新源码版本后再发布" >&2
+              exit 1
+            fi
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "git_revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: 设置 Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 运行测试
+        run: go test -mod=readonly ./...
+
+      - name: 构建全部 5 个平台的安装包
+        run: bash ./scripts/build_all_versions.sh
+
+      - name: 保存安装包供 Actions 下载
+        uses: actions/upload-artifact@v4
+        with:
+          name: dameng_exporter_${{ steps.meta.outputs.version }}_attempt_${{ github.run_attempt }}
+          path: dist/dameng_exporter_${{ steps.meta.outputs.version }}_*.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+      - name: 创建 Release 或补充缺失的安装包
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          RELEASE_TAG: ${{ steps.meta.outputs.release_tag }}
+          RELEASE_COMMIT: ${{ steps.meta.outputs.git_revision }}
+        run: |
+          set -euo pipefail
+          ASSETS=()
+          for TARGET in windows_amd64 linux_amd64 linux_arm64 darwin_amd64 darwin_arm64; do
+            ASSET="dist/dameng_exporter_${VERSION}_${TARGET}.tar.gz"
+            if [ ! -s "$ASSET" ]; then
+              echo "安装包缺失或为空：$ASSET" >&2
+              exit 1
+            fi
+            ASSETS+=("$ASSET")
+          done
+
+          ERROR_FILE=$(mktemp)
+          if EXISTING_ASSETS=$(gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" --jq '.assets[].name' 2>"$ERROR_FILE"); then
+            MISSING_ASSETS=()
+            for ASSET in "${ASSETS[@]}"; do
+              if grep -Fxq -- "${ASSET##*/}" <<< "$EXISTING_ASSETS"; then
+                echo "保留已有附件：${ASSET##*/}"
+              else
+                MISSING_ASSETS+=("$ASSET")
+              fi
+            done
+            if [ "${#MISSING_ASSETS[@]}" -gt 0 ]; then
+              gh release upload "$RELEASE_TAG" "${MISSING_ASSETS[@]}"
+            fi
+          elif grep -q 'HTTP 404' "$ERROR_FILE"; then
+            gh release create "$RELEASE_TAG" "${ASSETS[@]}" \
+              --target "$RELEASE_COMMIT" --title "$RELEASE_TAG" --generate-notes
+          else
+            cat "$ERROR_FILE" >&2
+            exit 1
+          fi

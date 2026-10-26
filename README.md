@@ -155,6 +155,17 @@ go build -o dameng_exporter .
 bash ./scripts/build_all_versions.sh
 ```
 
+### 手动发布镜像和安装包
+
+在 GitHub Actions 中运行「手动发布多架构镜像和安装包」（`manual-docker-release.yml`）：
+
+- Docker 任务发布 Linux amd64/arm64 镜像；`release_version` 仅覆盖镜像标签，留空时读取源码中的 `Version`。
+- `publish_release` 默认开启，独立构建 Linux amd64/arm64、Windows amd64、macOS Intel/Apple Silicon 共 5 个安装包，上传到 GitHub Release，并在本次运行的 Artifacts 中保留 14 天。关闭此选项可只发布 Docker 镜像。
+- 安装包名保留完整源码版本（例如 `v1.2.6_20261026`），Release 标签去掉日期后缀（例如 `v1.2.6`）。标签不存在时使用本次运行的提交创建 Release；标签已存在时从该标签构建，只补充缺失的附件，保留原附件和发布说明。
+- 发布新代码前请更新 `dameng_exporter.go` 中的版本号（例如升级到 `v1.2.7_20261027`）；仅修改日期或填写 `release_version` 不会把新代码发布到已有 Release。已有标签中的完整版本与当前源码不一致时，安装包任务会报错。
+
+安装包任务使用工作流自带的 `GITHUB_TOKEN`，单独声明 `contents: write` 权限；Docker 仍使用 `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN`。两个任务独立执行，任一任务失败不会阻止另一个任务，但本次工作流的整体状态会显示失败。安装包上传到 Release 失败时，已保存的 Artifacts 仍可下载。
+
 ## 📈 监控效果展示
 
 ### Grafana 面板效果
