@@ -1,7 +1,5 @@
 <h1 align="center">Dameng Exporter - 达梦数据库 Prometheus 监控采集器</h1>
 
-> ⚠️ **重要提示：v1.2.0+ 采用全新多数据源架构，与 v1.1.6 及更早版本不兼容。[查看版本兼容性说明](#版本兼容性说明)**
-
 <p align="center">
   <!-- 项目统计 -->
   <img src="https://img.shields.io/github/stars/gaoyuan98/dameng_exporter?style=social" alt="GitHub Stars">
@@ -517,7 +515,7 @@ scrape_configs:
 ---
 
 ## 🔄 更新记录
-## v1.2.6（待发布，2026-10-26）
+## v1.2.6（已发布，2026-10-26）
 
 1. fix: 隔离 HTTP 路由，关闭 `/debug/vars` 信息泄露，未注册路径返回 404；保留监听地址、指标路径和 Basic Auth。
 2. feat: 升级达梦 Go 驱动至 `github.com/gaoyuan98/dm v1.5.103`，增加 macOS Intel 和 Apple Silicon 发行包。
