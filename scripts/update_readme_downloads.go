@@ -22,13 +22,19 @@ const (
 		"访问 [Releases](https://github.com/gaoyuan98/dameng_exporter/releases) 页面下载对应平台的版本：\n\n" +
 		"```bash\n" +
 		"# Linux AMD64\n" +
-		"wget https://github.com/gaoyuan98/dameng_exporter/releases/download/{{.Version}}/dameng_exporter_{{.Version}}_linux_amd64.tar.gz\n" +
+		"wget https://github.com/gaoyuan98/dameng_exporter/releases/download/{{.Tag}}/dameng_exporter_{{.Version}}_linux_amd64.tar.gz\n" +
 		"tar -xzf dameng_exporter_{{.Version}}_linux_amd64.tar.gz\n\n" +
 		"# Linux ARM64\n" +
-		"wget https://github.com/gaoyuan98/dameng_exporter/releases/download/{{.Version}}/dameng_exporter_{{.Version}}_linux_arm64.tar.gz\n" +
+		"wget https://github.com/gaoyuan98/dameng_exporter/releases/download/{{.Tag}}/dameng_exporter_{{.Version}}_linux_arm64.tar.gz\n" +
 		"tar -xzf dameng_exporter_{{.Version}}_linux_arm64.tar.gz\n\n" +
 		"# Windows AMD64\n" +
-		"# 下载 dameng_exporter_{{.Version}}_windows_amd64.tar.gz 并解压\n" +
+		"# 下载 dameng_exporter_{{.Version}}_windows_amd64.tar.gz 并解压\n\n" +
+		"# macOS Apple Silicon（M 系列芯片）\n" +
+		"curl -fLO https://github.com/gaoyuan98/dameng_exporter/releases/download/{{.Tag}}/dameng_exporter_{{.Version}}_darwin_arm64.tar.gz\n" +
+		"tar -xzf dameng_exporter_{{.Version}}_darwin_arm64.tar.gz\n\n" +
+		"# macOS Intel\n" +
+		"curl -fLO https://github.com/gaoyuan98/dameng_exporter/releases/download/{{.Tag}}/dameng_exporter_{{.Version}}_darwin_amd64.tar.gz\n" +
+		"tar -xzf dameng_exporter_{{.Version}}_darwin_amd64.tar.gz\n" +
 		"```"
 )
 
@@ -72,7 +78,9 @@ func renderSnippet(version string) (string, error) {
 	}
 
 	var buf bytes.Buffer
-	if err := tpl.Execute(&buf, struct{ Version string }{Version: version}); err != nil {
+	// Git tag 沿用 vX.Y.Z，安装包保留源码中的日期后缀。
+	tag := strings.SplitN(version, "_", 2)[0]
+	if err := tpl.Execute(&buf, struct{ Version, Tag string }{Version: version, Tag: tag}); err != nil {
 		return "", fmt.Errorf("渲染模板失败: %w", err)
 	}
 	return strings.TrimSpace(buf.String()), nil

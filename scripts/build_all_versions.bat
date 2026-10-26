@@ -1,190 +1,86 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
+set "BUILD_DIR="
+pushd "%~dp0.." || exit /b 1
 
-REM 设置变量
-set PROGRAM_NAME=dameng_exporter
-
-REM 从 Go 源码中提取版本号
-for /f "tokens=4" %%i in ('findstr /C:"const Version" ..\dameng_exporter.go') do (
-    set VERSION=%%i
-    REM 移除引号
-    set VERSION=!VERSION:"=!
+set "PROGRAM_NAME=dameng_exporter"
+set "VERSION="
+for /f "tokens=4" %%i in ('findstr /C:"const Version" dameng_exporter.go') do set "VERSION=%%~i"
+if not defined VERSION (
+    echo Error: Cannot find Version in dameng_exporter.go
+    goto :fail
 )
 
-if "%VERSION%"=="" (
-    echo Error: Cannot find version in dameng_exporter.go
-    exit /b 1
+set "GIT_REVISION=unknown"
+set "GIT_BRANCH=unknown"
+for /f "delims=" %%i in ('git rev-parse HEAD 2^>nul') do set "GIT_REVISION=%%i"
+for /f "delims=" %%i in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "GIT_BRANCH=%%i"
+set "LDFLAGS=-s -w -X dameng_exporter/collector.GitRevision=%GIT_REVISION% -X dameng_exporter/collector.GitBranch=%GIT_BRANCH%"
+
+REM Run the README helper for the host before cross-compiling.
+set "GOOS="
+set "GOARCH="
+set "CGO_ENABLED=0"
+go run -mod=readonly scripts\update_readme_downloads.go
+if errorlevel 1 goto :fail
+
+set "DIST_DIR=%CD%\dist"
+if not exist "%DIST_DIR%" mkdir "%DIST_DIR%"
+set "BUILD_DIR=%DIST_DIR%\.build-%RANDOM%-%RANDOM%"
+if exist "%BUILD_DIR%" (
+    echo Error: Build directory already exists
+    set "BUILD_DIR="
+    goto :fail
 )
+mkdir "%BUILD_DIR%"
+if errorlevel 1 goto :fail
 
-echo Building %PROGRAM_NAME% version: %VERSION%
+echo Building %PROGRAM_NAME% %VERSION% [%GIT_BRANCH% %GIT_REVISION%]
+call :build windows amd64
+if errorlevel 1 goto :fail
+call :build linux amd64
+if errorlevel 1 goto :fail
+call :build linux arm64
+if errorlevel 1 goto :fail
+call :build darwin amd64
+if errorlevel 1 goto :fail
+call :build darwin arm64
+if errorlevel 1 goto :fail
 
-REM Get Git information
-for /f "tokens=*" %%i in ('git rev-parse HEAD 2^>nul') do set GIT_REVISION=%%i
-if "%GIT_REVISION%"=="" set GIT_REVISION=unknown
-
-for /f "tokens=*" %%i in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set GIT_BRANCH=%%i
-if "%GIT_BRANCH%"=="" set GIT_BRANCH=unknown
-
-echo Git Revision: %GIT_REVISION%
-echo Git Branch: %GIT_BRANCH%
-
-REM Set ldflags with build info
-set LDFLAGS=-s -w -X "dameng_exporter/collector.GitRevision=%GIT_REVISION%" -X "dameng_exporter/collector.GitBranch=%GIT_BRANCH%"
-
-REM 切换到上级目录执行编译
-cd ..
-
-REM 同步 README 下载说明
-go run scripts\update_readme_downloads.go
-if %errorlevel% neq 0 (
-    echo Error syncing README download section
-    exit /b 1
+for %%f in ("%BUILD_DIR%\*.tar.gz") do (
+    move /Y "%%~ff" "%DIST_DIR%\" >nul
+    if errorlevel 1 goto :fail
 )
-
-REM 设置需要打包的配置文件（从docs/config目录获取）
-set CONFIG_FILES=dameng_exporter.toml custom_queries.metrics
-set CONFIG_SOURCE_DIR=docs\config
-set DASHBOARD_SOURCE_DIR=docs\dashboards
-
-
-REM 编译Windows 64位版本
-set GOOS=windows
-set GOARCH=amd64
-go build -ldflags "%LDFLAGS%" -o %PROGRAM_NAME%_windows_amd64.exe
-if %errorlevel% neq 0 (
-    echo Error compiling Windows 64-bit version
-    timeout /t 3 /nobreak >nul
-    exit /b 1
-)
-echo Compiled Windows 64-bit version successfully
-
-REM 创建临时目录结构
-set TEMP_DIR=%PROGRAM_NAME%_%VERSION%_windows_amd64
-if exist %TEMP_DIR% rmdir /s /q %TEMP_DIR%
-mkdir %TEMP_DIR%
-
-REM 复制文件到临时目录
-move %PROGRAM_NAME%_windows_amd64.exe %TEMP_DIR%\%PROGRAM_NAME%.exe
-for %%f in (%CONFIG_FILES%) do (
-    if exist %CONFIG_SOURCE_DIR%\%%f copy %CONFIG_SOURCE_DIR%\%%f %TEMP_DIR%\ >nul
-)
-if exist %DASHBOARD_SOURCE_DIR% xcopy /E /I /Y "%DASHBOARD_SOURCE_DIR%" "%TEMP_DIR%\dashboards\" >nul
-
-REM 打包Windows版本为tar.gz
-tar -czf %PROGRAM_NAME%_%VERSION%_windows_amd64.tar.gz %TEMP_DIR%
-if %errorlevel% neq 0 (
-    echo Error packaging Windows 64-bit version
-    rmdir /s /q %TEMP_DIR%
-    timeout /t 3 /nobreak >nul
-    exit /b 1
-)
-
-REM 清理临时目录
-rmdir /s /q %TEMP_DIR%
-
-REM 编译Linux 64位版本
-set GOOS=linux
-set GOARCH=amd64
-go build -ldflags "%LDFLAGS%" -o %PROGRAM_NAME%_linux_amd64
-if %errorlevel% neq 0 (
-    echo Error compiling Linux 64-bit version
-    timeout /t 3 /nobreak >nul
-    exit /b 1
-)
-echo Compiled Linux 64-bit version successfully
-
-REM 创建临时目录结构
-set TEMP_DIR=%PROGRAM_NAME%_%VERSION%_linux_amd64
-if exist %TEMP_DIR% rmdir /s /q %TEMP_DIR%
-mkdir %TEMP_DIR%
-
-REM 复制文件到临时目录
-move %PROGRAM_NAME%_linux_amd64 %TEMP_DIR%\%PROGRAM_NAME%
-for %%f in (%CONFIG_FILES%) do (
-    if exist %CONFIG_SOURCE_DIR%\%%f copy %CONFIG_SOURCE_DIR%\%%f %TEMP_DIR%\ >nul
-)
-if exist %DASHBOARD_SOURCE_DIR% xcopy /E /I /Y "%DASHBOARD_SOURCE_DIR%" "%TEMP_DIR%\dashboards\" >nul
-
-REM 打包Linux版本为tar.gz
-tar -czf %PROGRAM_NAME%_%VERSION%_linux_amd64.tar.gz %TEMP_DIR%
-if %errorlevel% neq 0 (
-    echo Error packaging Linux 64-bit version
-    rmdir /s /q %TEMP_DIR%
-    timeout /t 3 /nobreak >nul
-    exit /b 1
-)
-
-REM 清理临时目录
-rmdir /s /q %TEMP_DIR%
-
-
-REM 编译Linux ARM版本
-set GOOS=linux
-set GOARCH=arm64
-set GOHOSTARCH=arm64
-go build -ldflags "%LDFLAGS%" -o %PROGRAM_NAME%_linux_arm64
-if %errorlevel% neq 0 (
-    echo Error compiling Linux ARM version
-    timeout /t 3 /nobreak >nul
-    exit /b 1
-)
-echo Compiled Linux ARM version successfully
-
-REM 创建临时目录结构
-set TEMP_DIR=%PROGRAM_NAME%_%VERSION%_linux_arm64
-if exist %TEMP_DIR% rmdir /s /q %TEMP_DIR%
-mkdir %TEMP_DIR%
-
-REM 复制文件到临时目录
-move %PROGRAM_NAME%_linux_arm64 %TEMP_DIR%\%PROGRAM_NAME%
-for %%f in (%CONFIG_FILES%) do (
-    if exist %CONFIG_SOURCE_DIR%\%%f copy %CONFIG_SOURCE_DIR%\%%f %TEMP_DIR%\ >nul
-)
-if exist %DASHBOARD_SOURCE_DIR% xcopy /E /I /Y "%DASHBOARD_SOURCE_DIR%" "%TEMP_DIR%\dashboards\" >nul
-
-REM 打包Linux ARM版本为tar.gz
-tar -czf %PROGRAM_NAME%_%VERSION%_linux_arm64.tar.gz %TEMP_DIR%
-if %errorlevel% neq 0 (
-    echo Error packaging Linux ARM version
-    rmdir /s /q %TEMP_DIR%
-    timeout /t 3 /nobreak >nul
-    exit /b 1
-)
-
-REM 清理临时目录
-rmdir /s /q %TEMP_DIR%
-
-REM 编译darwin amd64版本
-@REM SET GOOS=darwin
-@REM SET GOARCH=amd64
-@REM go build -ldflags "-s -w" -o %PROGRAM_NAME%_%VERSION%_darwin_amd64
-@REM if %errorlevel% neq 0 (
-@REM     echo Error compiling Darwin amd64 version
-@REM     timeout /t 3 /nobreak >nul  REM 等待3秒钟
-@REM     exit /b 1
-@REM )
-@REM echo Compiled Darwin amd64 version successfully
-@REM REM 打包Darwin amd64版本为tar.gz，包括配置文件
-@REM tar -czvf %PROGRAM_NAME%_%VERSION%_darwin_amd64.tar.gz %PROGRAM_NAME%_%VERSION%_darwin_amd64 %CONFIG_FILE%
-@REM if %errorlevel% neq 0 (
-@REM     echo Error packaging Darwin amd64 version
-@REM     timeout /t 3 /nobreak >nul
-@REM     exit /b 1
-@REM )
-@REM REM 清理编译生成的可执行文件
-@REM del %PROGRAM_NAME%_%VERSION%_darwin_amd64
-
-
-echo.
-echo ======================================
-echo All versions compiled successfully!
-echo Version: %VERSION%
-echo Package files include (from %CONFIG_SOURCE_DIR% directory):
-for %%f in (%CONFIG_FILES%) do (
-    echo   - %%f
-)
-echo ======================================
-echo.
-REM 返回 scripts 目录
-cd scripts
+rmdir /s /q "%BUILD_DIR%"
+echo All 5 packages are ready in %DIST_DIR%
+popd
 exit /b 0
+
+:build
+set "GOOS=%~1"
+set "GOARCH=%~2"
+set "PACKAGE_NAME=%PROGRAM_NAME%_%VERSION%_%GOOS%_%GOARCH%"
+set "PACKAGE_DIR=%BUILD_DIR%\%PACKAGE_NAME%"
+set "BINARY_NAME=%PROGRAM_NAME%"
+if "%GOOS%"=="windows" set "BINARY_NAME=%PROGRAM_NAME%.exe"
+echo Building %GOOS%/%GOARCH%...
+mkdir "%PACKAGE_DIR%"
+if errorlevel 1 exit /b 1
+go build -mod=readonly -trimpath -ldflags "%LDFLAGS%" -o "%PACKAGE_DIR%\%BINARY_NAME%" .
+if errorlevel 1 exit /b 1
+copy /Y docs\config\dameng_exporter.toml "%PACKAGE_DIR%\" >nul
+if errorlevel 1 exit /b 1
+copy /Y docs\config\custom_queries.metrics "%PACKAGE_DIR%\" >nul
+if errorlevel 1 exit /b 1
+copy /Y LICENSE "%PACKAGE_DIR%\" >nul
+if errorlevel 1 exit /b 1
+xcopy /E /I /Y docs\dashboards "%PACKAGE_DIR%\dashboards\" >nul
+if errorlevel 1 exit /b 1
+tar -czf "%BUILD_DIR%\%PACKAGE_NAME%.tar.gz" -C "%BUILD_DIR%" "%PACKAGE_NAME%"
+exit /b %errorlevel%
+
+:fail
+if defined BUILD_DIR if exist "%BUILD_DIR%" rmdir /s /q "%BUILD_DIR%"
+echo Build failed. No complete release was produced.
+popd
+exit /b 1

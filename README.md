@@ -84,6 +84,7 @@ dameng_exporter/
 - Prometheus 2.0+
 - Grafana 8.5+（使用提供的面板模板）
 - Go 1.23+（从源码编译时需要）
+- 支持 Linux amd64/arm64、Windows amd64、macOS Intel/Apple Silicon
 
 ### 下载安装
 
@@ -94,15 +95,23 @@ dameng_exporter/
 
 ```bash
 # Linux AMD64
-wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.5_20260413/dameng_exporter_v1.2.5_20260413_linux_amd64.tar.gz
-tar -xzf dameng_exporter_v1.2.5_20260413_linux_amd64.tar.gz
+wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.6/dameng_exporter_v1.2.6_20261026_linux_amd64.tar.gz
+tar -xzf dameng_exporter_v1.2.6_20261026_linux_amd64.tar.gz
 
 # Linux ARM64
-wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.5_20260413/dameng_exporter_v1.2.5_20260413_linux_arm64.tar.gz
-tar -xzf dameng_exporter_v1.2.5_20260413_linux_arm64.tar.gz
+wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.6/dameng_exporter_v1.2.6_20261026_linux_arm64.tar.gz
+tar -xzf dameng_exporter_v1.2.6_20261026_linux_arm64.tar.gz
 
 # Windows AMD64
-# 下载 dameng_exporter_v1.2.5_20260413_windows_amd64.tar.gz 并解压
+# 下载 dameng_exporter_v1.2.6_20261026_windows_amd64.tar.gz 并解压
+
+# macOS Apple Silicon（M 系列芯片）
+curl -fLO https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.6/dameng_exporter_v1.2.6_20261026_darwin_arm64.tar.gz
+tar -xzf dameng_exporter_v1.2.6_20261026_darwin_arm64.tar.gz
+
+# macOS Intel
+curl -fLO https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.6/dameng_exporter_v1.2.6_20261026_darwin_amd64.tar.gz
+tar -xzf dameng_exporter_v1.2.6_20261026_darwin_amd64.tar.gz
 ```
 <!-- AUTO_UPDATING_DOWNLOADS_END -->
 
@@ -142,10 +151,10 @@ git clone https://github.com/gaoyuan98/dameng_exporter.git
 cd dameng_exporter
 
 # 编译（自动下载依赖）
-go build -o dameng_exporter main.go
+go build -o dameng_exporter .
 
-# Windows 一键编译
-./scripts/build_all_versions.bat
+# macOS / Linux 一键构建全部发行包
+bash ./scripts/build_all_versions.sh
 ```
 
 ## 📈 监控效果展示
@@ -508,6 +517,15 @@ scrape_configs:
 ---
 
 ## 🔄 更新记录
+## v1.2.6（待发布，2026-10-26）
+
+1. fix: 隔离 HTTP 路由，关闭 `/debug/vars` 信息泄露，未注册路径返回 404；保留监听地址、指标路径和 Basic Auth。
+2. feat: 升级达梦 Go 驱动至 `github.com/gaoyuan98/dm v1.5.103`，增加 macOS Intel 和 Apple Silicon 发行包。
+3. build: 新增 macOS/Linux 打包脚本，Windows 脚本同步支持全部 5 个目标，统一输出到 `dist/`。
+4. docs: 修正 Release tag 与安装包版本的下载链接，更新源码编译及 macOS 下载说明。
+5. fix: 修复 DSC 环境下 `dmdbms_arch_send_detail_info` 的 `V$ARCH_APPLY_INFO` 子查询报错。
+6. feat: 慢 SQL 信息采集器支持各数据源独立的慢 SQL 开关、阈值和行数限制。
+
 ## v1.2.5 (2026-04-13)
 1. perf: 废弃掉MaxIdleConns参数,跟maxOpenConns参数值相等，避免每次查询后连接收缩的开销问题
 2. perf: 调整表空间的SQL语句，兼容DSC环境
@@ -594,13 +612,13 @@ git clone https://github.com/gaoyuan98/dameng_exporter.git
 go mod download
 
 # 本地测试
-go run main.go --configFile=dameng_exporter.toml
+go run . --configFile=dameng_exporter.toml
 
 # 运行测试
 go test ./...
 
 # 构建
-go build -o dameng_exporter main.go
+go build -o dameng_exporter .
 ```
 
 ## 📄 许可证
