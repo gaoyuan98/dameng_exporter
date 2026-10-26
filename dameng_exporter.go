@@ -6,6 +6,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
+	"dameng_exporter/server"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )
 
@@ -121,14 +121,9 @@ func main() {
 	collector.RegisterMultiSourceCollectors(reg, poolManager)
 	logger.Logger.Info("Starting dameng_exporter version " + Version)
 	logger.Logger.Info("Please visit: http://localhost" + config.Global.GetListenAddress() + config.Global.GetMetricPath())
-	//设置metric路径
-	http.Handle(config.Global.GetMetricPath(), auth.BasicAuthMiddleware(promhttp.HandlerFor(reg, promhttp.HandlerOpts{})))
-	//配置引导页
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write(landingPage)
-	})
+	handler := server.NewHandler(config.Global.GetMetricPath(), reg, landingPage)
 	//设置端口号
-	if err := http.ListenAndServe(config.Global.GetListenAddress(), nil); err != nil {
+	if err := http.ListenAndServe(config.Global.GetListenAddress(), handler); err != nil {
 		logger.Logger.Errorf("Error occur when start server %v", zap.Error(err))
 	}
 
