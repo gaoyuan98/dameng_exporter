@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// ExporterAppName 标识采集连接，供内置会话状态查询排除使用。
+const ExporterAppName = "dameng_exporter"
+
 // GlobalMultiConfig 全局多数据源配置实例
 var GlobalMultiConfig *MultiSourceConfig
 

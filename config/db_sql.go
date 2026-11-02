@@ -93,10 +93,13 @@ FROM (
 )
 `
 
-	//查询数据库的会话状态
+	// 查询非 Exporter 会话的状态；参数为 ExporterAppName，保留未设置应用名的会话。
 	QueryDBSessionsStatusSqlStr = `SELECT /*+DM_EXPORTER*/
         DECODE(STATE, NULL, 'UNKNOWN', STATE) AS STATE_TYPE,
-        COUNT(SESS_ID) AS COUNT_VAL FROM V$SESSIONS GROUP BY STATE`
+        COUNT(SESS_ID) AS COUNT_VAL
+        FROM V$SESSIONS
+        WHERE (APPNAME IS NULL OR APPNAME <> ?)
+        GROUP BY STATE`
 
 	//查询数据库定时任务错误数量的SQL
 	QueryDbJobRunningInfoSqlStr = ` SELECT /*+DM_EXPORTER*/ COUNT(*) error_num FROM (SELECT NAME,ERRINFO FROM SYSJOB.SYSJOBHISTORIES2 WHERE ERRCODE !=0 AND START_TIME >= (SYSDATE-31) AND NAME  IN (SELECT SYSJOBS.NAME

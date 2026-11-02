@@ -305,21 +305,29 @@ func (m *DBPoolManager) buildDSN(dsConfig *config.DataSourceConfig) string {
 		url.QueryEscape(dsConfig.DbPwd),
 		hostWithParams)
 
-	// 步骤3：带上原始查询参数，缺省情况下追加 autoCommit=true
-	if queryParams != "" {
-		dsn += queryParams
-	} else {
+	// 步骤3：没有附加参数时，保留原有自动提交及超时默认值。
+	if queryParams == "" {
 		timeoutSeconds := dsConfig.QueryTimeout
 		if timeoutSeconds <= 0 {
 			timeoutSeconds = config.DefaultDataSourceConfig.QueryTimeout
 		}
 		socketTimeout := timeoutSeconds
 		connectTimeout := timeoutSeconds * 1000
-		dsn += fmt.Sprintf("?autoCommit=true&socketTimeout=%d&connectTimeout=%d",
+		queryParams = fmt.Sprintf("?autoCommit=true&socketTimeout=%d&connectTimeout=%d",
 			socketTimeout, connectTimeout)
 	}
 
-	return dsn
+	// 驱动按原文读取参数，并忽略参数名大小写；只替换 appName，
+	// 不重新 URL 编码其他参数，以免改变驱动实际收到的值。
+	var params []string
+	for _, param := range strings.Split(strings.TrimPrefix(queryParams, "?"), "&") {
+		key, _, _ := strings.Cut(param, "=")
+		if param != "" && !strings.EqualFold(key, "appName") {
+			params = append(params, param)
+		}
+	}
+	params = append(params, "appName="+config.ExporterAppName)
+	return dsn + "?" + strings.Join(params, "&")
 }
 
 // normalizeDBHost 解析并归一化 dbHost，支持 IPv4/IPv6 以及带查询串的写法

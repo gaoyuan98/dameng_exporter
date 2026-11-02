@@ -6,9 +6,10 @@ import (
 	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
+	"time"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
-	"time"
 )
 
 // DBSessionsStatusCollector 结构体
@@ -49,7 +50,7 @@ func (c *DBSessionsStatusCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 
-	//保存全局结果对象
+	// 完整读取成功后再输出，避免将查询失败或部分结果误报为零。
 	var sessionsStatusInfos []DBSessionsStatusInfo
 
 	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
@@ -59,7 +60,7 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDBSessionsStatusSqlStr)
+	rows, err := c.db.QueryContext(ctx, config.QueryDBSessionsStatusSqlStr, config.ExporterAppName)
 	if err != nil {
 		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
 		return
@@ -69,18 +70,27 @@ func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info DBSessionsStatusInfo
 		if err := rows.Scan(&info.stateType, &info.countVal); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
-			continue
+			logger.Logger.Error("Error scanning session row", zap.String("datasource", c.dataSource), zap.Error(err))
+			return
 		}
 		sessionsStatusInfos = append(sessionsStatusInfos, info)
 	}
 	if err := rows.Err(); err != nil {
 		logger.Logger.Error("Error with rows", zap.Error(err))
+		return
 	}
 
-	// 发送数据到 Prometheus
+	// 过滤采集连接后可能没有 ACTIVE/IDLE；查询成功时明确输出零。
+	seen := make(map[string]bool, len(sessionsStatusInfos))
 	for _, info := range sessionsStatusInfos {
-		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, utils.NullFloat64ToFloat64(info.countVal), utils.NullStringToString(info.stateType))
+		state := utils.NullStringToString(info.stateType)
+		seen[state] = true
+		ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, utils.NullFloat64ToFloat64(info.countVal), state)
+	}
+	for _, state := range []string{"ACTIVE", "IDLE"} {
+		if !seen[state] {
+			ch <- prometheus.MustNewConstMetric(c.sessionTypeDesc, prometheus.GaugeValue, 0, state)
+		}
 	}
 
 }
