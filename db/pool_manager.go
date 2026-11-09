@@ -5,15 +5,15 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/logger"
 	"database/sql"
+	"errors"
 	"fmt"
 	"net"
-	"net/url"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	_ "github.com/gaoyuan98/dm"
+	"github.com/gaoyuan98/dm"
 	"go.uber.org/zap"
 )
 
@@ -238,6 +238,9 @@ func (m *DBPoolManager) InitPools() error {
 
 // createPool 创建单个连接池
 func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSourcePool, error) {
+	if err := dsConfig.ValidateConnection(); err != nil {
+		return nil, err
+	}
 	// 步骤1：根据数据源配置构建连接 DSN
 	dsn := m.buildDSN(dsConfig)
 
@@ -262,7 +265,7 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 
 	if err := db.PingContext(ctx); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("测试数据库连接失败: %w", err)
+		return nil, fmt.Errorf("测试数据库连接失败: %w", explainConnectionError(err))
 	}
 
 	// 步骤5：封装成 DataSourcePool 统一管理
@@ -288,6 +291,19 @@ func (m *DBPoolManager) createPool(dsConfig *config.DataSourceConfig) (*DataSour
 	return pool, nil
 }
 
+func explainConnectionError(err error) error {
+	var dmErr *dm.DmError
+	if errors.As(err, &dmErr) {
+		switch dmErr.ErrCode {
+		case dm.ECGO_USERNAME_TOO_LONG.ErrCode:
+			return fmt.Errorf("用户名按数据库字符集编码后超过当前驱动的 128 字节上限: %w", err)
+		case dm.ECGO_PASSWORD_TOO_LONG.ErrCode:
+			return fmt.Errorf("密码按数据库字符集编码后超过当前驱动的 128 字节上限: %w", err)
+		}
+	}
+	return err
+}
+
 // buildDSN 构建数据源连接字符串
 func (m *DBPoolManager) buildDSN(dsConfig *config.DataSourceConfig) string {
 	// 步骤1：拆分主机地址与附加查询参数
@@ -299,10 +315,10 @@ func (m *DBPoolManager) buildDSN(dsConfig *config.DataSourceConfig) string {
 		hostWithParams = hostWithParams[:idx]
 	}
 
-	// 步骤2：按照达梦驱动要求拼接基础 DSN
+	// 步骤2：当前达梦驱动原样读取凭据，不做 URL 解码，用户名和密码不能转义。
 	dsn := fmt.Sprintf("dm://%s:%s@%s",
-		url.QueryEscape(dsConfig.DbUser),
-		url.QueryEscape(dsConfig.DbPwd),
+		dsConfig.DbUser,
+		dsConfig.DbPwd,
 		hostWithParams)
 
 	// 步骤3：没有附加参数时，保留原有自动提交及超时默认值。
@@ -327,6 +343,7 @@ func (m *DBPoolManager) buildDSN(dsConfig *config.DataSourceConfig) string {
 		}
 	}
 	params = append(params, "appName="+config.ExporterAppName)
+	// 驱动用最后一个 ? 分隔参数；始终保留查询串，使凭据中的 ? 也能原样解析。
 	return dsn + "?" + strings.Join(params, "&")
 }
 

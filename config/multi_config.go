@@ -54,7 +54,8 @@ type DataSourceConfig struct {
 	// 数据库连接配置（从全局下沉）
 	DbHost          string `toml:"dbHost"`
 	DbUser          string `toml:"dbUser"`
-	DbPwd           string `toml:"dbPwd"` // 支持明文和ENC()加密格式
+	DbPwd           string `toml:"dbPwd"`     // 支持明文和ENC()加密格式
+	DbPwdMode       string `toml:"dbPwdMode"` // auto（默认）、plain 或 encrypted
 	QueryTimeout    int    `toml:"queryTimeout"`
 	MaxOpenConns    int    `toml:"maxOpenConns"`
 	ConnMaxLifetime int    `toml:"connMaxLifetime"`

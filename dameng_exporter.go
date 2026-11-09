@@ -29,6 +29,7 @@ func parseFlags() *config.CmdArgs {
 		DbHost:                  kingpin.Flag("dbHost", "Database Host (when specified, requires dbUser and dbPwd)").String(),
 		DbUser:                  kingpin.Flag("dbUser", "Database user (required with dbHost)").String(),
 		DbPwd:                   kingpin.Flag("dbPwd", "Database password (required with dbHost)").String(),
+		DbPwdMode:               kingpin.Flag("dbPwdMode", "Database password format: auto, plain or encrypted").Default("auto").Enum("auto", "plain", "encrypted"),
 		DbName:                  kingpin.Flag("dbName", "Name for the database (optional, defaults to generated name)").String(),
 		QueryTimeout:            kingpin.Flag("queryTimeout", "Timeout for queries (Second)").Default(fmt.Sprint(config.DefaultDataSourceConfig.QueryTimeout)).Int(),
 		MaxOpenConns:            kingpin.Flag("maxOpenConns", "Maximum open connections (number)").Default(fmt.Sprint(config.DefaultDataSourceConfig.MaxOpenConns)).Int(),
@@ -161,7 +162,10 @@ func mergeConfigParam(args *config.CmdArgs) {
 	multiConfig.Version = Version
 
 	// 合并命令行参数到配置
-	config.MergeMultiSourceConfigFromCmdArgs(multiConfig, args)
+	if err := config.MergeMultiSourceConfigFromCmdArgs(multiConfig, args); err != nil {
+		fmt.Printf("Error: Invalid configuration: %v\n", err)
+		os.Exit(1)
+	}
 
 	// 保存多数据源配置
 	config.GlobalMultiConfig = multiConfig

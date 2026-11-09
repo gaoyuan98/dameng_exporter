@@ -137,6 +137,7 @@ type rawDataSourceConfig struct {
 	DbHost                  string `toml:"dbHost"`
 	DbUser                  string `toml:"dbUser"`
 	DbPwd                   string `toml:"dbPwd"`
+	DbPwdMode               string `toml:"dbPwdMode"`
 	QueryTimeout            int    `toml:"queryTimeout"`
 	MaxOpenConns            int    `toml:"maxOpenConns"`
 	MaxIdleConns            int    `toml:"maxIdleConns"` // Deprecated
@@ -166,6 +167,7 @@ func (raw rawDataSourceConfig) toConfig() DataSourceConfig {
 	cfg.DbHost = raw.DbHost
 	cfg.DbUser = raw.DbUser
 	cfg.DbPwd = raw.DbPwd
+	cfg.DbPwdMode = raw.DbPwdMode
 	if raw.QueryTimeout != 0 {
 		cfg.QueryTimeout = raw.QueryTimeout
 	}
@@ -217,7 +219,7 @@ func (raw rawDataSourceConfig) toConfig() DataSourceConfig {
 
 // MergeMultiSourceConfigFromCmdArgs 合并命令行参数到多数据源配置
 // 统一的合并逻辑：命令行参数总是覆盖配置文件的值
-func MergeMultiSourceConfigFromCmdArgs(config *MultiSourceConfig, args *CmdArgs) {
+func MergeMultiSourceConfigFromCmdArgs(config *MultiSourceConfig, args *CmdArgs) error {
 	// 检查是否通过命令行指定了数据库连接三要素
 	hasDbHost := args.DbHost != nil && *args.DbHost != ""
 	hasDbUser := args.DbUser != nil && *args.DbUser != ""
@@ -225,6 +227,14 @@ func MergeMultiSourceConfigFromCmdArgs(config *MultiSourceConfig, args *CmdArgs)
 
 	// 如果命令行指定了完整的数据库连接参数，替换配置文件中的数据源
 	if hasDbHost && hasDbUser && hasDbPwd {
+		passwordMode := ""
+		if args.DbPwdMode != nil {
+			passwordMode = *args.DbPwdMode
+		}
+		password, err := DecodePassword(*args.DbPwd, passwordMode)
+		if err != nil {
+			return fmt.Errorf("invalid --dbPwd: %w (use --dbPwdMode=plain for a literal ENC(...) password)", err)
+		}
 		// 使用命令行参数创建新的数据源
 		config.DataSources = []DataSourceConfig{{
 			Name:                    fmt.Sprintf("cmdline_%s", strings.Split(*args.DbHost, ":")[0]),
@@ -232,7 +242,8 @@ func MergeMultiSourceConfigFromCmdArgs(config *MultiSourceConfig, args *CmdArgs)
 			Enabled:                 true,
 			DbHost:                  *args.DbHost,
 			DbUser:                  *args.DbUser,
-			DbPwd:                   *args.DbPwd,
+			DbPwd:                   password,
+			DbPwdMode:               "plain", // 内存中已解密，避免保存或复用配置时再次解密。
 			QueryTimeout:            *args.QueryTimeout,
 			MaxOpenConns:            *args.MaxOpenConns,
 			ConnMaxLifetime:         *args.ConnMaxLife,
@@ -249,11 +260,7 @@ func MergeMultiSourceConfigFromCmdArgs(config *MultiSourceConfig, args *CmdArgs)
 		}}
 	} else if hasDbHost || hasDbUser || hasDbPwd {
 		// 如果只指定了部分数据库连接参数，报错
-		fmt.Println("错误：数据库连接参数不完整！")
-		fmt.Println("必须同时指定：--dbHost、--dbUser、--dbPwd")
-		fmt.Println("\n示例：")
-		fmt.Println("  ./dameng_exporter --dbHost=127.0.0.1:5236 --dbUser=SYSDBA --dbPwd=SYSDBA")
-		os.Exit(1)
+		return fmt.Errorf("必须同时指定 --dbHost、--dbUser、--dbPwd")
 	}
 
 	// 如果是命令行模式（指定了数据库参数），使用命令行的所有参数
@@ -283,28 +290,27 @@ func MergeMultiSourceConfigFromCmdArgs(config *MultiSourceConfig, args *CmdArgs)
 	for i := range config.DataSources {
 		ds := &config.DataSources[i]
 		if ds.DbHost == "" || ds.DbUser == "" || ds.DbPwd == "" {
-			fmt.Printf("错误：数据源 %s 缺少必需的数据库连接参数\n", ds.Name)
-			fmt.Println("必需参数：dbHost、dbUser、dbPwd")
-			os.Exit(1)
+			return fmt.Errorf("数据源 %s 缺少 dbHost、dbUser 或 dbPwd", ds.Name)
 		}
 	}
+	return nil
 }
 
 // DecryptPasswords 解密配置中的密码
 func (msc *MultiSourceConfig) DecryptPasswords() error {
 	// 解密数据源密码
 	for i := range msc.DataSources {
-		if strings.HasPrefix(msc.DataSources[i].DbPwd, "ENC(") && strings.HasSuffix(msc.DataSources[i].DbPwd, ")") {
-			decPwd, err := DecryptPassword(msc.DataSources[i].DbPwd)
-			if err != nil {
-				return fmt.Errorf("failed to decrypt password for datasource %s: %w", msc.DataSources[i].Name, err)
-			}
-			msc.DataSources[i].DbPwd = decPwd
+		ds := &msc.DataSources[i]
+		password, err := DecodePassword(ds.DbPwd, ds.DbPwdMode)
+		if err != nil {
+			return fmt.Errorf("failed to decode password for datasource %s: %w (use dbPwdMode=plain for a literal ENC(...) password)", ds.Name, err)
 		}
+		ds.DbPwd = password
+		ds.DbPwdMode = "plain"
 	}
 
 	// 解密Basic Auth密码
-	if msc.EnableBasicAuth && strings.HasPrefix(msc.BasicAuthPassword, "ENC(") && strings.HasSuffix(msc.BasicAuthPassword, ")") {
+	if msc.EnableBasicAuth && hasEncryptedPasswordEnvelope(msc.BasicAuthPassword) {
 		decPwd, err := DecryptPassword(msc.BasicAuthPassword)
 		if err != nil {
 			return fmt.Errorf("failed to decrypt basic auth password: %w", err)

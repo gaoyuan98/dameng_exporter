@@ -16,10 +16,6 @@ const encryptedSuffix = ")"
 
 // EncryptPassword encrypts the password with a simple XOR and Base64 encoding
 func EncryptPassword(password string) string {
-	if strings.HasPrefix(password, encryptedPrefix) {
-		// The password is not encrypted
-		return password
-	}
 	saltedPwd := salt + password
 	encrypted := make([]byte, len(saltedPwd))
 	for i := 0; i < len(saltedPwd); i++ {
@@ -34,17 +30,50 @@ func DecryptPassword(encoded string) (string, error) {
 		// The password is not encrypted
 		return encoded, nil
 	}
+	if !strings.HasSuffix(encoded, encryptedSuffix) {
+		return "", fmt.Errorf("encrypted password must end with )")
+	}
 	encoded = strings.TrimPrefix(encoded, encryptedPrefix)
 	encoded = strings.TrimSuffix(encoded, encryptedSuffix)
 	decodedBytes, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("invalid encrypted password encoding")
+	}
+	if len(decodedBytes) < len(salt) {
+		return "", fmt.Errorf("encrypted password payload is too short")
 	}
 	decrypted := make([]byte, len(decodedBytes))
 	for i := 0; i < len(decodedBytes); i++ {
 		decrypted[i] = decodedBytes[i] ^ xorKey
 	}
+	if !strings.HasPrefix(string(decrypted), salt) {
+		return "", fmt.Errorf("invalid encrypted password marker")
+	}
 	return string(decrypted[len(salt):]), nil
+}
+
+func hasEncryptedPasswordEnvelope(value string) bool {
+	return strings.HasPrefix(value, encryptedPrefix) && strings.HasSuffix(value, encryptedSuffix)
+}
+
+// DecodePassword 保留旧配置的完整 ENC(...) 自动识别，plain 模式用于内容恰好为 ENC(...) 的明文。
+func DecodePassword(value, mode string) (string, error) {
+	switch mode {
+	case "plain":
+		return value, nil
+	case "", "auto":
+		if !hasEncryptedPasswordEnvelope(value) {
+			return value, nil
+		}
+		return DecryptPassword(value)
+	case "encrypted":
+		if !hasEncryptedPasswordEnvelope(value) {
+			return "", fmt.Errorf("encrypted password requires ENC(...) format")
+		}
+		return DecryptPassword(value)
+	default:
+		return "", fmt.Errorf("password mode must be auto, plain or encrypted")
+	}
 }
 
 // CheckAndEncryptConfigPasswords 检查并加密配置文件中的密码
@@ -70,12 +99,15 @@ func CheckAndEncryptConfigPasswords(multiConfig *MultiSourceConfig, configFile s
 	needUpdate := false
 	// 检查每个数据源的密码是否需要加密
 	for i := range rawConfig.DataSources {
-		// 如果密码不是以 ENC( 开头，说明需要加密
-		if rawConfig.DataSources[i].DbPwd != "" &&
-			!strings.HasPrefix(rawConfig.DataSources[i].DbPwd, "ENC(") {
+		ds := &rawConfig.DataSources[i]
+		if _, err := DecodePassword(ds.DbPwd, ds.DbPwdMode); err != nil {
+			return multiConfig, fmt.Errorf("invalid password for datasource %s: %w", ds.Name, err)
+		}
+		isEncrypted := ds.DbPwdMode != "plain" && hasEncryptedPasswordEnvelope(ds.DbPwd)
+		if ds.DbPwd != "" && !isEncrypted {
 			// 加密密码（EncryptPassword 返回 ENC(...) 格式）
-			encPwd := EncryptPassword(rawConfig.DataSources[i].DbPwd)
-			rawConfig.DataSources[i].DbPwd = encPwd
+			ds.DbPwd = EncryptPassword(ds.DbPwd)
+			ds.DbPwdMode = "encrypted"
 			needUpdate = true
 			fmt.Printf("Encrypted password for datasource: %s\n", rawConfig.DataSources[i].Name)
 		}
