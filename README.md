@@ -93,23 +93,23 @@ dameng_exporter/
 
 ```bash
 # Linux AMD64
-wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.6/dameng_exporter_v1.2.6_20261026_linux_amd64.tar.gz
-tar -xzf dameng_exporter_v1.2.6_20261026_linux_amd64.tar.gz
+wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.7/dameng_exporter_v1.2.7_20261109_linux_amd64.tar.gz
+tar -xzf dameng_exporter_v1.2.7_20261109_linux_amd64.tar.gz
 
 # Linux ARM64
-wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.6/dameng_exporter_v1.2.6_20261026_linux_arm64.tar.gz
-tar -xzf dameng_exporter_v1.2.6_20261026_linux_arm64.tar.gz
+wget https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.7/dameng_exporter_v1.2.7_20261109_linux_arm64.tar.gz
+tar -xzf dameng_exporter_v1.2.7_20261109_linux_arm64.tar.gz
 
 # Windows AMD64
-# 下载 dameng_exporter_v1.2.6_20261026_windows_amd64.tar.gz 并解压
+# 下载 dameng_exporter_v1.2.7_20261109_windows_amd64.tar.gz 并解压
 
 # macOS Apple Silicon（M 系列芯片）
-curl -fLO https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.6/dameng_exporter_v1.2.6_20261026_darwin_arm64.tar.gz
-tar -xzf dameng_exporter_v1.2.6_20261026_darwin_arm64.tar.gz
+curl -fLO https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.7/dameng_exporter_v1.2.7_20261109_darwin_arm64.tar.gz
+tar -xzf dameng_exporter_v1.2.7_20261109_darwin_arm64.tar.gz
 
 # macOS Intel
-curl -fLO https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.6/dameng_exporter_v1.2.6_20261026_darwin_amd64.tar.gz
-tar -xzf dameng_exporter_v1.2.6_20261026_darwin_amd64.tar.gz
+curl -fLO https://github.com/gaoyuan98/dameng_exporter/releases/download/v1.2.7/dameng_exporter_v1.2.7_20261109_darwin_amd64.tar.gz
+tar -xzf dameng_exporter_v1.2.7_20261109_darwin_amd64.tar.gz
 ```
 <!-- AUTO_UPDATING_DOWNLOADS_END -->
 
@@ -118,7 +118,7 @@ tar -xzf dameng_exporter_v1.2.6_20261026_darwin_amd64.tar.gz
 ```bash
 # 拉取镜像（自动匹配系统架构）
 docker pull gaoyuan98/dameng_exporter:latest  # 拉取最新版本
-# docker pull gaoyuan98/dameng_exporter:v1.2.0  # 拉取指定版本
+# docker pull gaoyuan98/dameng_exporter:v1.2.7_20261109  # 拉取指定版本
 
 # 如果遇到拉取失败，尝试以下方法：
 # 1. 使用完整路径
@@ -154,17 +154,6 @@ go build -o dameng_exporter .
 # macOS / Linux 一键构建全部发行包
 bash ./scripts/build_all_versions.sh
 ```
-
-### 手动发布镜像和安装包
-
-在 GitHub Actions 中运行「手动发布多架构镜像和安装包」（`manual-docker-release.yml`）：
-
-- Docker 任务发布 Linux amd64/arm64 镜像；`release_version` 仅覆盖镜像标签，留空时读取源码中的 `Version`。
-- `publish_release` 默认开启，独立构建 Linux amd64/arm64、Windows amd64、macOS Intel/Apple Silicon 共 5 个安装包，上传到 GitHub Release，并在本次运行的 Artifacts 中保留 14 天。关闭此选项可只发布 Docker 镜像。
-- 安装包名保留完整源码版本（例如 `v1.2.6_20261026`），Release 标签去掉日期后缀（例如 `v1.2.6`）。标签不存在时使用本次运行的提交创建 Release；标签已存在时从该标签构建，只补充缺失的附件，保留原附件和发布说明。
-- 发布新代码前请更新 `dameng_exporter.go` 中的版本号（例如升级到 `v1.2.7_20261027`）；仅修改日期或填写 `release_version` 不会把新代码发布到已有 Release。已有标签中的完整版本与当前源码不一致时，安装包任务会报错。
-
-安装包任务使用工作流自带的 `GITHUB_TOKEN`，单独声明 `contents: write` 权限；Docker 仍使用 `DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN`。两个任务独立执行，任一任务失败不会阻止另一个任务，但本次工作流的整体状态会显示失败。安装包上传到 Release 失败时，已保存的 Artifacts 仍可下载。
 
 ## 📈 监控效果展示
 
@@ -526,6 +515,17 @@ scrape_configs:
 ---
 
 ## 🔄 更新记录
+## v1.2.7（2026-11-09）
+
+1. fix: 修复数据库用户名、密码中的 `@`、`!`、`+`、`%`、空格和中文等字符被 URL 转义后导致连接失败的问题，按原文传递给达梦驱动。
+2. feat: 新增配置项 `dbPwdMode` 和命令行参数 `--dbPwdMode`，支持 `auto`、`plain`、`encrypted`，统一配置文件与命令行的数据库密码解码规则。
+3. fix: 加强 `ENC(...)` 密文格式、长度和内部标记校验；支持将内容恰好为 `ENC(...)` 的明文密码加密保存，读取时只解密一层。
+4. fix: 增加单个数据源的连接参数校验，明确用户名冒号、主机参数覆盖凭据和驱动 128 字节上限等限制，校验失败时记录原因并继续初始化其他数据源。
+5. fix: 会话状态统计排除 Exporter 自身连接，查询成功且没有对应会话时输出 `ACTIVE`、`IDLE` 零值；查询或读取失败时不再输出不完整结果。
+6. ci: 手动发布工作流支持同时发布 Linux amd64/arm64、Windows amd64、macOS Intel/Apple Silicon 安装包，并保留已有 Release 的附件和说明。
+
+升级提示：真实密码若恰好为 `ENC(...)`，请设置 `dbPwdMode = "plain"`；原先在 `dbHost` 查询参数中配置的 `user`、`password` 需迁移至 `dbUser`、`dbPwd`。特殊字符输入方式及字符集限制详见[参数配置指南](docs/documents/参数配置指南.md#复杂密码与输入格式)。
+
 ## v1.2.6（已发布，2026-10-26）
 
 1. fix: 隔离 HTTP 路由，关闭 `/debug/vars` 信息泄露，未注册路径返回 404；保留监听地址、指标路径和 Basic Auth。
