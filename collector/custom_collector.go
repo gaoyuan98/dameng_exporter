@@ -181,6 +181,9 @@ func queryDynamicDatabase(ctx context.Context, db *sql.DB, query string) ([]map[
 
 		results = append(results, row)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("读取查询结果出错: %w", err)
+	}
 
 	return results, nil
 }
