@@ -301,3 +301,48 @@ func TestUnavailableDatasourceAppearsWithoutRunningCollectors(t *testing.T) {
 		t.Fatalf("unavailable sources: %v", sources)
 	}
 }
+
+func TestIndependentRegistriesRegisterAndGatherConcurrently(t *testing.T) {
+	setupCollectionLogTest(t)
+	cfg := config.DefaultMultiSourceConfig
+	cfg.DataSources = []config.DataSourceConfig{{Name: "offline", Enabled: true, RegisterDatabaseMetrics: true}}
+	config.Global.Init(&cfg)
+	config.GlobalMultiConfig = &cfg
+	manager := db.NewDBPoolManager(&cfg)
+	t.Cleanup(manager.Close)
+	registries := []*prometheus.Registry{prometheus.NewRegistry(), prometheus.NewRegistry()}
+	type response struct {
+		families []*dto.MetricFamily
+		err      error
+	}
+	responses := make(chan response, len(registries))
+	for _, reg := range registries {
+		go func(reg *prometheus.Registry) {
+			RegisterMultiSourceCollectors(reg, manager)
+			families, err := reg.Gather()
+			responses <- response{families, err}
+		}(reg)
+	}
+	for range registries {
+		r := <-responses
+		if r.err != nil {
+			t.Fatal(r.err)
+		}
+		want := map[string]bool{dameng_exporter_build_info: true, dmdb_up: true, dmdbms_node_type_info: true}
+		for _, family := range r.families {
+			if !want[family.GetName()] || len(family.Metric) != 1 {
+				t.Fatalf("registry mixed or duplicated collectors: %v", family)
+			}
+			delete(want, family.GetName())
+		}
+		if len(want) != 0 {
+			t.Fatalf("registry omitted collectors: %v", want)
+		}
+	}
+	defer func() {
+		if _, ok := recover().(prometheus.AlreadyRegisteredError); !ok {
+			t.Fatal("duplicate registration no longer reports AlreadyRegisteredError")
+		}
+	}()
+	RegisterMultiSourceCollectors(registries[0], manager)
+}

@@ -227,7 +227,7 @@ GRANT SELECT ON V$ASMGROUP TO MONITOR_USER;
 
 > 📖 **配置参数详解**：查看 [参数配置指南](https://github.com/gaoyuan98/dameng_exporter/blob/master/docs/documents/参数配置指南.md) 了解所有参数的详细说明和使用示例。
 
-采集变慢或面板缺少指标时，可按[采集日志排查指南](docs/documents/采集日志排查指南.md)查看每轮总耗时、最慢三项、全部零样本采集器及关联错误。全局 `collectorSlowThresholdMs` 默认 5000ms，设为 0 可关闭慢提示；执行状态与业务结果分开记录，首批四项采集器支持明确业务结果。日志字段升级及验证情况见[采集诊断实施验收记录](docs/documents/采集诊断实施验收记录.md)。
+采集变慢或面板缺少指标时，可按[采集日志排查指南](docs/documents/采集日志排查指南.md)查看每轮总耗时、最慢三项、零样本计数与有限明细及关联错误。默认零样本名单最多展示 20 项，省略数量单独记录，启用 DEBUG 可查看全量逐项明细。全局 `collectorSlowThresholdMs` 默认 5000ms，设为 0 可关闭慢提示；执行状态与业务结果分开记录，首批四项采集器支持明确业务结果。后续业务修复与验证情况见[问题修复与收敛实施方案](docs/documents/采集诊断问题修复与收敛实施方案.md)。
 
 1. 创建配置文件 `dameng_exporter.toml`：
 

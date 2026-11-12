@@ -13,13 +13,9 @@ import (
 
 // RegisterMultiSourceCollectors 注册多数据源收集器
 func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBPoolManager) {
-	registerMux.Lock()
-	defer registerMux.Unlock()
-
 	logger.Logger.Debugf("Registering multi-source collectors, OS: %v", utils.GetOS())
 
-	// 清空现有收集器
-	collectors = []prometheus.Collector{}
+	collectors := []prometheus.Collector{}
 
 	// 系统级收集器（不依赖数据库）
 	collectors = append(collectors, NewBuildInfoCollector())
@@ -112,7 +108,7 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 			collectors = append(collectors, adapter)
 		}
 	}
-	reg.MustRegister(&scrapeCollector{children: append([]prometheus.Collector(nil), collectors...), poolManager: poolManager})
+	reg.MustRegister(&scrapeCollector{children: collectors, poolManager: poolManager})
 
 	logger.Logger.Infof("Registered %d collectors in multi-source mode", len(collectors))
 }

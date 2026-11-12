@@ -324,7 +324,7 @@ func TestHostProcessErrorsStayWithDatasource(t *testing.T) {
 	}
 }
 
-func TestShortSummaryKeepsEveryZeroSampleAndStableTopThree(t *testing.T) {
+func TestShortSummaryKeepsZeroSamplesWithinLimitAndStableTopThree(t *testing.T) {
 	logs := setupCollectionLogTest(t)
 	round := newCollectionRound()
 	// The fourth run is fast, silent, unclassified and absent from top three.

@@ -2,13 +2,6 @@ package collector
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	"sync"
-)
-
-var (
-	collectors  []prometheus.Collector
-	registerMux sync.Mutex
-	//timeout     = 5 * time.Second
 )
 
 const (

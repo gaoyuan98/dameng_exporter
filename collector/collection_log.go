@@ -193,6 +193,9 @@ type zeroSampleCollector struct {
 	Outcome    OutcomeState `json:"outcome"`
 	Reason     string       `json:"reason"`
 }
+
+const zeroSampleCollectorLimit = 20
+
 type slowestCollector struct {
 	Scope        string       `json:"scope"`
 	Datasource   string       `json:"datasource"`
@@ -269,10 +272,15 @@ func (r *collectionRound) finish(unavailable []string) {
 		unavailable = append(unavailable, name)
 	}
 	sort.Strings(unavailable)
+	zeroCount := len(zero)
+	if len(zero) > zeroSampleCollectorLimit {
+		zero = zero[:zeroSampleCollectorLimit]
+	}
 	fields := []interface{}{"phase", "collection", "collection_duration_ms", time.Since(r.start).Milliseconds(),
 		"recorded_runs", len(results), "samples", samples, "known_failed_runs", failed, "unknown_runs", unknown,
-		"observed_error_runs", errorRuns, "skipped_runs", skipped, "slow_runs", slow, "zero_sample_runs", len(zero),
-		"zero_sample_collectors", zero, "unavailable_datasources", unavailable, "slowest", slowest}
+		"observed_error_runs", errorRuns, "skipped_runs", skipped, "slow_runs", slow, "zero_sample_runs", zeroCount,
+		"zero_sample_collectors", zero, "zero_sample_collectors_omitted", zeroCount - len(zero),
+		"unavailable_datasources", unavailable, "slowest", slowest}
 	if issues {
 		r.log.Warnw("scrape_finished", fields...)
 	} else {
