@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -23,6 +22,7 @@ type InstanceLogInfo struct {
 
 // 定义收集器结构体
 type DbInstanceLogInfoCollector struct {
+	collectorLog
 	db                  *sql.DB
 	instanceLogInfoDesc *prometheus.Desc
 	dataSource          string // 数据源名称
@@ -51,7 +51,7 @@ func (c *DbInstanceLogInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -60,7 +60,7 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryInstanceErrorLogSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -70,14 +70,14 @@ func (c *DbInstanceLogInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		var info InstanceLogInfo
 		//LOG_TIME,PID,LEVEL$,TXT
 		if err := rows.Scan(&info.LogTime, &info.Pid, &info.Level, &info.Txt); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		instanceLogInfos = append(instanceLogInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 
 	// 对instanceLogInfos进行去重处理

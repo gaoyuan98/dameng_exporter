@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -16,6 +15,7 @@ import (
 
 // 定义收集器结构体
 type DbVersionCollector struct {
+	collectorLog
 	db              *sql.DB
 	versionInfoDesc *prometheus.Desc
 	dataSource      string // 数据源名称
@@ -52,7 +52,7 @@ func (c *DbVersionCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -64,7 +64,7 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 		// 缓存值格式: "idCode|buildType|innerVer"
 		parts := strings.Split(cachedValue, "|")
 		if len(parts) == 3 {
-			logger.Logger.Debugf("[%s] Using cached database version info", c.dataSource)
+			c.log().Debugf("[%s] Using cached database version info", c.dataSource)
 			ch <- prometheus.MustNewConstMetric(
 				c.versionInfoDesc,
 				prometheus.GaugeValue,
@@ -83,18 +83,18 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 	// 尝试使用V2版本获取版本信息
 	versionInfo, err := c.getDbVersionV2(ctx, c.db)
 	if err != nil {
-		logger.Logger.Warn("V2 version query failed, falling back to V1 version", zap.Error(err))
+		c.log().Desugar().Warn("V2 version query failed, falling back to V1 version", zap.Error(err))
 		// 如果V2版本失败，使用V1版本
 		dbVersion, err := c.getDbVersionV1(ctx, c.db)
 		if err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] exec getDbVersionV1 func error", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] exec getDbVersionV1 func error", c.dataSource), zap.Error(err))
 			return
 		}
 
 		// 缓存V1版本信息
 		cacheValue := fmt.Sprintf("%s||", dbVersion)
 		config.SetCache(cacheKey, cacheValue, time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
-		logger.Logger.Debugf("[%s] Database version info (V1) cached", c.dataSource)
+		c.log().Debugf("[%s] Database version info (V1) cached", c.dataSource)
 
 		// 使用V1版本时，新增标签填充空值
 		ch <- prometheus.MustNewConstMetric(
@@ -114,7 +114,7 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 		utils.NullStringToString(versionInfo.buildType),
 		utils.NullStringToString(versionInfo.innerVer))
 	config.SetCache(cacheKey, cacheValue, time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
-	logger.Logger.Debugf("[%s] Database version info (V2) cached", c.dataSource)
+	c.log().Debugf("[%s] Database version info (V2) cached", c.dataSource)
 
 	// 发送V2版本信息到Prometheus
 	ch <- prometheus.MustNewConstMetric(
@@ -137,7 +137,7 @@ func (c *DbVersionCollector) getDbVersionV2(ctx context.Context, db *sql.DB) (*D
 		return nil, err
 	}
 
-	logger.Logger.Debugf("[%s] Check Database version Info V2 Success, version info: %+v", c.dataSource, versionInfo)
+	c.log().Debugf("[%s] Check Database version Info V2 Success, version info: %+v", c.dataSource, versionInfo)
 	return &versionInfo, nil
 }
 
@@ -176,6 +176,6 @@ func (c *DbVersionCollector) getDbVersionV1(ctx context.Context, db *sql.DB) (st
 		dbVersion = strings.TrimSpace(dbVersion)
 	}
 
-	logger.Logger.Debugf("[%s] Check Database version Info V1 Success, version value %s", c.dataSource, dbVersion)
+	c.log().Debugf("[%s] Check Database version Info V1 Success, version value %s", c.dataSource, dbVersion)
 	return dbVersion, nil
 }

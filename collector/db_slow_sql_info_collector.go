@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 )
 
 type SessionInfoCollector struct {
+	collectorLog
 	db               *sql.DB
 	slowSQLInfoDesc  *prometheus.Desc
 	dataSource       string // 数据源名称
@@ -63,11 +63,11 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	if dataSourceConfig == nil || !dataSourceConfig.CheckSlowSQL {
-		logger.Logger.Debugf("[%s] CheckSlowSQL is false, skip collecting slow SQL info", c.dataSource)
+		c.log().Debugf("[%s] CheckSlowSQL is false, skip collecting slow SQL info", c.dataSource)
 		return
 	}
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -76,7 +76,7 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, dataSourceConfig.SlowSqlTime, dataSourceConfig.SlowSqlMaxRows)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -85,14 +85,14 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info SessionInfo
 		if err := rows.Scan(&info.ExecTime, &info.SlowSQL, &info.SessID, &info.CurrSch, &info.ThrdID, &info.LastRecvTime, &info.ConnIP); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		sessionInfos = append(sessionInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 	for _, info := range sessionInfos {

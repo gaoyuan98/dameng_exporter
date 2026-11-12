@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -20,6 +19,7 @@ type DbLicenseInfo struct {
 
 // 定义收集器结构体
 type DbLicenseCollector struct {
+	collectorLog
 	db              *sql.DB
 	licenseDateDesc *prometheus.Desc
 	dataSource      string // 数据源名称
@@ -48,7 +48,7 @@ func (c *DbLicenseCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -57,7 +57,7 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDbGrantInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -66,13 +66,13 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info DbLicenseInfo
 		if err := rows.Scan(&info.ExpiredDate); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		licenseInfos = append(licenseInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 
@@ -83,17 +83,17 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 		if expiredDateStr != "" {
 			expiredDate, err := time.Parse("20060102", expiredDateStr)
 			if err != nil {
-				logger.Logger.Error(fmt.Sprintf("[%s] Error parsing date", c.dataSource), zap.Error(err))
+				c.log().Desugar().Error(fmt.Sprintf("[%s] Error parsing date", c.dataSource), zap.Error(err))
 				continue
 			}
 			betweenDay := expiredDate.Sub(time.Now()).Hours() / 24
 			returnDateStr = fmt.Sprintf("%.0f", betweenDay)
 			licenseStatus = returnDateStr
-			logger.Logger.Infof("[%s] Check Database License Date Info Success, betweenDay is %s day", c.dataSource, returnDateStr)
+			c.log().Debugf("[%s] Check Database License Date Info Success, betweenDay is %s day", c.dataSource, returnDateStr)
 		} else {
 			licenseStatus = "无限制"
 			returnDateStr = "-1"
-			logger.Logger.Debugf("[%s] Check Database License Date Info Success, Expired Unlimited", c.dataSource)
+			c.log().Debugf("[%s] Check Database License Date Info Success, Expired Unlimited", c.dataSource)
 		}
 
 		ch <- prometheus.MustNewConstMetric(

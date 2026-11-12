@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"sync"
@@ -21,6 +20,7 @@ type DbSystemEventWaitInfo struct {
 
 // DbSystemEventWaitCollector 负责查询 V$SYSTEM_EVENT 并将事件名称及等待次数转换为 Prometheus 指标。
 type DbSystemEventWaitCollector struct {
+	collectorLog
 	db             *sql.DB
 	eventWaitsDesc *prometheus.Desc
 	dataSource     string
@@ -61,7 +61,7 @@ func (c *DbSystemEventWaitCollector) Describe(ch chan<- *prometheus.Desc) {
 // Collect 执行查询并逐行生成指标，包含数据库连接健康检查、查询超时控制以及错误处理。
 func (c *DbSystemEventWaitCollector) Collect(ch chan<- prometheus.Metric) {
 	// 1. 数据库连接健康检查，异常时直接跳过采集。
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -82,7 +82,7 @@ func (c *DbSystemEventWaitCollector) Collect(ch chan<- prometheus.Metric) {
 	// 5. 执行核心查询并将结果转换为指标。
 	rows, err := c.db.QueryContext(ctx, config.QuerySystemEventWaitsSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -91,9 +91,8 @@ func (c *DbSystemEventWaitCollector) Collect(ch chan<- prometheus.Metric) {
 		var info DbSystemEventWaitInfo
 		// 5.1 扫描单行记录，保留 NULL 状态以便统一转换。
 		if err := rows.Scan(&info.Event, &info.TotalWaits); err != nil {
-			logger.Logger.Error("Error scanning system event waits row",
-				zap.Error(err),
-				zap.String("data_source", c.dataSource))
+			c.log().Desugar().Error("Error scanning system event waits row",
+				zap.Error(err))
 			continue
 		}
 
@@ -113,9 +112,8 @@ func (c *DbSystemEventWaitCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error iterating system event waits rows",
-			zap.Error(err),
-			zap.String("data_source", c.dataSource))
+		c.log().Desugar().Error("Error iterating system event waits rows",
+			zap.Error(err))
 	}
 }
 
@@ -125,12 +123,12 @@ func (c *DbSystemEventWaitCollector) checkSystemEventViewExists(ctx context.Cont
 		// 通过 V$DYNAMIC_TABLES 判断目标视图是否被注册，避免访问不存在视图导致的 SQL 错误。
 		var count int
 		if err := c.db.QueryRowContext(ctx, config.QuerySystemEventViewExistsSqlStr).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] Failed to check V$SYSTEM_EVENT existence: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to check V$SYSTEM_EVENT existence: %v", c.dataSource, err)
 			c.viewExists = false
 			return
 		}
 		c.viewExists = count > 0
-		logger.Logger.Debugf("[%s] V$SYSTEM_EVENT exists: %v", c.dataSource, c.viewExists)
+		c.log().Debugf("[%s] V$SYSTEM_EVENT exists: %v", c.dataSource, c.viewExists)
 	})
 	return c.viewExists
 }
@@ -141,12 +139,12 @@ func (c *DbSystemEventWaitCollector) checkSystemEventColumnsExist(ctx context.Co
 		// 查询系统列元数据，确认 EVENT 与 TOTAL_WAITS 是否都可用。
 		var count int
 		if err := c.db.QueryRowContext(ctx, config.QuerySystemEventColumnsExistSqlStr).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] Failed to check V$SYSTEM_EVENT columns: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to check V$SYSTEM_EVENT columns: %v", c.dataSource, err)
 			c.columnsExist = false
 			return
 		}
 		c.columnsExist = count >= 2
-		logger.Logger.Debugf("[%s] V$SYSTEM_EVENT columns valid: %v", c.dataSource, c.columnsExist)
+		c.log().Debugf("[%s] V$SYSTEM_EVENT columns valid: %v", c.dataSource, c.columnsExist)
 	})
 	return c.columnsExist
 }

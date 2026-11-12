@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -20,6 +19,7 @@ type BufferPoolInfo struct {
 
 // 定义收集器结构体
 type DbBufferPoolInfoCollector struct {
+	collectorLog
 	db                 *sql.DB
 	bufferPoolInfoDesc *prometheus.Desc
 	dataSource         string // 数据源名称
@@ -48,7 +48,7 @@ func (c *DbBufferPoolInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbBufferPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -57,7 +57,7 @@ func (c *DbBufferPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryBufferPoolHitRateInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -66,14 +66,14 @@ func (c *DbBufferPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info BufferPoolInfo
 		if err := rows.Scan(&info.bufferName, &info.hitRate); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		bufferPoolInfos = append(bufferPoolInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 
 	// 发送数据到 Prometheus

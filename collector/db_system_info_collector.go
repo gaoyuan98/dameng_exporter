@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"time"
@@ -14,6 +13,7 @@ import (
 
 // DBSystemInfoCollector 数据库系统信息采集器结构体
 type DBSystemInfoCollector struct {
+	collectorLog
 	db                 *sql.DB
 	systemBaseInfoDesc *prometheus.Desc // 系统基础信息（始终为1，包含所有信息在标签中）
 	cpuInfoDesc        *prometheus.Desc // CPU核心数信息
@@ -68,9 +68,13 @@ func (c *DBSystemInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect 采集指标
 func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
+	c.CollectWithResult(ch)
+}
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
-		return
+func (c *DBSystemInfoCollector) CollectWithResult(ch chan<- prometheus.Metric) CollectorOutcome {
+
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
+		return databaseOutcome(OutcomeFailed, "datasource_unavailable")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
@@ -79,27 +83,27 @@ func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	// 使用统一的SQL查询获取系统信息
 	rows, err := c.db.QueryContext(ctx, config.QuerySystemInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
-		return
+		outcome := queryFailure(ctx, err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		return outcome
 	}
 	defer rows.Close()
 
 	var info SystemInfo
 
-	if rows.Next() {
+	hasRow := rows.Next()
+	if hasRow {
 		if err := rows.Scan(&info.NCpu, &info.TotalPhySize, &info.TotalVirSize, &info.TotalDiskSize); err != nil {
-			logger.Logger.Error("Error scanning system info row",
-				zap.Error(err),
-				zap.String("data_source", c.dataSource))
-			return
+			c.log().Desugar().Error("Error scanning system info row",
+				zap.Error(err))
+			return databaseOutcome(OutcomeFailed, "scan_error")
 		}
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with system info rows",
-			zap.Error(err),
-			zap.String("data_source", c.dataSource))
-		return
+		c.log().Desugar().Error("Error with system info rows",
+			zap.Error(err))
+		return databaseOutcome(OutcomeFailed, "rows_error")
 	}
 
 	// 1. 发送数据库系统基础信息指标（始终为1，系统信息在标签中）
@@ -148,4 +152,9 @@ func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			utils.NullFloat64ToFloat64(info.TotalPhySize),
 		)
 	}
+	if !hasRow {
+		return databaseOutcome(OutcomeUnknown, "no_row_placeholder")
+	}
+	return databaseOutcome(OutcomeSuccess, "")
+
 }

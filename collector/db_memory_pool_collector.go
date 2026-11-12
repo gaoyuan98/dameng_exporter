@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -13,6 +12,7 @@ import (
 )
 
 type DbMemoryPoolInfoCollector struct {
+	collectorLog
 	db            *sql.DB
 	totalPoolDesc *prometheus.Desc
 	currPoolDesc  *prometheus.Desc
@@ -59,7 +59,7 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	//保存全局结果对象
 	var memoryPoolInfos []MemoryPoolInfo
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -68,7 +68,7 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryMemoryPoolInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -76,13 +76,13 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info MemoryPoolInfo
 		if err := rows.Scan(&info.ZoneType, &info.CurrVal, &info.ResVal, &info.TotalVal); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		memoryPoolInfos = append(memoryPoolInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 	for _, info := range memoryPoolInfos {
@@ -90,6 +90,6 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(c.currPoolDesc, prometheus.GaugeValue, utils.NullFloat64ToFloat64(info.CurrVal), utils.NullStringToString(info.ZoneType))
 	}
 
-	//	logger.Logger.Infof("MemoryPoolInfo exec finish")
+	//	c.log().Infof("MemoryPoolInfo exec finish")
 
 }

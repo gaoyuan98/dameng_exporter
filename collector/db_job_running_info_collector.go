@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 )
 
 type DbJobRunningInfoCollector struct {
+	collectorLog
 	db              *sql.DB
 	jobErrorNumDesc *prometheus.Desc
 	dataSource      string // 数据源名称
@@ -47,7 +47,7 @@ func (c *DbJobRunningInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -58,10 +58,10 @@ func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		// 检查报错信息中是否包含 "v$dmmonitor" 字符串
 		if strings.Contains(err.Error(), "SYSJOB") {
-			logger.Logger.Warnf("[%s] 数据库未开启定时任务功能，无法检查错误任务异常数量。请执行sql语句call SP_INIT_JOB_SYS(1); 开启定时作业的功能。（该报错不影响其他指标采集数据,也可忽略）", c.dataSource)
+			c.log().Warnf("[%s] 数据库未开启定时任务功能，无法检查错误任务异常数量。请执行sql语句call SP_INIT_JOB_SYS(1); 开启定时作业的功能。（该报错不影响其他指标采集数据,也可忽略）", c.dataSource)
 			return
 		}
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -70,13 +70,13 @@ func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	var errorCountInfo ErrorCountInfo
 	if rows.Next() {
 		if err := rows.Scan(&errorCountInfo.ErrorNum); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			return
 		}
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 

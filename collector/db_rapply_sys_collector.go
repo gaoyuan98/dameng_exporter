@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -20,6 +19,7 @@ type RapplySysInfo struct {
 
 // 定义收集器结构体
 type DbRapplySysCollector struct {
+	collectorLog
 	db              *sql.DB
 	taskMemUsedDesc *prometheus.Desc
 	taskNumDesc     *prometheus.Desc
@@ -56,7 +56,7 @@ func (c *DbRapplySysCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -66,7 +66,7 @@ func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 	// 执行查询
 	rows, err := c.db.QueryContext(ctx, config.QueryStandbyInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -75,13 +75,13 @@ func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info RapplySysInfo
 		if err := rows.Scan(&info.TaskMemUsed, &info.TaskNum); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		rapplySysInfos = append(rapplySysInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 

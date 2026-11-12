@@ -106,19 +106,13 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 		logger.Logger.Debug("DMHS metrics requested but not yet implemented")
 	}
 
-	// 注册所有收集器
-	for _, collector := range collectors {
-		if collector != nil {
-			reg.MustRegister(collector)
+	// Include custom collection in the same round as built-in collectors.
+	if needCustomMetrics {
+		if adapter := buildCustomMetricsAdapter(poolManager); adapter != nil {
+			collectors = append(collectors, adapter)
 		}
 	}
-
-	// 自定义指标处理 - 使用新的多数据源独立配置方式
-	// 每个数据源可以有自己独立的自定义指标配置文件
-	if needCustomMetrics {
-		// 使用专门的自定义指标适配器，支持每个数据源独立配置
-		RegisterCustomMetricsForMultiSource(reg, poolManager)
-	}
+	reg.MustRegister(&scrapeCollector{children: append([]prometheus.Collector(nil), collectors...), poolManager: poolManager})
 
 	logger.Logger.Infof("Registered %d collectors in multi-source mode", len(collectors))
 }

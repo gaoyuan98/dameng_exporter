@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -16,6 +15,7 @@ import (
 )
 
 type DBInstanceRunningInfoCollector struct {
+	collectorLog
 	db                  *sql.DB
 	startTimeDesc       *prometheus.Desc
 	statusDesc          *prometheus.Desc
@@ -109,7 +109,7 @@ func (c *DBInstanceRunningInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -118,7 +118,7 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryDBInstanceRunningInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -128,7 +128,7 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	if rows.Next() {
 		var startTimeStr, statusStr, modeStr, trxNumStr, deadlockNumStr, threadNumStr string
 		if err := rows.Scan(&startTimeStr, &statusStr, &modeStr, &trxNumStr, &deadlockNumStr, &threadNumStr, &dbStartDay); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			return
 		}
 		status, _ = strconv.ParseFloat(statusStr, 64)
@@ -140,19 +140,19 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		// 加载东八区（北京时间）时区
 		loc, err := time.LoadLocation("Asia/Shanghai")
 		if err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error loading time location", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error loading time location", c.dataSource), zap.Error(err))
 		}
 		// 解析时间字符串为 time.Time 类型，并指定东八区时区
 		startTime, err := time.ParseInLocation("2006-01-02 15:04:05", startTimeStr, loc)
 		if err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error parsing start time", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error parsing start time", c.dataSource), zap.Error(err))
 			// 如果转换失败则赋予默认时间值（此处使用东八区）
 			startTime = time.Date(2006, time.January, 1, 0, 0, 0, 0, loc)
 		}
 		/*		// 解析时间戳字符串为 time.Time 类型
 				startTime, err := time.Parse("2006-01-02 15:04:05", startTimeStr)
 				if err != nil {
-					logger.Logger.Error(fmt.Sprintf("[%s] Error parsing start time", c.dataSource), zap.Error(err))
+					c.log().Desugar().Error(fmt.Sprintf("[%s] Error parsing start time", c.dataSource), zap.Error(err))
 					// 如果转换失败则赋予默认时间值
 					var defaultTime = time.Date(2006, time.January, 1, 0, 0, 0, 0, loc)
 					startTime = defaultTime
@@ -176,7 +176,7 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	//注册指标
 	c.collectMetrics(ch, data)
-	//	logger.Logger.Debugf("Collector DBInstanceRunningInfoCollector success,status: %v", status)
+	//	c.log().Debugf("Collector DBInstanceRunningInfoCollector success,status: %v", status)
 
 }
 

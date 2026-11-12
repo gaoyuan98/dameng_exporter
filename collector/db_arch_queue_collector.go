@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -22,6 +21,7 @@ type DbArchQueueInfo struct {
 
 // DbArchQueueCollector 归档队列等待指标采集器
 type DbArchQueueCollector struct {
+	collectorLog
 	db                    *sql.DB
 	archQueueWaitingDesc  *prometheus.Desc
 	dataSource            string
@@ -52,7 +52,7 @@ func (c *DbArchQueueCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbArchQueueCollector) Collect(ch chan<- prometheus.Metric) {
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -65,7 +65,7 @@ func (c *DbArchQueueCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryArchQueueWaitingSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -73,7 +73,7 @@ func (c *DbArchQueueCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info DbArchQueueInfo
 		if err := rows.Scan(&info.archType, &info.waiting); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning V$ARCH_QUEUE row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning V$ARCH_QUEUE row", c.dataSource), zap.Error(err))
 			continue
 		}
 
@@ -90,7 +90,7 @@ func (c *DbArchQueueCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error iterating V$ARCH_QUEUE rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error iterating V$ARCH_QUEUE rows", c.dataSource), zap.Error(err))
 	}
 }
 
@@ -98,16 +98,16 @@ func (c *DbArchQueueCollector) checkWaitingFieldExists(ctx context.Context) bool
 	c.waitingFieldCheckOnce.Do(func() {
 		var count int
 		if err := c.db.QueryRowContext(ctx, config.QueryArchQueueWaitingFieldExists).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] Failed to check V$ARCH_QUEUE WAITING field: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to check V$ARCH_QUEUE WAITING field: %v", c.dataSource, err)
 			c.waitingFieldExists = false
 			return
 		}
 
 		c.waitingFieldExists = count > 0
 		if c.waitingFieldExists {
-			logger.Logger.Debugf("[%s] V$ARCH_QUEUE WAITING field exists", c.dataSource)
+			c.log().Debugf("[%s] V$ARCH_QUEUE WAITING field exists", c.dataSource)
 		} else {
-			logger.Logger.Infof("[%s] V$ARCH_QUEUE WAITING field not found, skip waiting metric", c.dataSource)
+			c.log().Debugf("[%s] V$ARCH_QUEUE WAITING field not found, skip waiting metric", c.dataSource)
 		}
 	})
 

@@ -230,3 +230,13 @@ func (g *GlobalSettings) GetBigKeyDataCacheTime() int {
 	ds := g.GetDefaultDataSource()
 	return ds.BigKeyDataCacheTime
 }
+
+// GetCollectorSlowThresholdMs preserves an explicit zero (disabled).
+func (g *GlobalSettings) GetCollectorSlowThresholdMs() int {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	if g.config == nil {
+		return DefaultMultiSourceConfig.CollectorSlowThresholdMs
+	}
+	return g.config.CollectorSlowThresholdMs
+}

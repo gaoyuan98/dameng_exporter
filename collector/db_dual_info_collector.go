@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -18,6 +17,7 @@ const (
 
 // 定义收集器结构体
 type DbDualInfoCollector struct {
+	collectorLog
 	db           *sql.DB
 	dualInfoDesc *prometheus.Desc
 	dataSource   string // 数据源名称
@@ -46,7 +46,7 @@ func (c *DbDualInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbDualInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -68,14 +68,14 @@ func (c *DbDualInfoCollector) QueryDualInfo(ctx context.Context) float64 {
 	var dualValue float64
 	rows, err := c.db.QueryContext(ctx, config.QueryDualInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return DB_DUAL_FAILUR
 	}
 	defer rows.Close()
 	rows.Next()
 	err = rows.Scan(&dualValue)
 	if err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error scanning dual value", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning dual value", c.dataSource), zap.Error(err))
 		return DB_DUAL_FAILUR
 	}
 

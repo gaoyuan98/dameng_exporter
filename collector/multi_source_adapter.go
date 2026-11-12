@@ -8,11 +8,11 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
-	"runtime/debug"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -57,9 +57,6 @@ func SetNodeTypeIfSupported(collector MetricCollector, nodeType string) {
 type MultiSourceAdapter struct {
 	poolManager     *db.DBPoolManager
 	createCollector func(*sql.DB) MetricCollector
-	collectorName   string // 采集器名称（延迟初始化）
-	mu              sync.Mutex
-	nameOnce        sync.Once // 确保名称只获取一次
 }
 
 // NewMultiSourceAdapter 创建多数据源适配器
@@ -67,7 +64,6 @@ func NewMultiSourceAdapter(poolManager *db.DBPoolManager, createFunc func(*sql.D
 	return &MultiSourceAdapter{
 		poolManager:     poolManager,
 		createCollector: createFunc,
-		collectorName:   "UnknownCollector", // 默认名称，将在首次使用时更新
 	}
 }
 
@@ -105,203 +101,132 @@ func (a *MultiSourceAdapter) Describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-// Collect 实现Prometheus Collector接口
+// Collect also supports standalone registration, without a shared scrape summary.
 func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
-	// 获取所有健康的连接池
+	a.collectWithRound(ch, nil)
+}
+
+func (a *MultiSourceAdapter) collectWithRound(ch chan<- prometheus.Metric, round *collectionRound) {
 	pools := a.poolManager.GetHealthyPools()
-
-	// 为每个数据源采集指标
 	var wg sync.WaitGroup
-
 	for _, pool := range pools {
 		wg.Add(1)
 		go func(p *db.DataSourcePool) {
 			defer wg.Done()
-
-			// 记录collector开始时间
-			startTime := time.Now()
-
-			// 创建采集器实例
 			collector := a.createCollector(p.DB)
-
-			// 延迟初始化采集器名称（只执行一次）
-			a.nameOnce.Do(func() {
-				a.collectorName = getCollectorName(collector)
-			})
-
-			// 如果采集器支持数据源感知，设置数据源名称
 			SetDataSourceIfSupported(collector, p.Name)
 			SetDataSourceConfigIfSupported(collector, p.Config)
 			SetNodeTypeIfSupported(collector, p.GetNodeType())
-
-			// 快速检查数据源是否已降级，避免无谓查询
-			if err := utils.CheckDBConnectionWithSource(p.DB, p.Name); err != nil {
-				logger.Logger.Warnf("[%s] %s skipped (datasource unavailable): %v",
-					p.Name, a.collectorName, err)
-				return
-			}
-
-			// 创建标签注入器
-			labelInjector := NewLabelInjectorFromPool(p)
-
-			// 根据配置选择采集模式
-			if config.GlobalMultiConfig != nil && config.GlobalMultiConfig.IsFastMode() {
-				// 快速模式：超时返回部分数据
-				a.collectInFastMode(ch, p, collector, labelInjector, startTime)
-			} else {
-				// 默认阻塞模式：不丢失任何指标
-				a.collectInBlockingMode(ch, p, collector, labelInjector, startTime)
-			}
+			fast := config.GlobalMultiConfig != nil && config.GlobalMultiConfig.IsFastMode()
+			collectWithLogging(ch, p, collector, round, fast, time.Duration(config.Global.GetGlobalTimeoutSeconds())*time.Second)
 		}(pool)
 	}
-
-	// 等待所有goroutine完成
 	wg.Wait()
 }
 
-// collectInBlockingMode 阻塞模式采集 - 不丢失任何指标
-func (a *MultiSourceAdapter) collectInBlockingMode(ch chan<- prometheus.Metric, p *db.DataSourcePool, collector MetricCollector, labelInjector *LabelInjector, startTime time.Time) {
-	var metricCount int32 = 0
-	timeout := time.Duration(config.Global.GetGlobalTimeoutSeconds()) * time.Second
-
-	// 小缓冲通道，仅用于解耦采集和标签注入
-	safeChan := make(chan prometheus.Metric, 10)
-
-	// 转发goroutine - 阻塞写入，不丢弃任何指标
-	forwardDone := make(chan struct{})
-	go func() {
-		defer close(forwardDone)
-		for metric := range safeChan {
-			wrappedMetric := NewMetricWrapper(metric, labelInjector)
-			ch <- wrappedMetric // 阻塞写入，确保所有指标都被接收
-			atomic.AddInt32(&metricCount, 1)
-		}
-	}()
-
-	// 采集goroutine
-	collectDone := make(chan struct{})
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				logger.Logger.Errorf("[%s] Collector panic recovered: %v\nStack trace:\n%s",
-					p.Name, r, debug.Stack())
-			}
-			close(safeChan)
-			close(collectDone)
-		}()
-		collector.Collect(safeChan)
-	}()
-
-	// 超时仅用于日志记录，不中断采集
-	slowCollector := false
-	if timeout > 0 {
-		select {
-		case <-collectDone:
-			slowCollector = false
-		case <-time.After(timeout):
-			slowCollector = true
-			//logger.Logger.Warnf("[%s] %s SLOW (blocking mode) | Exceeded timeout %v, still collecting...",
-			//	p.Name, a.collectorName, timeout)
-		}
+// collectWithLogging measures the whole collector, including connection waits,
+// SQL, row processing and forwarding. It does not claim to measure SQL alone.
+func collectWithLogging(ch chan<- prometheus.Metric, p *db.DataSourcePool, collector MetricCollector, round *collectionRound, fast bool, timeout time.Duration) {
+	mode := "blocking"
+	if fast {
+		mode = "fast"
 	}
-
-	// 如果是慢采集器，继续等待它完成
-	if slowCollector {
-		<-collectDone
+	sourceLabel, injector := buildLabelContextFromPool(p)
+	run := newCollectionRun(round, "database", p.Name, getCollectorName(collector), mode, timeout, sourceLabel)
+	if aware, ok := collector.(interface{ SetCollectionLogger(*zap.SugaredLogger) }); ok {
+		aware.SetCollectionLogger(run.log)
 	}
-	<-forwardDone
-
-	// 记录结果
-	collectorDuration := time.Since(startTime)
-	finalCount := atomic.LoadInt32(&metricCount)
-
-	if slowCollector {
-		logger.Logger.Warnf("[%s] %s completed (slow, blocking mode) | Cost: %vms | Metrics: %d",
-			p.Name, a.collectorName, collectorDuration.Milliseconds(), finalCount)
-	} else {
-		logger.Logger.Infof("[%s] %s completed (blocking mode) | Cost: %vms | Metrics: %d",
-			p.Name, a.collectorName, collectorDuration.Milliseconds(), finalCount)
+	if err := utils.CheckDBConnectionWithSource(p.DB, p.Name, run.log); err != nil {
+		run.finish(round, 0, 0, workerResult{execution: "skipped", outcome: CollectorOutcome{State: OutcomeUnknown, Reason: "datasource_unavailable", DataOrigin: "unknown"}})
+		return
 	}
-}
-
-// collectInFastMode 快速模式采集 - 超时返回部分数据
-func (a *MultiSourceAdapter) collectInFastMode(ch chan<- prometheus.Metric, p *db.DataSourcePool, collector MetricCollector, labelInjector *LabelInjector, startTime time.Time) {
-	var metricCount int32 = 0
-	timeout := time.Duration(config.Global.GetGlobalTimeoutSeconds()) * time.Second
-
-	// 大缓冲防止阻塞
-	safeChan := make(chan prometheus.Metric, 500)
-	stopForward := make(chan struct{})
-	forwardDone := make(chan struct{})
-	timedOut := false
-
-	// 转发goroutine - 可以被安全终止
+	buffer := 10
+	if fast {
+		buffer = 500
+	}
+	safeChan := make(chan prometheus.Metric, buffer)
+	stopForward, forwardDone := make(chan struct{}), make(chan struct{})
+	// Only the forwarder writes these counters. Reading after forwardDone is safe.
+	var samples, dropped int64
 	go func() {
-		defer close(forwardDone)
 		for {
 			select {
 			case <-stopForward:
-				// 排水阶段：继续读取但不转发
+				close(forwardDone)
 				for range safeChan {
-					// drain and drop
-				}
+				} // allow late workers to finish without touching Registry
 				return
 			case metric, ok := <-safeChan:
 				if !ok {
+					close(forwardDone)
 					return
 				}
-				wrappedMetric := NewMetricWrapper(metric, labelInjector)
+				// Prefer an already-requested stop, even with a continuously ready worker.
 				select {
-				case ch <- wrappedMetric:
-					atomic.AddInt32(&metricCount, 1)
+				case <-stopForward:
+					close(forwardDone)
+					for range safeChan {
+					}
+					return
 				default:
-					// 主channel满了，丢弃
+				}
+				wrapped := NewMetricWrapper(metric, injector)
+				if fast {
+					select {
+					case ch <- wrapped:
+						samples++
+					default:
+						dropped++
+					}
+				} else {
+					ch <- wrapped
+					samples++
 				}
 			}
 		}
 	}()
-
-	// 采集goroutine
-	collectDone := make(chan struct{})
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				logger.Logger.Errorf("[%s] Collector panic recovered: %v\nStack trace:\n%s",
-					p.Name, r, debug.Stack())
-			}
-			close(safeChan)
-			close(collectDone)
-		}()
-		collector.Collect(safeChan)
-	}()
-
-	// 超时控制 - 会真正中断数据转发
-	if timeout <= 0 {
-		<-collectDone
-		<-forwardDone
-		timedOut = false
-	} else {
-		select {
-		case <-collectDone:
-			<-forwardDone
-			timedOut = false
-		case <-time.After(timeout):
-			timedOut = true
-			close(stopForward) // 停止转发
-			// 快速模式：不等待清理，让转发goroutine在后台自行完成
-		}
+	done := make(chan workerResult, 1)
+	// Keep the existing worker-stage budget boundary (preflight is excluded).
+	var timer *time.Timer
+	if fast && timeout > 0 {
+		timer = time.NewTimer(timeout)
+		defer timer.Stop()
 	}
-
-	// 记录结果
-	collectorDuration := time.Since(startTime)
-	finalCount := atomic.LoadInt32(&metricCount)
-
+	go executeCollector(collector, safeChan, done, run)
+	var deadline <-chan time.Time
+	if timer != nil {
+		deadline = timer.C
+	}
+	result, timedOut := waitForWorker(done, deadline)
 	if timedOut {
-		logger.Logger.Warnf("[%s] %s TIMEOUT (fast mode) | Cost: %vms | Timeout: %v | Metrics: %d (partial)",
-			p.Name, a.collectorName, collectorDuration.Milliseconds(), timeout, finalCount)
-	} else {
-		logger.Logger.Infof("[%s] %s completed (fast mode) | Cost: %vms | Metrics: %d",
-			p.Name, a.collectorName, collectorDuration.Milliseconds(), finalCount)
+		close(stopForward)
+		result = workerResult{execution: "timeout", outcome: CollectorOutcome{State: OutcomeUnknown, Reason: "frontend_timeout", DataOrigin: "unknown"}}
+	}
+	<-forwardDone
+	run.finish(round, samples, dropped, result)
+	if timedOut {
+		go func() {
+			final := <-done
+			run.diagnostic.Infow("collector_background_finished", "background_duration_ms", final.finishedAt.Sub(run.start).Milliseconds(),
+				"execution", final.execution, "outcome", final.outcome.State, "reason", final.outcome.Reason,
+				"data_origin", final.outcome.DataOrigin, "cache_fallback", final.outcome.CacheFallback)
+		}()
+	}
+}
+
+// A nil deadline preserves blocking behavior. A ready completion takes priority
+// when the budget and the result are observed together.
+func waitForWorker(done <-chan workerResult, deadline <-chan time.Time) (workerResult, bool) {
+	select {
+	case result := <-done:
+		return result, false
+	case <-deadline:
+		select {
+		case result := <-done:
+			return result, false
+		default:
+			return workerResult{}, true
+		}
 	}
 }
 

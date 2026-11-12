@@ -4,7 +4,6 @@ import (
 	"context"
 	"dameng_exporter/config"
 	dmdb "dameng_exporter/db"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -28,6 +27,7 @@ type DbArchSendDetailInfo struct {
 
 // DbArchSendCollector 负责采集归档发送差值和发送返回码。
 type DbArchSendCollector struct {
+	collectorLog
 	db                 *sql.DB
 	archSendDetailInfo *prometheus.Desc
 	archSendDiffValue  *prometheus.Desc
@@ -84,7 +84,7 @@ func (c *DbArchSendCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbArchSendCollector) Collect(ch chan<- prometheus.Metric) {
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -98,7 +98,7 @@ func (c *DbArchSendCollector) Collect(ch chan<- prometheus.Metric) {
 
 	dbArchSendInfos, err := c.getDbArchSendDetailInfo(ctx, c.db)
 	if err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] exec getDbArchSendDetailInfo func error", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] exec getDbArchSendDetailInfo func error", c.dataSource), zap.Error(err))
 		return
 	}
 
@@ -140,7 +140,7 @@ func (c *DbArchSendCollector) isArchiveConfigured(ctx context.Context) bool {
 	query := `SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI'`
 	err := c.db.QueryRowContext(ctx, query).Scan(&paraValue)
 	if err != nil {
-		logger.Logger.Debugf("[%s] Failed to check archive status: %v", c.dataSource, err)
+		c.log().Debugf("[%s] Failed to check archive status: %v", c.dataSource, err)
 		return false
 	}
 
@@ -152,12 +152,12 @@ func (c *DbArchSendCollector) checkArchSendInfoFields(ctx context.Context) bool 
 	c.archSendFieldsCheckOnce.Do(func() {
 		var count int
 		if err := c.db.QueryRowContext(ctx, config.QueryArchSendInfoFieldsExist).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] Failed to check V$ARCH_SEND_INFO fields existence: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to check V$ARCH_SEND_INFO fields existence: %v", c.dataSource, err)
 			c.archSendFieldsExist = false
 			return
 		}
 		c.archSendFieldsExist = count == 2
-		logger.Logger.Debugf("[%s] V$ARCH_SEND_INFO fields exist: %v (LAST_SEND_CODE, LAST_SEND_DESC)", c.dataSource, c.archSendFieldsExist)
+		c.log().Debugf("[%s] V$ARCH_SEND_INFO fields exist: %v (LAST_SEND_CODE, LAST_SEND_DESC)", c.dataSource, c.archSendFieldsExist)
 	})
 	return c.archSendFieldsExist
 }
@@ -167,12 +167,12 @@ func (c *DbArchSendCollector) checkArchApplyInfoExists(ctx context.Context) bool
 	c.archApplyInfoCheckOnce.Do(func() {
 		var count int
 		if err := c.db.QueryRowContext(ctx, config.QueryArchApplyInfoExists).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] V$ARCH_APPLY_INFO not accessible: %v", c.dataSource, err)
+			c.log().Warnf("[%s] V$ARCH_APPLY_INFO not accessible: %v", c.dataSource, err)
 			c.archApplyInfoExists = false
 			return
 		}
 		c.archApplyInfoExists = count == 1
-		logger.Logger.Debugf("[%s] V$ARCH_APPLY_INFO exists: %v", c.dataSource, c.archApplyInfoExists)
+		c.log().Debugf("[%s] V$ARCH_APPLY_INFO exists: %v", c.dataSource, c.archApplyInfoExists)
 	})
 	return c.archApplyInfoExists
 }
@@ -201,7 +201,7 @@ func (c *DbArchSendCollector) getDbArchSendDetailInfo(ctx context.Context, db *s
 	var dbArchSendDetailInfos []DbArchSendDetailInfo
 	rows, err := db.QueryContext(ctx, querySql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return dbArchSendDetailInfos, err
 	}
 	defer rows.Close()
@@ -213,7 +213,7 @@ func (c *DbArchSendCollector) getDbArchSendDetailInfo(ctx context.Context, db *s
 			&dbArchSendDetailInfo.lsnDiff, &lastSendCodeText,
 			&lastSendDesc, &lastStartTime,
 			&lastEndTime, &lastSendTime); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 
@@ -222,7 +222,7 @@ func (c *DbArchSendCollector) getDbArchSendDetailInfo(ctx context.Context, db *s
 			if lastSendCode, err := strconv.ParseFloat(lastSendCodeText.String, 64); err == nil {
 				dbArchSendDetailInfo.lastSendCode = sql.NullFloat64{Float64: lastSendCode, Valid: true}
 			} else {
-				logger.Logger.Warn(fmt.Sprintf("[%s] Failed to parse LAST_SEND_CODE: %s", c.dataSource, lastSendCodeText.String), zap.Error(err))
+				c.log().Desugar().Warn(fmt.Sprintf("[%s] Failed to parse LAST_SEND_CODE: %s", c.dataSource, lastSendCodeText.String), zap.Error(err))
 			}
 		}
 
@@ -230,7 +230,7 @@ func (c *DbArchSendCollector) getDbArchSendDetailInfo(ctx context.Context, db *s
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 
 	return dbArchSendDetailInfos, nil

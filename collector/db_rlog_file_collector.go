@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"strconv"
@@ -22,6 +21,7 @@ type rlogFileRow struct {
 
 // DbRlogFileCollector 采集 V$RLOGFILE 列表信息
 type DbRlogFileCollector struct {
+	collectorLog
 	db         *sql.DB
 	dataSource string
 	sizeDesc   *prometheus.Desc
@@ -50,7 +50,7 @@ func (c *DbRlogFileCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbRlogFileCollector) Collect(ch chan<- prometheus.Metric) {
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -59,7 +59,7 @@ func (c *DbRlogFileCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryRlogFileListSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -67,14 +67,14 @@ func (c *DbRlogFileCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var row rlogFileRow
 		if err := rows.Scan(&row.fileID, &row.path, &row.createTime, &row.size); err != nil {
-			logger.Logger.Warnf("[%s] Failed to scan V$RLOGFILE row: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to scan V$RLOGFILE row: %v", c.dataSource, err)
 			continue
 		}
 		c.emitMetric(ch, row)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Warnf("[%s] Iterating V$RLOGFILE rows failed: %v", c.dataSource, err)
+		c.log().Warnf("[%s] Iterating V$RLOGFILE rows failed: %v", c.dataSource, err)
 	}
 }
 

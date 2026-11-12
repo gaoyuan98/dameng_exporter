@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,6 +24,7 @@ type UserInfo struct {
 
 // 定义收集器结构体
 type DbUserCollector struct {
+	collectorLog
 	db               *sql.DB
 	userListInfoDesc *prometheus.Desc
 	dataSource       string // 数据源名称
@@ -53,7 +53,7 @@ func (c *DbUserCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -62,7 +62,7 @@ func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryUserInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -71,14 +71,14 @@ func (c *DbUserCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info UserInfo
 		if err := rows.Scan(&info.Username, &info.ReadOnly, &info.AccountStatus, &info.ExpiryDate, &info.ExpiryDateDay, &info.DefaultTablespace, &info.Profile, &info.CreateTime); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			c.log().Desugar().Error("Error scanning row", zap.Error(err))
 			continue
 		}
 		userInfos = append(userInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		c.log().Desugar().Error("Error with rows", zap.Error(err))
 		return
 	}
 

@@ -10,15 +10,18 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // 统一的数据库连接检查（带数据源标识）
-func CheckDBConnectionWithSource(dbConn *sql.DB, dataSource string) error {
+func CheckDBConnectionWithSource(dbConn *sql.DB, dataSource string, logs ...*zap.SugaredLogger) error {
+	log := queryLogger(logs)
 	if dbConn == nil {
 		err := fmt.Errorf("数据库连接未初始化")
-		logger.Logger.Errorf("[%s] 数据库连接未初始化，无法执行检查", dataSource)
+		log.Errorf("[%s] 数据库连接未初始化，无法执行检查", dataSource)
 		if manager := db.GlobalPoolManager; manager != nil {
-			manager.MarkDatasourceFailed(dataSource, err)
+			manager.MarkDatasourceFailed(dataSource, err, log)
 		}
 		return err
 	}
@@ -31,7 +34,7 @@ func CheckDBConnectionWithSource(dbConn *sql.DB, dataSource string) error {
 	status := manager.GetDatasourceHealthStatus(dataSource)
 	if !status.Registered {
 		err := fmt.Errorf("数据源[%s]未注册或已禁用", dataSource)
-		logger.Logger.Warn(err.Error())
+		log.Warn(err.Error())
 		return err
 	}
 
@@ -41,9 +44,9 @@ func CheckDBConnectionWithSource(dbConn *sql.DB, dataSource string) error {
 			lastCheck = status.LastCheck.Format(time.DateTime)
 		}
 		if status.LastError != "" {
-			logger.Logger.Warnf("[%s] 数据源处于不可用状态，最近检查: %s，最近错误: %s", dataSource, lastCheck, status.LastError)
+			log.Warnf("[%s] 数据源处于不可用状态，最近检查: %s，最近错误: %s", dataSource, lastCheck, status.LastError)
 		} else {
-			logger.Logger.Warnf("[%s] 数据源处于不可用状态，最近检查: %s", dataSource, lastCheck)
+			log.Warnf("[%s] 数据源处于不可用状态，最近检查: %s", dataSource, lastCheck)
 		}
 		return fmt.Errorf("数据源[%s]当前不可用", dataSource)
 	}
@@ -52,11 +55,12 @@ func CheckDBConnectionWithSource(dbConn *sql.DB, dataSource string) error {
 }
 
 // 封装通用的错误处理逻辑（带数据源标识）
-func HandleDbQueryErrorWithSource(err error, dataSource string) {
+func HandleDbQueryErrorWithSource(err error, dataSource string, logs ...*zap.SugaredLogger) {
+	log := queryLogger(logs)
 	if errors.Is(err, context.DeadlineExceeded) {
-		logger.Logger.Errorf("[%s] 查询超时: %v", dataSource, err)
+		log.Errorf("[%s] 查询超时: %v", dataSource, err)
 	} else {
-		logger.Logger.Errorf("[%s] 查询数据库时发生错误: %v", dataSource, err)
+		log.Errorf("[%s] 查询数据库时发生错误: %v", dataSource, err)
 	}
 	if dataSource == "" || err == nil {
 		return
@@ -64,15 +68,16 @@ func HandleDbQueryErrorWithSource(err error, dataSource string) {
 
 	// 针对网络故障等致命错误直接触发降级，避免所有采集器在同一轮内重复阻塞
 	if shouldForceDegrade(err) {
-		triggerFastDegrade(dataSource, err)
+		triggerFastDegrade(dataSource, err, log)
 		return
 	}
 
-	triggerHealthCheckOnError(dataSource)
+	triggerHealthCheckOnError(dataSource, log)
 }
 
 // triggerHealthCheckOnError 在禁用周期探活时补充一次点对点健康检查
-func triggerHealthCheckOnError(dataSource string) {
+func triggerHealthCheckOnError(dataSource string, logs ...*zap.SugaredLogger) {
+	log := queryLogger(logs)
 	if dataSource == "" || config.Global.GetEnableHealthPing() {
 		return
 	}
@@ -96,8 +101,8 @@ func triggerHealthCheckOnError(dataSource string) {
 	defer cancel()
 
 	if err := pool.DB.PingContext(ctx); err != nil {
-		logger.Logger.Warnf("[%s] 确认性健康检查失败，标记数据源不可用: %v", dataSource, err)
-		manager.MarkDatasourceFailed(dataSource, err)
+		log.Warnf("[%s] 确认性健康检查失败，标记数据源不可用: %v", dataSource, err)
+		manager.MarkDatasourceFailed(dataSource, err, log)
 	}
 }
 
@@ -130,7 +135,7 @@ func shouldForceDegrade(err error) bool {
 }
 
 // triggerFastDegrade 在确认数据源仍处于健康状态时，直接标记为失败
-func triggerFastDegrade(dataSource string, reason error) {
+func triggerFastDegrade(dataSource string, reason error, logs ...*zap.SugaredLogger) {
 	if dataSource == "" {
 		return
 	}
@@ -145,7 +150,7 @@ func triggerFastDegrade(dataSource string, reason error) {
 		return
 	}
 
-	manager.MarkDatasourceFailed(dataSource, reason)
+	manager.MarkDatasourceFailed(dataSource, reason, logs...)
 }
 
 // containsAny 判断字符串是否包含关键字列表中的任意一个
@@ -215,4 +220,11 @@ func NullStringTimeToUnixSeconds(n sql.NullString) (float64, error) {
 	}
 
 	return float64(parsedTime.Unix()), nil
+}
+
+func queryLogger(logs []*zap.SugaredLogger) *zap.SugaredLogger {
+	if len(logs) > 0 && logs[0] != nil {
+		return logs[0]
+	}
+	return logger.Logger
 }

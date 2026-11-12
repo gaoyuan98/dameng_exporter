@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+	"math"
 	"strings"
+	"time"
 )
 
 // ExporterAppName 标识采集连接，供内置会话状态查询排除使用。
@@ -36,6 +38,9 @@ type MultiSourceConfig struct {
 	// "blocking": 默认模式，阻塞写入，不丢失任何指标（适合正常采集）
 	// "fast": 快速模式，超时返回部分数据（适合要求快速响应的场景）
 	CollectionMode string `toml:"collectionMode"`
+
+	// CollectorSlowThresholdMs only controls diagnostics; zero disables slow warnings.
+	CollectorSlowThresholdMs int `toml:"collectorSlowThresholdMs"`
 
 	// 数据源列表
 	DataSources []DataSourceConfig `toml:"datasource"`
@@ -100,7 +105,8 @@ var DefaultMultiSourceConfig = MultiSourceConfig{
 	GlobalTimeoutSeconds: 5, // 默认5秒全局超时
 
 	// 采集模式默认值
-	CollectionMode: "blocking", // 默认使用阻塞模式，不丢失指标
+	CollectorSlowThresholdMs: 5000,
+	CollectionMode:           "blocking", // 默认使用阻塞模式，不丢失指标
 }
 
 // DefaultDataSourceConfig 默认数据源配置
@@ -226,6 +232,9 @@ func (msc *MultiSourceConfig) GetDataSourceByName(name string) *DataSourceConfig
 // ValidateAll 验证所有配置
 func (msc *MultiSourceConfig) ValidateAll() error {
 	// 验证全局配置
+	if msc.CollectorSlowThresholdMs < 0 || int64(msc.CollectorSlowThresholdMs) > math.MaxInt64/int64(time.Millisecond) {
+		return fmt.Errorf("collectorSlowThresholdMs 必须为非负数且不能超出 time.Duration 范围")
+	}
 	if msc.ListenAddress == "" {
 		return fmt.Errorf("监听地址不能为空 (listenAddress)")
 	}
@@ -348,8 +357,8 @@ func (msc *MultiSourceConfig) StringCategorized() string {
 		authInfo, msc.EncodeConfigPwd))
 
 	// 性能配置 - 使用完整参数名
-	sb.WriteString(fmt.Sprintf("[Performance] globalTimeoutSeconds=%ds, collectionMode=%s, retryIntervalSeconds=%ds, enableHealthPing=%v\n",
-		msc.GlobalTimeoutSeconds, msc.CollectionMode, msc.RetryIntervalSeconds, msc.IsHealthPingEnabled()))
+	sb.WriteString(fmt.Sprintf("[Performance] globalTimeoutSeconds=%ds, collectionMode=%s, retryIntervalSeconds=%ds, enableHealthPing=%v, collectorSlowThresholdMs=%d\n",
+		msc.GlobalTimeoutSeconds, msc.CollectionMode, msc.RetryIntervalSeconds, msc.IsHealthPingEnabled(), msc.CollectorSlowThresholdMs))
 
 	// 数据源摘要 - 一行
 	enabledCount := 0

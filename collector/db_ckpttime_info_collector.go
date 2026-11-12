@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -23,6 +22,7 @@ type CkptInfo struct {
 
 // 定义收集器结构体
 type CkptCollector struct {
+	collectorLog
 	db               *sql.DB
 	ckptTimeInfoDesc *prometheus.Desc
 	viewExists       bool
@@ -53,7 +53,7 @@ func (c *CkptCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 	//不存在则直接返回
@@ -68,11 +68,11 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		//if strings.EqualFold(err.Error(), "CKPT") { // 检查视图不存在的特定错误
 		if strings.Contains(err.Error(), "v$CKPT") {
-			logger.Logger.Warnf("[%s] v$CKPT view does not exist, skipping future queries: %v", c.dataSource, err)
+			c.log().Warnf("[%s] v$CKPT view does not exist, skipping future queries: %v", c.dataSource, err)
 			c.viewExists = false
 			return
 		}
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -81,13 +81,13 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info CkptInfo
 		if err := rows.Scan(&info.CkptTotalCount, &info.CkptReserveCount, &info.CkptFlushedPages, &info.CkptTimeUsed); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		ckptInfos = append(ckptInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 

@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -26,6 +25,7 @@ type MonitorInfo struct {
 
 // 定义收集器结构体
 type MonitorInfoCollector struct {
+	collectorLog
 	db              *sql.DB
 	monitorInfoDesc *prometheus.Desc
 	viewExists      bool
@@ -48,12 +48,12 @@ func (c *MonitorInfoCollector) checkDmMonitorExists(ctx context.Context) bool {
 		const query = "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR'"
 		var count int
 		if err := c.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] Failed to check V$DMMONITOR existence: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to check V$DMMONITOR existence: %v", c.dataSource, err)
 			c.viewChecked = false
 			return
 		}
 		c.viewChecked = count == 1
-		logger.Logger.Debugf("[%s] V$DMMONITOR exists: %v", c.dataSource, c.viewChecked)
+		c.log().Debugf("[%s] V$DMMONITOR exists: %v", c.dataSource, c.viewChecked)
 	})
 	return c.viewChecked
 }
@@ -84,7 +84,7 @@ func (c *MonitorInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -98,7 +98,7 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryMonitorInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -107,14 +107,14 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info MonitorInfo
 		if err := rows.Scan(&info.DwConnTime, &info.MonConfirm, &info.MonId, &info.MonIp, &info.MonVersion, &info.Mid); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		monitorInfos = append(monitorInfos, info)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 	// 发送数据到 Prometheus
 	for _, info := range monitorInfos {

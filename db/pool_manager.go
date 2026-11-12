@@ -658,7 +658,7 @@ func (m *DBPoolManager) checkHealthyPools() {
 }
 
 // demoteToFailed 将健康连接降级为失败列表并关闭连接
-func (m *DBPoolManager) demoteToFailed(pool *DataSourcePool, reason error) {
+func (m *DBPoolManager) demoteToFailed(pool *DataSourcePool, reason error, logs ...*zap.SugaredLogger) {
 	if pool == nil {
 		return
 	}
@@ -680,7 +680,7 @@ func (m *DBPoolManager) demoteToFailed(pool *DataSourcePool, reason error) {
 	if dbToClose != nil {
 		// 关闭无效连接，释放资源
 		if err := dbToClose.Close(); err != nil {
-			m.logger.Error("关闭异常数据源连接失败",
+			m.collectionLogger(logs).Desugar().Error("关闭异常数据源连接失败",
 				zap.String("datasource", pool.Name),
 				zap.Error(err))
 		}
@@ -688,7 +688,7 @@ func (m *DBPoolManager) demoteToFailed(pool *DataSourcePool, reason error) {
 }
 
 // MarkDatasourceFailed 将指定数据源标记为失败状态，供采集器检测失败时快速降级
-func (m *DBPoolManager) MarkDatasourceFailed(name string, reason error) {
+func (m *DBPoolManager) MarkDatasourceFailed(name string, reason error, logs ...*zap.SugaredLogger) {
 	if m == nil || name == "" {
 		return
 	}
@@ -699,14 +699,14 @@ func (m *DBPoolManager) MarkDatasourceFailed(name string, reason error) {
 	m.mu.RUnlock()
 	if exists && pool != nil {
 		if reason != nil {
-			m.logger.Warn("采集器检测到连接异常，执行快速降级",
+			m.collectionLogger(logs).Desugar().Warn("采集器检测到连接异常，执行快速降级",
 				zap.String("datasource", name),
 				zap.Error(reason))
 		} else {
-			m.logger.Warn("采集器检测到连接异常，执行快速降级",
+			m.collectionLogger(logs).Desugar().Warn("采集器检测到连接异常，执行快速降级",
 				zap.String("datasource", name))
 		}
-		m.demoteToFailed(pool, reason)
+		m.demoteToFailed(pool, reason, logs...)
 		return
 	}
 
@@ -714,11 +714,11 @@ func (m *DBPoolManager) MarkDatasourceFailed(name string, reason error) {
 	if m.config != nil {
 		if cfg := m.config.GetDataSourceByName(name); cfg != nil {
 			if reason != nil {
-				m.logger.Warn("采集器检测到连接异常，记录失败等待自动恢复",
+				m.collectionLogger(logs).Desugar().Warn("采集器检测到连接异常，记录失败等待自动恢复",
 					zap.String("datasource", name),
 					zap.Error(reason))
 			} else {
-				m.logger.Warn("采集器检测到连接异常，记录失败等待自动恢复",
+				m.collectionLogger(logs).Desugar().Warn("采集器检测到连接异常，记录失败等待自动恢复",
 					zap.String("datasource", name))
 			}
 			m.noteFailedDataSource(cfg, reason)
@@ -824,4 +824,12 @@ func (m *DBPoolManager) Close() {
 
 	m.pools = make(map[string]*DataSourcePool)
 	m.failedSources = make(map[string]*FailedDataSource)
+}
+
+// collectionLogger preserves scrape context for failures triggered by a collector.
+func (m *DBPoolManager) collectionLogger(logs []*zap.SugaredLogger) *zap.SugaredLogger {
+	if len(logs) > 0 && logs[0] != nil {
+		return logs[0]
+	}
+	return m.logger
 }

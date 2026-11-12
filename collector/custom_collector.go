@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -16,6 +15,7 @@ import (
 
 // CustomMetrics 结构体，封装多个 Prometheus Collectors
 type CustomMetrics struct {
+	collectorLog
 	metrics    map[string]prometheus.Collector
 	db         *sql.DB
 	sqlConfig  config.CustomConfig
@@ -84,9 +84,9 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 	if dsName == "" {
 		dsName = "default"
 	}
-	logger.Logger.Debugf("[%s] Collecting custom metrics...", dsName)
+	cm.log().Debugf("[%s] Collecting custom metrics...", dsName)
 
-	if err := utils.CheckDBConnectionWithSource(cm.db, dsName); err != nil {
+	if err := utils.CheckDBConnectionWithSource(cm.db, dsName, cm.log()); err != nil {
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
@@ -96,7 +96,7 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 	for _, metric := range cm.sqlConfig.Metrics {
 		results, err := queryDynamicDatabase(ctx, cm.db, metric.Request)
 		if err != nil {
-			utils.HandleDbQueryErrorWithSource(err, dsName)
+			utils.HandleDbQueryErrorWithSource(err, dsName, cm.log())
 			continue
 		}
 
@@ -123,7 +123,7 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 
 					// 如果启用了忽略零值且当前值为0，则跳过该指标
 					if metric.IgnoreZeroResult && conver_float == 0 {
-						logger.Logger.Debugf("[%s] Ignoring zero value for metric: %s_%s",
+						cm.log().Debugf("[%s] Ignoring zero value for metric: %s_%s",
 							dsName, metric.Context, field)
 						continue
 					}
@@ -134,7 +134,7 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 					default:
 						collector.(*prometheus.GaugeVec).WithLabelValues(labelValues...).Set(conver_float)
 					}
-					//	logger.Logger.Debugf("metric %s value %v labelValues %v", field, conver_float, labelValues)
+					//	cm.log().Debugf("metric %s value %v labelValues %v", field, conver_float, labelValues)
 				}
 			}
 

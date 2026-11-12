@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"sync"
@@ -29,6 +28,7 @@ type rlogLsnInfo struct {
 
 // DbRedoLogLsnCollector 采集 V$RLOG 中的 LSN 指标
 type DbRedoLogLsnCollector struct {
+	collectorLog
 	db              *sql.DB
 	lsnDesc         *prometheus.Desc
 	dataSource      string
@@ -63,7 +63,7 @@ func (c *DbRedoLogLsnCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbRedoLogLsnCollector) Collect(ch chan<- prometheus.Metric) {
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -102,13 +102,13 @@ func (c *DbRedoLogLsnCollector) checkRlogView(ctx context.Context) bool {
 	c.viewCheckOnce.Do(func() {
 		var count int
 		if err := c.db.QueryRowContext(ctx, config.QueryRlogViewExists).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] Failed to check V$RLOG view existence: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to check V$RLOG view existence: %v", c.dataSource, err)
 			c.viewExists = false
 			return
 		}
 		c.viewExists = count > 0
 		if !c.viewExists {
-			logger.Logger.Infof("[%s] V$RLOG view not found, skip redo LSN metrics", c.dataSource)
+			c.log().Debugf("[%s] V$RLOG view not found, skip redo LSN metrics", c.dataSource)
 		}
 	})
 	return c.viewExists
@@ -118,13 +118,13 @@ func (c *DbRedoLogLsnCollector) checkRlogColumns(ctx context.Context) bool {
 	c.columnCheckOnce.Do(func() {
 		var count int
 		if err := c.db.QueryRowContext(ctx, config.QueryRlogColumnsExist).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] Failed to check V$RLOG columns: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to check V$RLOG columns: %v", c.dataSource, err)
 			c.columnsExist = false
 			return
 		}
 		c.columnsExist = count == requiredRlogColumnCount
 		if !c.columnsExist {
-			logger.Logger.Infof("[%s] Required V$RLOG columns missing, skip redo LSN metrics", c.dataSource)
+			c.log().Debugf("[%s] Required V$RLOG columns missing, skip redo LSN metrics", c.dataSource)
 		}
 	})
 	return c.columnsExist
@@ -135,7 +135,7 @@ func (c *DbRedoLogLsnCollector) queryRlogInfo(ctx context.Context) (rlogLsnInfo,
 
 	rows, err := c.db.QueryContext(ctx, config.QueryRedoLogLsnInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return result, err
 	}
 	defer rows.Close()
@@ -143,14 +143,14 @@ func (c *DbRedoLogLsnCollector) queryRlogInfo(ctx context.Context) (rlogLsnInfo,
 	for rows.Next() {
 		var row rlogLsnInfo
 		if err := rows.Scan(&row.ckptLsn, &row.fileLsn, &row.flushLsn, &row.curLsn); err != nil {
-			logger.Logger.Warnf("[%s] Failed to scan V$RLOG row: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to scan V$RLOG row: %v", c.dataSource, err)
 			continue
 		}
 		result = mergeRlogInfo(result, row)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Warnf("[%s] Iterating V$RLOG rows failed: %v", c.dataSource, err)
+		c.log().Warnf("[%s] Iterating V$RLOG rows failed: %v", c.dataSource, err)
 		return result, err
 	}
 

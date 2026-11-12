@@ -56,27 +56,31 @@ func LoadMultiSourceConfig(configFile string) (*MultiSourceConfig, error) {
 
 // rawMultiSourceConfig 对应配置文件的原始映射，使用指针布尔字段以保留“是否显式配置”信息。
 type rawMultiSourceConfig struct {
-	ListenAddress        string                `toml:"listenAddress"`
-	MetricPath           string                `toml:"metricPath"`
-	Version              string                `toml:"version"`
-	LogMaxSize           int                   `toml:"logMaxSize"`
-	LogMaxBackups        int                   `toml:"logMaxBackups"`
-	LogMaxAge            int                   `toml:"logMaxAge"`
-	LogLevel             string                `toml:"logLevel"`
-	EncodeConfigPwd      bool                  `toml:"encodeConfigPwd"`
-	EnableBasicAuth      bool                  `toml:"enableBasicAuth"`
-	BasicAuthUsername    string                `toml:"basicAuthUsername"`
-	BasicAuthPassword    string                `toml:"basicAuthPassword"`
-	GlobalTimeoutSeconds int                   `toml:"globalTimeoutSeconds"`
-	CollectionMode       string                `toml:"collectionMode"`
-	RetryIntervalSeconds int                   `toml:"retryIntervalSeconds"`
-	EnableHealthPing     *bool                 `toml:"enableHealthPing"`
-	DataSources          []rawDataSourceConfig `toml:"datasource"`
+	CollectorSlowThresholdMs *int                  `toml:"collectorSlowThresholdMs"`
+	ListenAddress            string                `toml:"listenAddress"`
+	MetricPath               string                `toml:"metricPath"`
+	Version                  string                `toml:"version"`
+	LogMaxSize               int                   `toml:"logMaxSize"`
+	LogMaxBackups            int                   `toml:"logMaxBackups"`
+	LogMaxAge                int                   `toml:"logMaxAge"`
+	LogLevel                 string                `toml:"logLevel"`
+	EncodeConfigPwd          bool                  `toml:"encodeConfigPwd"`
+	EnableBasicAuth          bool                  `toml:"enableBasicAuth"`
+	BasicAuthUsername        string                `toml:"basicAuthUsername"`
+	BasicAuthPassword        string                `toml:"basicAuthPassword"`
+	GlobalTimeoutSeconds     int                   `toml:"globalTimeoutSeconds"`
+	CollectionMode           string                `toml:"collectionMode"`
+	RetryIntervalSeconds     int                   `toml:"retryIntervalSeconds"`
+	EnableHealthPing         *bool                 `toml:"enableHealthPing"`
+	DataSources              []rawDataSourceConfig `toml:"datasource"`
 }
 
 // toConfig 将原始结构转换为应用了默认值的最终配置结构。
 func (raw rawMultiSourceConfig) toConfig() *MultiSourceConfig {
 	cfg := DefaultMultiSourceConfig
+	if raw.CollectorSlowThresholdMs != nil {
+		cfg.CollectorSlowThresholdMs = *raw.CollectorSlowThresholdMs
+	}
 
 	if raw.ListenAddress != "" {
 		cfg.ListenAddress = raw.ListenAddress

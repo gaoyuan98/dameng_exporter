@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"sync"
@@ -30,6 +29,7 @@ type asmGroupInfo struct {
 
 // AsmGroupInfoCollector 采集 ASM 磁盘组总量、剩余量和使用率。
 type AsmGroupInfoCollector struct {
+	collectorLog
 	db *sql.DB
 
 	totalDesc   *prometheus.Desc
@@ -81,7 +81,7 @@ func (c *AsmGroupInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *AsmGroupInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -94,7 +94,7 @@ func (c *AsmGroupInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryAsmGroupInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -102,9 +102,8 @@ func (c *AsmGroupInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info asmGroupInfo
 		if err := rows.Scan(&info.groupID, &info.groupName, &info.groupType, &info.totalMB, &info.freeMB, &info.usedPct); err != nil {
-			logger.Logger.Error("Error scanning V$ASMGROUP row",
-				zap.Error(err),
-				zap.String("data_source", c.dataSource))
+			c.log().Desugar().Error("Error scanning V$ASMGROUP row",
+				zap.Error(err))
 			continue
 		}
 
@@ -142,7 +141,7 @@ func (c *AsmGroupInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Warnf("[%s] Iterating V$ASMGROUP rows failed: %v", c.dataSource, err)
+		c.log().Warnf("[%s] Iterating V$ASMGROUP rows failed: %v", c.dataSource, err)
 	}
 }
 
@@ -150,13 +149,13 @@ func (c *AsmGroupInfoCollector) checkAsmGroupViewExists(ctx context.Context) boo
 	c.viewCheckOnce.Do(func() {
 		var count int
 		if err := c.db.QueryRowContext(ctx, config.QueryAsmGroupViewExistsSqlStr).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] Failed to check V$ASMGROUP existence: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to check V$ASMGROUP existence: %v", c.dataSource, err)
 			c.viewExists = false
 			return
 		}
 		c.viewExists = count > 0
 		if !c.viewExists {
-			logger.Logger.Infof("[%s] V$ASMGROUP view not found, skip ASM group metrics", c.dataSource)
+			c.log().Debugf("[%s] V$ASMGROUP view not found, skip ASM group metrics", c.dataSource)
 		}
 	})
 	return c.viewExists
@@ -167,13 +166,13 @@ func (c *AsmGroupInfoCollector) checkAsmGroupTypeColumnExists(ctx context.Contex
 	c.columnCheckOnce.Do(func() {
 		var count int
 		if err := c.db.QueryRowContext(ctx, config.QueryAsmGroupTypeColumnExistsSqlStr).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] Failed to check V$ASMGROUP.TYPE column existence: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to check V$ASMGROUP.TYPE column existence: %v", c.dataSource, err)
 			c.typeColumnExists = false
 			return
 		}
 		c.typeColumnExists = count > 0
 		if !c.typeColumnExists {
-			logger.Logger.Infof("[%s] V$ASMGROUP.TYPE column not found, skip ASM group metrics", c.dataSource)
+			c.log().Debugf("[%s] V$ASMGROUP.TYPE column not found, skip ASM group metrics", c.dataSource)
 		}
 	})
 	return c.typeColumnExists

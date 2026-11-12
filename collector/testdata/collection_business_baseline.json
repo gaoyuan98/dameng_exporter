@@ -1,0 +1,270 @@
+{
+  "datafile/cache": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_file_free_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"auto_extend\",\"value\":\"\"},{\"name\":\"max_size\",\"value\":\"\"},{\"name\":\"next_size\",\"value\":\"\"},{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_total_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"auto_extend\",\"value\":\"\"},{\"name\":\"max_size\",\"value\":\"\"},{\"name\":\"next_size\",\"value\":\"\"},{\"name\":\"tablespace_name\",\"value\":\"\"}]}"
+    ],
+    "Queries": 0
+  },
+  "datafile/cache recovery": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_file_free_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"auto_extend\",\"value\":\"\"},{\"name\":\"max_size\",\"value\":\"\"},{\"name\":\"next_size\",\"value\":\"\"},{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_free_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"auto_extend\",\"value\":\"\"},{\"name\":\"max_size\",\"value\":\"\"},{\"name\":\"next_size\",\"value\":\"\"},{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_free_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_total_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"auto_extend\",\"value\":\"\"},{\"name\":\"max_size\",\"value\":\"\"},{\"name\":\"next_size\",\"value\":\"\"},{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_total_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"auto_extend\",\"value\":\"\"},{\"name\":\"max_size\",\"value\":\"\"},{\"name\":\"next_size\",\"value\":\"\"},{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_total_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}"
+    ],
+    "Queries": 1
+  },
+  "datafile/empty": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "datafile/empty cache": {
+    "Samples": [],
+    "Queries": 0
+  },
+  "datafile/error": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "datafile/marshal": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_file_free_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":\"NaN\"},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_total_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}"
+    ],
+    "Queries": 1
+  },
+  "datafile/normal": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_file_free_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_total_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}"
+    ],
+    "Queries": 1
+  },
+  "datafile/rows": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_file_free_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_total_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}"
+    ],
+    "Queries": 1
+  },
+  "datafile/rows failed": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "datafile/scan": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_file_free_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_total_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}"
+    ],
+    "Queries": 1
+  },
+  "datafile/scan failed": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "datafile/slow": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_file_free_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_file_total_info\", help: \"Tablespace file information\", constLabels: {}, variableLabels: {tablespace_name,auto_extend,next_size,max_size}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"auto_extend\",\"value\":\"ON\"},{\"name\":\"max_size\",\"value\":\"1000\"},{\"name\":\"next_size\",\"value\":\"10\"},{\"name\":\"tablespace_name\",\"value\":\"/dm/main.dbf\"}]}"
+    ],
+    "Queries": 1
+  },
+  "datafile/timeout": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "sessions/empty": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"ACTIVE\"}]}",
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"IDLE\"}]}"
+    ],
+    "Queries": 1
+  },
+  "sessions/error": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "sessions/normal": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"IDLE\"}]}",
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":3},\"label\":[{\"name\":\"session_type\",\"value\":\"ACTIVE\"}]}"
+    ],
+    "Queries": 1
+  },
+  "sessions/rows": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "sessions/rows failed": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "sessions/scan": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "sessions/scan failed": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "sessions/slow": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"IDLE\"}]}",
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":3},\"label\":[{\"name\":\"session_type\",\"value\":\"ACTIVE\"}]}"
+    ],
+    "Queries": 1
+  },
+  "sessions/timeout": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "system/empty": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"\"},{\"name\":\"total_disk_size\",\"value\":\"\"},{\"name\":\"total_phy_size\",\"value\":\"\"},{\"name\":\"total_vir_size\",\"value\":\"\"}]}"
+    ],
+    "Queries": 1
+  },
+  "system/error": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "system/normal": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"8.000000\"},{\"name\":\"total_disk_size\",\"value\":\"10000.000000\"},{\"name\":\"total_phy_size\",\"value\":\"4096.000000\"},{\"name\":\"total_vir_size\",\"value\":\"8192.000000\"}]}",
+      "Desc{fqName: \"dmdbms_system_cpu_info\", help: \"Number of CPU cores\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":8}}",
+      "Desc{fqName: \"dmdbms_system_memory_info\", help: \"Total physical memory size in bytes\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":4096}}"
+    ],
+    "Queries": 1
+  },
+  "system/null": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"\"},{\"name\":\"total_disk_size\",\"value\":\"\"},{\"name\":\"total_phy_size\",\"value\":\"\"},{\"name\":\"total_vir_size\",\"value\":\"\"}]}"
+    ],
+    "Queries": 1
+  },
+  "system/rows": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"8.000000\"},{\"name\":\"total_disk_size\",\"value\":\"10000.000000\"},{\"name\":\"total_phy_size\",\"value\":\"4096.000000\"},{\"name\":\"total_vir_size\",\"value\":\"8192.000000\"}]}",
+      "Desc{fqName: \"dmdbms_system_cpu_info\", help: \"Number of CPU cores\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":8}}",
+      "Desc{fqName: \"dmdbms_system_memory_info\", help: \"Total physical memory size in bytes\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":4096}}"
+    ],
+    "Queries": 1
+  },
+  "system/rows failed": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "system/scan": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"8.000000\"},{\"name\":\"total_disk_size\",\"value\":\"10000.000000\"},{\"name\":\"total_phy_size\",\"value\":\"4096.000000\"},{\"name\":\"total_vir_size\",\"value\":\"8192.000000\"}]}",
+      "Desc{fqName: \"dmdbms_system_cpu_info\", help: \"Number of CPU cores\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":8}}",
+      "Desc{fqName: \"dmdbms_system_memory_info\", help: \"Total physical memory size in bytes\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":4096}}"
+    ],
+    "Queries": 1
+  },
+  "system/scan failed": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "system/slow": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"8.000000\"},{\"name\":\"total_disk_size\",\"value\":\"10000.000000\"},{\"name\":\"total_phy_size\",\"value\":\"4096.000000\"},{\"name\":\"total_vir_size\",\"value\":\"8192.000000\"}]}",
+      "Desc{fqName: \"dmdbms_system_cpu_info\", help: \"Number of CPU cores\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":8}}",
+      "Desc{fqName: \"dmdbms_system_memory_info\", help: \"Total physical memory size in bytes\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":4096}}"
+    ],
+    "Queries": 1
+  },
+  "system/timeout": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "tablespace/cache": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_size_act_used_rt_info\", help: \"Tablespace actual used rate information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_free_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_total_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"\"}]}"
+    ],
+    "Queries": 0
+  },
+  "tablespace/cache recovery": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_size_act_used_rt_info\", help: \"Tablespace actual used rate information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_act_used_rt_info\", help: \"Tablespace actual used rate information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_act_used_rt_info\", help: \"Tablespace actual used rate information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":75},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_free_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_free_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_free_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_total_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_total_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_total_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}"
+    ],
+    "Queries": 1
+  },
+  "tablespace/empty": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "tablespace/empty cache": {
+    "Samples": [],
+    "Queries": 0
+  },
+  "tablespace/error": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "tablespace/marshal": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_size_act_used_rt_info\", help: \"Tablespace actual used rate information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":75},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_free_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_total_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":\"NaN\"},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}"
+    ],
+    "Queries": 1
+  },
+  "tablespace/normal": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_size_act_used_rt_info\", help: \"Tablespace actual used rate information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":75},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_free_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_total_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}"
+    ],
+    "Queries": 1
+  },
+  "tablespace/rows": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_size_act_used_rt_info\", help: \"Tablespace actual used rate information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":75},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_free_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_total_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}"
+    ],
+    "Queries": 1
+  },
+  "tablespace/rows failed": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "tablespace/scan": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_size_act_used_rt_info\", help: \"Tablespace actual used rate information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":75},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_free_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_total_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}"
+    ],
+    "Queries": 1
+  },
+  "tablespace/scan failed": {
+    "Samples": [],
+    "Queries": 1
+  },
+  "tablespace/slow": {
+    "Samples": [
+      "Desc{fqName: \"dmdbms_tablespace_size_act_used_rt_info\", help: \"Tablespace actual used rate information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":75},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_free_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":25},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}",
+      "Desc{fqName: \"dmdbms_tablespace_size_total_info\", help: \"Tablespace info information\", constLabels: {}, variableLabels: {tablespace_name}} {\"gauge\":{\"value\":100},\"label\":[{\"name\":\"tablespace_name\",\"value\":\"MAIN\"}]}"
+    ],
+    "Queries": 1
+  },
+  "tablespace/timeout": {
+    "Samples": [],
+    "Queries": 1
+  }
+}

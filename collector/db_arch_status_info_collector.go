@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -37,6 +36,7 @@ type DbArchStatusInfo struct {
 
 // DbArchStatusCollector 负责采集归档总状态和归档目的地状态。
 type DbArchStatusCollector struct {
+	collectorLog
 	db             *sql.DB
 	archStatusDesc *prometheus.Desc
 	archStatusInfo *prometheus.Desc
@@ -73,7 +73,7 @@ func (c *DbArchStatusCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -83,7 +83,7 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	// 先采集本地归档总状态。
 	dbArchStatus, err := c.getDbArchStatus(ctx, c.db)
 	if err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] exec getDbArchStatus func error", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] exec getDbArchStatus func error", c.dataSource), zap.Error(err))
 		setArchMetric(ch, c.archStatusDesc, DB_ARCH_UNKNOWN)
 		return
 	}
@@ -95,7 +95,7 @@ func (c *DbArchStatusCollector) Collect(ch chan<- prometheus.Metric) {
 	if dbArchStatus != DB_ARCH_NO_ENABLE {
 		dbArchStatusInfos, err := c.getDbArchStatusInfo(ctx, c.db)
 		if err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] exec getDbArchStatusInfo func error", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] exec getDbArchStatusInfo func error", c.dataSource), zap.Error(err))
 			return
 		}
 
@@ -158,7 +158,7 @@ func (c *DbArchStatusCollector) getDbArchStatus(ctx context.Context, db *sql.DB)
 		return DB_ARCH_NO_ENABLE, nil
 	}
 
-	logger.Logger.Infof("[%s] Check Database Arch Status Info Success", c.dataSource)
+	c.log().Debugf("[%s] Check Database Arch Status Info Success", c.dataSource)
 	return DB_ARCH_UNKNOWN, nil
 }
 
@@ -167,7 +167,7 @@ func (c *DbArchStatusCollector) getDbArchStatusInfo(ctx context.Context, db *sql
 	var dbArchStatusInfos []DbArchStatusInfo
 	rows, err := db.QueryContext(ctx, config.QueryArchiveSendStatusSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return dbArchStatusInfos, err
 	}
 	defer rows.Close()
@@ -176,14 +176,14 @@ func (c *DbArchStatusCollector) getDbArchStatusInfo(ctx context.Context, db *sql
 		var dbArchStatusInfo DbArchStatusInfo
 		if err := rows.Scan(&dbArchStatusInfo.archStatus, &dbArchStatusInfo.archType,
 			&dbArchStatusInfo.archDest, &dbArchStatusInfo.archSrc); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			continue
 		}
 		dbArchStatusInfos = append(dbArchStatusInfos, dbArchStatusInfo)
 	}
 
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
 
 	return dbArchStatusInfos, nil

@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"sync"
@@ -14,6 +13,7 @@ import (
 
 // DbLogHistoryCollector 负责暴露 redo 日志切换时间相关指标。
 type DbLogHistoryCollector struct {
+	collectorLog
 	db                     *sql.DB
 	dataSource             string
 	redoLastSwitchTimeDesc *prometheus.Desc
@@ -46,7 +46,7 @@ func (c *DbLogHistoryCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect 从 V$LOG_HISTORY 采样并计算指标值。
 func (c *DbLogHistoryCollector) Collect(ch chan<- prometheus.Metric) {
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -63,14 +63,14 @@ func (c *DbLogHistoryCollector) Collect(ch chan<- prometheus.Metric) {
 		if err == sql.ErrNoRows {
 			ch <- prometheus.MustNewConstMetric(c.redoLastSwitchTimeDesc, prometheus.GaugeValue, 0)
 		} else {
-			utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+			utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		}
 		return
 	}
 
 	lastSwitchTime, err := utils.NullStringTimeToUnixSeconds(rectime)
 	if err != nil {
-		logger.Logger.Warnf("[%s] Failed to parse redo log rectime %q: %v", c.dataSource, utils.NullStringToString(rectime), err)
+		c.log().Warnf("[%s] Failed to parse redo log rectime %q: %v", c.dataSource, utils.NullStringToString(rectime), err)
 		lastSwitchTime = 0
 	}
 
@@ -82,13 +82,13 @@ func (c *DbLogHistoryCollector) checkLogHistoryViewExists(ctx context.Context) b
 	c.viewCheckOnce.Do(func() {
 		var count int
 		if err := c.db.QueryRowContext(ctx, config.QueryRedoLogHistoryViewExistsSql).Scan(&count); err != nil {
-			logger.Logger.Warnf("[%s] Failed to check V$LOG_HISTORY view existence: %v", c.dataSource, err)
+			c.log().Warnf("[%s] Failed to check V$LOG_HISTORY view existence: %v", c.dataSource, err)
 			c.viewExists = false
 			return
 		}
 		c.viewExists = count > 0
 		if !c.viewExists {
-			logger.Logger.Infof("[%s] V$LOG_HISTORY view not found, skip redo log history metrics", c.dataSource)
+			c.log().Debugf("[%s] V$LOG_HISTORY view not found, skip redo log history metrics", c.dataSource)
 		}
 	})
 	return c.viewExists

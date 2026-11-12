@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"time"
@@ -12,6 +11,7 @@ import (
 )
 
 type PurgeCollector struct {
+	collectorLog
 	dbPool       *sql.DB
 	purgeObjects *prometheus.Desc
 	dataSource   string // 数据源名称
@@ -45,7 +45,7 @@ func (c *PurgeCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *PurgeCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.dbPool, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.dbPool, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -71,7 +71,7 @@ func (c *PurgeCollector) getPurgeInfos() ([]PurgeInfo, error) {
 
 	rows, err := c.dbPool.QueryContext(ctx, config.QueryPurgeInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return nil, err
 	}
 	defer rows.Close()
@@ -83,14 +83,14 @@ func (c *PurgeCollector) getPurgeInfos() ([]PurgeInfo, error) {
 		var isRunning, purgeForTs sql.NullString
 		err := rows.Scan(&info.ObjNum, &isRunning, &purgeForTs)
 		if err != nil {
-			logger.Logger.Errorf("[%s] Error scanning purge row: %v", c.dataSource, err)
+			c.log().Errorf("[%s] Error scanning purge row: %v", c.dataSource, err)
 			continue
 		}
 		purgeInfos = append(purgeInfos, info)
 	}
 
 	if err = rows.Err(); err != nil {
-		logger.Logger.Errorf("[%s] Error iterating purge rows: %v", c.dataSource, err)
+		c.log().Errorf("[%s] Error iterating purge rows: %v", c.dataSource, err)
 		return nil, err
 	}
 

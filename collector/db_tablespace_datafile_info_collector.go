@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"encoding/json"
@@ -14,6 +13,7 @@ import (
 )
 
 type TableSpaceDateFileInfoCollector struct {
+	collectorLog
 	db         *sql.DB
 	totalDesc  *prometheus.Desc
 	freeDesc   *prometheus.Desc
@@ -58,6 +58,13 @@ func (c *TableSpaceDateFileInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
+	c.CollectWithResult(ch)
+}
+
+func (c *TableSpaceDateFileInfoCollector) CollectWithResult(ch chan<- prometheus.Metric) (result CollectorOutcome) {
+	cacheFallback := false
+	defer func() { result.CacheFallback = cacheFallback }()
+	validRows, readReason := 0, ""
 
 	//保存全局结果对象，可以用来做缓存以及序列化
 	var tablespaceInfos []TableSpaceDateFileInfo
@@ -67,23 +74,25 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	if cachedJSON, found := config.GetFromCache(cacheKey); found {
 		// 将缓存中的 JSON 字符串转换为 TablespaceInfo 切片
 		if err := json.Unmarshal([]byte(cachedJSON), &tablespaceInfos); err != nil {
+			cacheFallback = true
 			// 处理反序列化错误
-			logger.Logger.Error(fmt.Sprintf("[%s] Error unmarshaling cached data", c.dataSource), zap.Error(err))
-			// 反序列化失败，忽略缓存中的数据，继续查询数据库
-			cachedJSON = "" // 清空缓存数据，确保后续不使用过期或损坏的数据
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error unmarshaling cached data", c.dataSource), zap.Error(err))
+			// 沿用现有回退行为：仅清空字符串，切片可能残留部分解析数据。
+			// 因此完整查询后的结果仍为 cache_recovery_unverified，缓存修复另行处理。
+			cachedJSON = ""
 		} else {
-			logger.Logger.Infof("[%s] Use cache TablespaceDateFile data", c.dataSource)
+			c.log().Debugf("[%s] Use cache TablespaceDateFile data", c.dataSource)
 			// 使用缓存的数据
 			for _, info := range tablespaceInfos {
 				ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
 				ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
 			}
-			return
+			return CollectorOutcome{State: OutcomeUnknown, Reason: "cache_unverified", DataOrigin: "cache"}
 		}
 	}
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
-		return
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
+		return databaseOutcome(OutcomeFailed, "datasource_unavailable")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
@@ -91,22 +100,27 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	rows, err := c.db.QueryContext(ctx, config.QueryTablespaceFileSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
-		return
+		outcome := queryFailure(ctx, err)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		return outcome
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var info TableSpaceDateFileInfo
 		if err := rows.Scan(&info.Path, &info.TotalSize, &info.FreeSize, &info.AutoExtend, &info.NextSize, &info.MaxSize); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			readReason = "scan_error"
 			continue
 		}
+		validRows++
 		tablespaceInfos = append(tablespaceInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+		readReason = "rows_error"
+		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 	}
+	result = tableOutcome(validRows, readReason, cacheFallback)
 	// 发送数据到 Prometheus
 	for _, info := range tablespaceInfos {
 		ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
@@ -117,11 +131,12 @@ func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	valueJSON, err := json.Marshal(tablespaceInfos)
 	if err != nil {
 		// 处理序列化错误
-		logger.Logger.Error(fmt.Sprintf("[%s] TablespaceInfo marshal error", c.dataSource), zap.Error(err))
-		return
+		c.log().Desugar().Error(fmt.Sprintf("[%s] TablespaceInfo marshal error", c.dataSource), zap.Error(err))
+		return result
 	}
 	// 将查询结果存入缓存，重用之前定义的cacheKey
 	config.SetCache(cacheKey, string(valueJSON), time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
-	logger.Logger.Infof("[%s] TablespaceFileInfoCollector exec finish", c.dataSource)
+	c.log().Debugf("[%s] TablespaceFileInfoCollector exec finish", c.dataSource)
 
+	return result
 }

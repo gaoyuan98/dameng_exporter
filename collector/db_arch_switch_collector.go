@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -20,6 +19,7 @@ type DbArchLatestCreateTimeInfo struct {
 
 // DbArchSwitchCollector 归档切换监控采集器
 type DbArchSwitchCollector struct {
+	collectorLog
 	db                     *sql.DB
 	archLastCreateTimeDesc *prometheus.Desc // 最新归档创建时间
 	dataSource             string           // 数据源名称
@@ -48,7 +48,7 @@ func (c *DbArchSwitchCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DbArchSwitchCollector) Collect(ch chan<- prometheus.Metric) {
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -69,13 +69,13 @@ func (c *DbArchSwitchCollector) Collect(ch chan<- prometheus.Metric) {
 	// 查询最新归档创建时间
 	dbArchLatestCreateTimeInfo, err := c.getLatestArchCreateTime(ctx, c.db)
 	if err != nil {
-		logger.Logger.Warnf("[%s] Failed to get latest archive create time: %v", c.dataSource, err)
+		c.log().Warnf("[%s] Failed to get latest archive create time: %v", c.dataSource, err)
 		return
 	}
 
 	lastCreateTime, err := utils.NullStringTimeToUnixSeconds(dbArchLatestCreateTimeInfo.createTime)
 	if err != nil {
-		logger.Logger.Warnf("[%s] Failed to parse archive create time %q: %v", c.dataSource, utils.NullStringToString(dbArchLatestCreateTimeInfo.createTime), err)
+		c.log().Warnf("[%s] Failed to parse archive create time %q: %v", c.dataSource, utils.NullStringToString(dbArchLatestCreateTimeInfo.createTime), err)
 		lastCreateTime = 0
 	}
 	// 最新归档创建时间指标
@@ -92,7 +92,7 @@ func (c *DbArchSwitchCollector) isArchiveEnabled(ctx context.Context) bool {
 	query := `SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI'`
 	err := c.db.QueryRowContext(ctx, query).Scan(&paraValue)
 	if err != nil {
-		logger.Logger.Debugf("[%s] Failed to check archive status: %v", c.dataSource, err)
+		c.log().Debugf("[%s] Failed to check archive status: %v", c.dataSource, err)
 		return false
 	}
 
@@ -105,7 +105,7 @@ func (c *DbArchSwitchCollector) isArchiveEnabled(ctx context.Context) bool {
 	query = `SELECT /*+DMDB_CHECK_FLAG*/ CASE arch_status WHEN 'VALID' THEN '1' WHEN 'INVALID' THEN '0' END FROM v$arch_status WHERE arch_type='LOCAL'`
 	err = c.db.QueryRowContext(ctx, query).Scan(&archStatus)
 	if err != nil {
-		logger.Logger.Debugf("[%s] Failed to check archive validity: %v", c.dataSource, err)
+		c.log().Debugf("[%s] Failed to check archive validity: %v", c.dataSource, err)
 		return false
 	}
 
@@ -118,14 +118,14 @@ func (c *DbArchSwitchCollector) getLatestArchCreateTime(ctx context.Context, db 
 
 	rows, err := db.QueryContext(ctx, config.QueryArchiveLatestCreateTimeSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return dbArchLatestCreateTimeInfo, err
 	}
 	defer rows.Close()
 
 	if rows.Next() {
 		if err := rows.Scan(&dbArchLatestCreateTimeInfo.createTime); err != nil {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			return dbArchLatestCreateTimeInfo, err
 		}
 	}

@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"time"
@@ -19,6 +18,7 @@ type RapplyTimeDiff struct {
 
 // 定义收集器结构体
 type DbRapplyTimeDiffCollector struct {
+	collectorLog
 	db           *sql.DB
 	timeDiffDesc *prometheus.Desc
 	dataSource   string // 数据源名称
@@ -47,7 +47,7 @@ func (c *DbRapplyTimeDiffCollector) Describe(ch chan<- *prometheus.Desc) {
 
 func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -57,7 +57,7 @@ func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 	// 执行查询
 	rows, err := c.db.QueryContext(ctx, config.QueryRapplyTimeDiffSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource)
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
 		return
 	}
 	defer rows.Close()
@@ -66,13 +66,13 @@ func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info RapplyTimeDiff
 		if err := rows.Scan(&info.TimeDiff); err != nil {
-			logger.Logger.Error("Error scanning row", zap.Error(err))
+			c.log().Desugar().Error("Error scanning row", zap.Error(err))
 			continue
 		}
 		rapplyTimeDiffs = append(rapplyTimeDiffs, info)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Logger.Error("Error with rows", zap.Error(err))
+		c.log().Desugar().Error("Error with rows", zap.Error(err))
 		return
 	}
 

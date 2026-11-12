@@ -3,7 +3,6 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
-	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
@@ -24,6 +23,7 @@ type DictCacheInfo struct {
 
 // DbDictCacheCollector 数据字典缓存信息收集器
 type DbDictCacheCollector struct {
+	collectorLog
 	db                 *sql.DB
 	dictCacheTotalDesc *prometheus.Desc // 数据字典缓存计数指标（Counter）
 	dataSource         string           // 数据源名称
@@ -71,16 +71,16 @@ func (c *DbDictCacheCollector) checkDictCacheFields(ctx context.Context) []strin
 			query := fmt.Sprintf("SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = '%s'", field)
 			var count int
 			if err := c.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
-				logger.Logger.Warnf("[%s] Failed to check V$DB_CACHE field %s: %v", c.dataSource, field, err)
+				c.log().Warnf("[%s] Failed to check V$DB_CACHE field %s: %v", c.dataSource, field, err)
 				continue
 			}
 			if count > 0 {
 				c.availableFields = append(c.availableFields, field)
-				logger.Logger.Debugf("[%s] V$DB_CACHE field %s exists", c.dataSource, field)
+				c.log().Debugf("[%s] V$DB_CACHE field %s exists", c.dataSource, field)
 			}
 		}
 
-		logger.Logger.Infof("[%s] V$DB_CACHE available fields: %v", c.dataSource, c.availableFields)
+		c.log().Debugf("[%s] V$DB_CACHE available fields: %v", c.dataSource, c.availableFields)
 	})
 	return c.availableFields
 }
@@ -126,7 +126,7 @@ func (c *DbDictCacheCollector) buildDynamicQuery(fields []string) string {
 }
 
 func (c *DbDictCacheCollector) Collect(ch chan<- prometheus.Metric) {
-	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource); err != nil {
+	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
 		return
 	}
 
@@ -136,7 +136,7 @@ func (c *DbDictCacheCollector) Collect(ch chan<- prometheus.Metric) {
 	// 检查可用字段
 	availableFields := c.checkDictCacheFields(ctx)
 	if len(availableFields) == 0 {
-		logger.Logger.Warnf("[%s] No dictionary cache fields available in V$DB_CACHE", c.dataSource)
+		c.log().Warnf("[%s] No dictionary cache fields available in V$DB_CACHE", c.dataSource)
 		return
 	}
 
@@ -146,7 +146,7 @@ func (c *DbDictCacheCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	//	logger.Logger.Debugf("[%s] Executing dictionary cache query: %s", c.dataSource, query)
+	//	c.log().Debugf("[%s] Executing dictionary cache query: %s", c.dataSource, query)
 
 	// 执行查询
 	var dictCacheInfo DictCacheInfo
@@ -158,9 +158,9 @@ func (c *DbDictCacheCollector) Collect(ch chan<- prometheus.Metric) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			logger.Logger.Debugf("[%s] No dictionary cache data available", c.dataSource)
+			c.log().Debugf("[%s] No dictionary cache data available", c.dataSource)
 		} else {
-			logger.Logger.Error(fmt.Sprintf("[%s] Error querying dictionary cache info", c.dataSource), zap.Error(err))
+			c.log().Desugar().Error(fmt.Sprintf("[%s] Error querying dictionary cache info", c.dataSource), zap.Error(err))
 		}
 		return
 	}

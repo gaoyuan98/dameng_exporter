@@ -9,6 +9,10 @@
 #   region: 地域（beijing/shanghai/guangzhou）
 #   cluster: 集群名称（订单集群/用户集群等）
 # ========================================
+# 全局采集诊断
+# 仅控制采集器慢提示，单位毫秒；0 关闭提示，不改变查询或采集超时。
+collectorSlowThresholdMs = 5000
+
 # 单数据源配置示例
 [[datasource]]
 name = "prod_primary_01"
