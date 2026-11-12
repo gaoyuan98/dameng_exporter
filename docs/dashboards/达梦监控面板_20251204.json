@@ -1089,7 +1089,7 @@
             "uid": "${DS_PROMETHEUS}"
           },
           "exemplar": true,
-          "expr": "dmdbms_status_info{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
+          "expr": "dmdbms_arch_status{datasource=~\"${datasource}\",env=~\"${env:.*}\",region=~\"${region:.*}\",cluster=~\"${cluster:.*}\"}",
           "instant": true,
           "interval": "",
           "legendFormat": "",
