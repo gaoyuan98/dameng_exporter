@@ -78,18 +78,14 @@ func (c *TableSpaceInfoCollector) CollectWithResult(ch chan<- prometheus.Metric)
 	// 从缓存中获取数据，使用带数据源的缓存键
 	cacheKey := fmt.Sprintf("%s_%s", dmdbms_tablespace_size_total_info, c.dataSource)
 	if cachedJSON, found := config.GetFromCache(cacheKey); found {
-		// 将缓存中的 JSON 字符串转换为 TablespaceInfo 切片
-		if err := json.Unmarshal([]byte(cachedJSON), &tablespaceInfos); err != nil {
+		var cachedInfos []TableSpaceInfo
+		if err := json.Unmarshal([]byte(cachedJSON), &cachedInfos); err != nil {
 			cacheFallback = true
-			// 处理反序列化错误
 			c.log().Desugar().Error(fmt.Sprintf("[%s] Error unmarshaling cached data", c.dataSource), zap.Error(err))
-			// 沿用现有回退行为：仅清空字符串，切片可能残留部分解析数据。
-			// 因此完整查询后的结果仍为 cache_recovery_unverified，缓存修复另行处理。
-			cachedJSON = ""
 		} else {
 			c.log().Debugf("[%s] Use cache TablespaceInfo data", c.dataSource)
 			// 使用缓存的数据
-			for _, info := range tablespaceInfos {
+			for _, info := range cachedInfos {
 				ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.TablespaceName)
 				ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, info.TablespaceName)
 				ch <- prometheus.MustNewConstMetric(c.actUsedRtDesc, prometheus.GaugeValue, info.ActUsedRt, info.TablespaceName)
@@ -152,6 +148,10 @@ func (c *TableSpaceInfoCollector) CollectWithResult(ch chan<- prometheus.Metric)
 		ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.TablespaceName)
 		ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, info.TablespaceName)
 		ch <- prometheus.MustNewConstMetric(c.actUsedRtDesc, prometheus.GaugeValue, info.ActUsedRt, info.TablespaceName)
+	}
+	// Keep partial rows in this scrape, but never reuse them as a complete cache.
+	if readReason != "" {
+		return result
 	}
 
 	// 将 TablespaceInfo 切片序列化为 JSON 字符串

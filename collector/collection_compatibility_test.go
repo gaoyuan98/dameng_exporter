@@ -206,6 +206,10 @@ func TestBusinessCollectionCompatibility(t *testing.T) {
 	if err := json.Unmarshal(baseline, &want); err != nil {
 		t.Fatal(err)
 	}
+	// These two repaired paths must now match the historical fresh-query samples,
+	// without the partially decoded cache rows. Keep the original JSON as evidence.
+	want["tablespace/cache recovery"] = want["tablespace/normal"]
+	want["datafile/cache recovery"] = want["datafile/normal"]
 	if !reflect.DeepEqual(snapshots, want) {
 		t.Fatalf("business samples or query counts changed\ngot %s\nwant %s", data, baseline)
 	}

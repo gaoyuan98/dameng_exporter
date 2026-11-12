@@ -45,8 +45,8 @@ func queryFailure(ctx context.Context, err error) CollectorOutcome {
 	return databaseOutcome(OutcomeFailed, reason)
 }
 
-// Reading errors take precedence over an unverified cache recovery. Only fresh,
-// valid rows count toward a usable database result.
+// Only fresh, valid rows count toward a usable database result. Cache decoding
+// failures do not taint a subsequent complete query because its rows are isolated.
 func tableOutcome(validRows int, readReason string, cacheFallback bool) CollectorOutcome {
 	result := databaseOutcome(OutcomeSuccess, "")
 	result.CacheFallback = cacheFallback
@@ -56,8 +56,6 @@ func tableOutcome(validRows int, readReason string, cacheFallback bool) Collecto
 		if validRows > 0 {
 			result.State = OutcomePartial
 		}
-	case cacheFallback:
-		result.State, result.Reason = OutcomeUnknown, "cache_recovery_unverified"
 	case validRows == 0:
 		result.State = OutcomeEmpty
 	}

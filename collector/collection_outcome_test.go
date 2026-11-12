@@ -29,7 +29,6 @@ func TestTableOutcomes(t *testing.T) {
 				if f.name == "datafile" {
 					wantSamples = 2
 				}
-				perRow := wantSamples
 				cached := ""
 				wantCalls := 1
 				switch name {
@@ -78,8 +77,7 @@ func TestTableOutcomes(t *testing.T) {
 					wantCalls = 0
 				case "cache recovery":
 					cached = `[{"TotalSize":100},{"TotalSize":"invalid"}]`
-					want.State, want.Reason, want.CacheFallback = OutcomeUnknown, "cache_recovery_unverified", true
-					wantSamples += 2 * perRow
+					want.CacheFallback = true
 				case "marshal":
 					row[2] = math.NaN()
 					want.State = OutcomeSuccess
@@ -93,6 +91,11 @@ func TestTableOutcomes(t *testing.T) {
 				got := c.CollectWithResult(ch)
 				if got != want || len(ch) != wantSamples || *calls != wantCalls {
 					t.Fatalf("outcome %+v samples %d queries %d; want %+v/%d/%d", got, len(ch), *calls, want, wantSamples, wantCalls)
+				}
+				if want.State == OutcomeFailed || want.State == OutcomePartial || name == "marshal" {
+					if _, found := config.GetFromCache(f.cacheKey + "_fixture"); found {
+						t.Fatal("incomplete or unserializable result was cached")
+					}
 				}
 			})
 		}
