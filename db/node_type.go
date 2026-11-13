@@ -72,5 +72,5 @@ func queryCountGreaterThanZero(db *sql.DB, timeoutSeconds int, query string) (bo
 }
 
 func logNodeTypeDetected(dataSource string, nodeType NodeType, cost time.Duration) {
-	logger.Logger.Infof("[%s] 数据库节点类型: %s (耗时 %dms)", dataSource, nodeType, cost.Milliseconds())
+	logger.Logger.Debugf("[%s] 数据库节点类型: %s (耗时 %dms)", dataSource, nodeType, cost.Milliseconds())
 }

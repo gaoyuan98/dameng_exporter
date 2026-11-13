@@ -309,7 +309,7 @@ func TestBlockingSlowCollectorStillWaitsForMetrics(t *testing.T) {
 		t.Fatal("blocking collection did not finish")
 	}
 	round.finish(nil)
-	if len(out) != 1 || logs.FilterMessage("scrape_finished").All()[0].ContextMap()["frontend_timeout_runs"] != int64(0) {
+	if len(out) != 1 || logs.FilterMessage("scrape_finished").All()[0].ContextMap()["frontend_timeout_runs"] != nil {
 		t.Fatal("blocking behavior changed")
 	}
 

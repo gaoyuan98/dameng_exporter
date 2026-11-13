@@ -24,7 +24,7 @@ func TestSummaryCountsIndependentOfLogLevel(t *testing.T) {
 		level.SetLevel(zap.InfoLevel)
 		round.finish(nil)
 		summary := logs.FilterMessage("scrape_finished").All()[0].ContextMap()
-		if summary["runs"] != int64(1000) || summary["issue_runs"] != int64(0) {
+		if summary["runs"] != int64(1000) || summary["issue_runs"] != nil {
 			t.Fatal(summary)
 		}
 		for _, key := range []string{"slowest", "zero_sample_collectors", "unknown_runs", "observed_error_logs"} {

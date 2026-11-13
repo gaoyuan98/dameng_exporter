@@ -13,12 +13,14 @@ import (
 type Logger interface {
 	Debugw(string, ...interface{})
 	Infow(string, ...interface{})
+	Warnw(string, ...interface{})
 	Errorw(string, ...interface{})
 }
 type discard struct{}
 
 func (discard) Debugw(string, ...interface{}) {}
 func (discard) Infow(string, ...interface{})  {}
+func (discard) Warnw(string, ...interface{})  {}
 func (discard) Errorw(string, ...interface{}) {}
 
 // Clock allows snapshots and timers to be tested without wall-clock sleeps.
@@ -52,7 +54,6 @@ type RoundTrace struct {
 	runs                              map[*RunTrace]bool
 	top                               []querySnapshot
 	lastTop                           string
-	reasons                           map[string]bool
 	counts                            counts
 }
 type counts struct{ Runs, Skipped, Calls, Unfinished, Errors, Samples, Dropped, Issues, Timeouts int64 }
@@ -80,7 +81,7 @@ func NewRound(o Options) *RoundTrace {
 	if o.Logger == nil {
 		o.Logger = discard{}
 	}
-	r := &RoundTrace{id: fmt.Sprintf("%s-%d", prefix, sequence.Add(1)), clock: o.Clock, log: o.Logger, threshold: o.Threshold, stop: make(chan struct{}), observed: make(chan struct{}), top: make([]querySnapshot, 0, 5), active: map[*QueryTrace]bool{}, runs: map[*RunTrace]bool{}, reasons: map[string]bool{}}
+	r := &RoundTrace{id: fmt.Sprintf("%s-%d", prefix, sequence.Add(1)), clock: o.Clock, log: o.Logger, threshold: o.Threshold, stop: make(chan struct{}), observed: make(chan struct{}), top: make([]querySnapshot, 0, 5), active: map[*QueryTrace]bool{}, runs: map[*RunTrace]bool{}}
 	r.debug = true
 	if enabled, ok := o.Logger.(interface{ DebugEnabled() bool }); ok {
 		r.debug = enabled.DebugEnabled()
@@ -89,7 +90,7 @@ func NewRound(o Options) *RoundTrace {
 		r.debug = false
 	}
 	r.start = r.clock.Now()
-	r.log.Debugw("scrape_started", "scrape_id", r.id, "phase", "collection")
+	r.log.Debugw("scrape_started", "scrape_id", r.id)
 	if r.threshold > 0 {
 		var timer <-chan time.Time
 		stopTimer := func() {}
@@ -122,20 +123,25 @@ func (r *RoundTrace) NewRun(scope, source, name, mode string, budget time.Durati
 	r.runs[u] = true
 	r.counts.Runs++
 	f := u.fieldsLocked()
+	if mode == "fast" {
+		f = append(f, "mode", mode, "timeout_ms", budget.Milliseconds(), "timeout_scope", "worker")
+	}
 	r.mu.Unlock()
 	r.log.Debugw("collector_started", f...)
 	return u
 }
 func (u *RunTrace) fieldsLocked() []interface{} {
-	phase := "collection"
+	f := []interface{}{"scrape_id", u.round.id, "run_id", u.id, "collector", u.collector}
+	if u.source != "" {
+		f = append(f, "datasource", u.source)
+	}
+	if u.scope == "exporter" {
+		f = append(f, "scope", u.scope)
+	}
 	if u.detached {
-		phase = "background"
+		f = append(f, "phase", "background")
 	}
-	timeoutScope := "none"
-	if u.mode == "fast" && u.budget > 0 {
-		timeoutScope = "worker"
-	}
-	return []interface{}{"scrape_id", u.round.id, "run_id", u.id, "phase", phase, "scope", u.scope, "datasource", u.source, "collector", u.collector, "mode", u.mode, "timeout_ms", u.budget.Milliseconds(), "timeout_scope", timeoutScope}
+	return f
 }
 func (u *RunTrace) Fields() []interface{} {
 	r := u.round
@@ -203,9 +209,6 @@ func (u *RunTrace) Panic(value interface{}, stack string) {
 	u.issueLocked()
 	f := u.fieldsLocked()
 	bg := u.detached
-	if !bg && !r.finished {
-		r.reasons["panic"] = true
-	}
 	r.mu.Unlock()
 	r.log.Errorw("collector_panic", append(f, "panic", fmt.Sprint(value), "stack", stack)...)
 	if !bg {
@@ -223,7 +226,6 @@ func (u *RunTrace) Detach() {
 	now := r.clock.Now()
 	r.counts.Timeouts++
 	u.cutoffAt = now
-	r.reasons["frontend_timeout"] = true
 	for q := range r.active {
 		if q.run == u {
 			s := q.snapshotLocked(now)
@@ -233,9 +235,12 @@ func (u *RunTrace) Detach() {
 			r.counts.Unfinished++
 		}
 	}
+	f := u.fieldsLocked()
 	u.detached = true
 	delete(r.runs, u)
+	f = append(f, "mode", u.mode, "timeout_ms", u.budget.Milliseconds(), "timeout_scope", "worker", "foreground_cutoff_at", now.Format(time.RFC3339Nano))
 	r.mu.Unlock()
+	r.log.Warnw("collector_timeout", f...)
 	r.Trigger("frontend_timeout")
 }
 func (u *RunTrace) Finish(samples, dropped int64, skipped bool) {
@@ -264,22 +269,35 @@ func (u *RunTrace) finish(samples, dropped int64, skipped bool, skipReason strin
 	if skipped {
 		r.counts.Skipped++
 	}
-	f := u.fieldsLocked()
-	state := "completed"
+	// This is the foreground completion even when its worker was detached.
+	f := []interface{}{"scrape_id", r.id, "run_id", u.id, "collector", u.collector}
+	if u.source != "" {
+		f = append(f, "datasource", u.source)
+	}
+	if u.scope == "exporter" {
+		f = append(f, "scope", u.scope)
+	}
+	f = append(f, "sql_calls", u.calls, "duration_ms", r.clock.Now().Sub(u.start).Milliseconds(), "samples", samples)
+	if u.errors > 0 {
+		f = append(f, "sql_error_calls", u.errors)
+	}
+	if dropped > 0 {
+		f = append(f, "dropped_samples", dropped)
+	}
+	if u.issue {
+		f = append(f, "issue", true)
+	}
+	if u.origin != "none" {
+		f = append(f, "data_origin", u.origin)
+	}
+	if u.fallback {
+		f = append(f, "cache_fallback", true)
+	}
 	if u.detached {
-		state = "detached"
+		f = append(f, "run_state", "detached", "foreground_cutoff_at", u.cutoffAt.Format(time.RFC3339Nano), "forwarding_finished_at", r.clock.Now().Format(time.RFC3339Nano))
 	}
 	if skipped {
-		state = "skipped"
-	}
-	f[5] = "collection"
-	f = append(f, "sql_calls", u.calls, "sql_error_calls", u.errors, "forwarding_finished_at", r.clock.Now().Format(time.RFC3339Nano))
-	if !u.cutoffAt.IsZero() {
-		f = append(f, "foreground_cutoff_at", u.cutoffAt.Format(time.RFC3339Nano))
-	}
-	f = append(f, "run_state", state, "duration_ms", r.clock.Now().Sub(u.start).Milliseconds(), "samples", samples, "dropped_samples", dropped, "skipped", skipped, "issue", u.issue, "data_origin", u.origin, "cache_fallback", u.fallback)
-	if skipped {
-		f = append(f, "skip_reason", skipReason)
+		f = append(f, "run_state", "skipped", "skip_reason", skipReason)
 	}
 	r.mu.Unlock()
 	r.log.Debugw("collector_finished", f...)
@@ -288,7 +306,10 @@ func (u *RunTrace) BackgroundFinished() {
 	r := u.round
 	r.mu.Lock()
 	f := u.fieldsLocked()
-	f = append(f, "run_state", "completed", "background_duration_ms", r.clock.Now().Sub(u.start).Milliseconds(), "background_sql_calls", u.backgroundCalls, "background_sql_error_calls", u.backgroundErrors)
+	f = append(f, "background_duration_ms", r.clock.Now().Sub(u.start).Milliseconds(), "background_sql_calls", u.backgroundCalls)
+	if u.backgroundErrors > 0 {
+		f = append(f, "background_sql_error_calls", u.backgroundErrors)
+	}
 	r.mu.Unlock()
 	r.log.Infow("collector_background_finished", f...)
 }
@@ -326,9 +347,11 @@ func sortTop(s []querySnapshot) {
 }
 
 type snapshot struct {
-	top    []querySnapshot
-	fields []interface{}
-	at     time.Time
+	top                   []querySnapshot
+	counts                counts
+	activeRuns, activeSQL int
+	stages                string
+	at                    time.Time
 }
 
 func (r *RoundTrace) snapshotLocked() snapshot {
@@ -337,8 +360,8 @@ func (r *RoundTrace) snapshotLocked() snapshot {
 	for q := range r.active {
 		s.top = append(s.top, q.snapshotLocked(now))
 	}
-	c := r.counts
-	s.fields = []interface{}{"scrape_id", r.id, "phase", "collection", "snapshot_at", now.Format(time.RFC3339Nano), "collection_duration_ms", now.Sub(r.start).Milliseconds(), "runs", c.Runs, "skipped_runs", c.Skipped, "sql_calls", c.Calls, "sql_unfinished_at_cutoff", c.Unfinished, "sql_error_calls", c.Errors, "samples", c.Samples, "dropped_samples", c.Dropped, "issue_runs", c.Issues, "frontend_timeout_runs", c.Timeouts, "runs_active", len(r.runs), "sql_active", len(r.active), "threshold_ms", r.threshold.Milliseconds()}
+	s.counts = r.counts
+	s.activeRuns, s.activeSQL = len(r.runs), len(r.active)
 	stages := map[string]int{}
 	for u := range r.runs {
 		for _, v := range u.stages {
@@ -350,8 +373,23 @@ func (r *RoundTrace) snapshotLocked() snapshot {
 		parts = append(parts, fmt.Sprintf("%s:%d", k, v))
 	}
 	sort.Strings(parts)
-	s.fields = append(s.fields, "active_stages", strings.Join(parts, ","))
+	s.stages = strings.Join(parts, ",")
 	return s
+}
+func (s snapshot) summaryFields(id string, start time.Time) []interface{} {
+	c := s.counts
+	f := []interface{}{"scrape_id", id, "collection_duration_ms", s.at.Sub(start).Milliseconds(), "runs", c.Runs, "sql_calls", c.Calls, "samples", c.Samples}
+	for _, item := range []struct {
+		key   string
+		value int64
+	}{
+		{"skipped_runs", c.Skipped}, {"sql_unfinished_at_cutoff", c.Unfinished}, {"sql_error_calls", c.Errors}, {"dropped_samples", c.Dropped}, {"issue_runs", c.Issues}, {"frontend_timeout_runs", c.Timeouts},
+	} {
+		if item.value > 0 {
+			f = append(f, item.key, item.value)
+		}
+	}
+	return f
 }
 func prepare(s *snapshot) {
 	sortTop(s.top)
@@ -374,13 +412,11 @@ func (r *RoundTrace) Trigger(reason string) {
 		r.mu.Unlock()
 		return
 	}
-	r.reasons[reason] = true
 	// Errors remain diagnostic facts, but only round duration permits a snapshot.
 	if r.triggered || r.threshold <= 0 || r.clock.Now().Sub(r.start) < r.threshold {
 		r.mu.Unlock()
 		return
 	}
-	r.reasons["duration_threshold"] = true
 	r.triggered = true
 	r.snapshotID++
 	id := r.snapshotID
@@ -388,13 +424,20 @@ func (r *RoundTrace) Trigger(reason string) {
 	r.mu.Unlock()
 	prepare(&s)
 	r.lastTop = topKey(s.top)
-	r.log.Infow("scrape_diagnostic", append(s.fields, "snapshot_id", id, "trigger", reason, "top_count", len(s.top))...)
+	f := s.summaryFields(r.id, r.start)
+	f = append(f, "snapshot_id", id, "snapshot_at", s.at.Format(time.RFC3339Nano), "trigger", reason, "threshold_ms", r.threshold.Milliseconds(), "runs_active", s.activeRuns, "sql_active", s.activeSQL)
+	if s.stages != "" {
+		f = append(f, "active_stages", s.stages)
+	}
+	if len(s.top) > 0 {
+		f = append(f, "top_emitted_count", len(s.top))
+	}
+	r.log.Infow("scrape_diagnostic", f...)
 	r.emitTop(s.top, id)
 }
 func (r *RoundTrace) emitTop(top []querySnapshot, id uint64) {
 	for i, q := range top {
-		f := q.fields(false)
-		ordered := append([]interface{}{"scrape_id", r.id, "snapshot_id", id, "rank", i + 1}, f[2:]...)
+		ordered := append(q.topFields(), "snapshot_id", id, "rank", i+1)
 		r.log.Infow("sql_top", ordered...)
 	}
 }
@@ -409,38 +452,27 @@ func (r *RoundTrace) Finish(unavailable []string) {
 	s := r.snapshotLocked()
 	r.finished = true
 	close(r.stop)
-	reasons := make([]string, 0, len(r.reasons))
-	for k := range r.reasons {
-		reasons = append(reasons, k)
-	}
 	triggered := r.triggered
 	r.mu.Unlock()
 	prepare(&s)
 	slow := r.threshold > 0 && s.at.Sub(r.start) >= r.threshold
-	abnormal := false
-	for i := 0; i < len(s.fields); i += 2 {
-		if s.fields[i] == "issue_runs" {
-			abnormal = s.fields[i+1].(int64) > 0
-		}
-	}
 	refresh := slow && (!triggered || r.lastTop != topKey(s.top))
 	if refresh {
 		r.snapshotID++
-	}
-	sort.Strings(reasons)
-	if slow && !triggered {
-		reasons = append(reasons, "duration_threshold")
-	}
-	if abnormal {
-		reasons = append(reasons, "unexpected_issue")
 	}
 	unique := map[string]bool{}
 	for _, v := range unavailable {
 		unique[v] = true
 	}
-	f := append(s.fields, "unavailable_datasource_count", len(unique), "diagnostic_reasons", strings.Join(reasons, ","), "last_top_snapshot_id", r.snapshotID, "top_refreshed", refresh, "top_count", len(s.top))
-	if refresh {
+	f := s.summaryFields(r.id, r.start)
+	if len(unique) > 0 {
+		f = append(f, "unavailable_datasource_count", len(unique))
+	}
+	if r.snapshotID > 0 {
 		f = append(f, "snapshot_id", r.snapshotID)
+	}
+	if refresh && len(s.top) > 0 {
+		f = append(f, "top_emitted_count", len(s.top))
 	}
 	r.log.Infow("scrape_finished", f...)
 	if refresh {
@@ -450,7 +482,6 @@ func (r *RoundTrace) Finish(unavailable []string) {
 	r.top = nil
 	r.active = nil
 	r.runs = nil
-	r.reasons = nil
 	r.lastTop = ""
 	r.mu.Unlock()
 	r.output.Unlock()

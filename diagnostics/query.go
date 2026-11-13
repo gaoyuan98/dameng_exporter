@@ -43,6 +43,7 @@ type querySnapshot struct {
 	Rows                                                                                                                                   *int64
 	API                                                                                                                                    [8]time.Duration
 	RowAPI                                                                                                                                 bool
+	Observed                                                                                                                               uint8
 }
 
 var apiNames = [8]string{"query", "next", "scan", "err", "close", "columns", "column_types", "row_scan"}
@@ -72,39 +73,96 @@ func (q *QueryTrace) snapshotLocked(now time.Time) querySnapshot {
 	}
 	return s
 }
-func (s querySnapshot) fields(full bool) []interface{} {
+
+// SQL event builders deliberately keep lifecycle snapshots separate from logs.
+func (s querySnapshot) contextFields() []interface{} {
+	f := []interface{}{"scrape_id", s.Scrape, "run_id", s.Run, "datasource", s.Source, "collector", s.Collector, "query_id", s.ID}
+	if s.Phase == "background" {
+		f = append(f, "phase", s.Phase)
+	}
+	if s.Purpose != "" {
+		f = append(f, "purpose", s.Purpose)
+	}
+	if s.Name != "" {
+		f = append(f, "query_name", s.Name)
+	}
+	if s.Index > 0 {
+		f = append(f, "query_index", s.Index)
+	}
+	if s.ContextState != "active" {
+		f = append(f, "context_state_at_start", s.ContextState)
+	}
+	return f
+}
+func (s querySnapshot) budgetFields(f []interface{}) []interface{} {
 	var budget interface{}
 	if s.Budget != nil {
 		budget = *s.Budget
 	}
-	f := []interface{}{"scrape_id", s.Scrape, "run_id", s.Run, "phase", s.Phase, "datasource", s.Source, "collector", s.Collector, "query_id", s.ID, "state", s.State, "result", s.Result, "sql_phase", s.SQLPhase, "sql_duration_ms", s.Duration.Milliseconds(), "sql_wall_ms", s.Wall.Milliseconds(), "start_offset_ms", s.Offset.Milliseconds(), "budget_remaining_ms_at_start", budget, "sql", s.SQL}
-	if s.Purpose != "" {
-		f = append(f, "purpose", s.Purpose)
+	return append(f, "budget_remaining_ms_at_start", budget)
+}
+func (s querySnapshot) readFields(f []interface{}) []interface{} {
+	var rows interface{}
+	if s.Rows != nil {
+		rows = *s.Rows
 	}
-	if s.Index > 0 {
-		f = append(f, "query_name", s.Name, "query_index", s.Index)
+	f = append(f, "read_scope", s.ReadScope, "rows_read", rows)
+	if s.ReadState != "complete" {
+		f = append(f, "read_state", s.ReadState)
+	}
+	return f
+}
+func (s querySnapshot) apiFields(f []interface{}) []interface{} {
+	api := make(map[string]int64)
+	for i, name := range apiNames {
+		if s.Observed&(1<<i) != 0 {
+			api[name] = s.API[i].Milliseconds()
+		}
+	}
+	if len(api) > 0 {
+		f = append(f, "api_ms", api)
+	}
+	return f
+}
+func (s querySnapshot) startedFields() []interface{} {
+	return append(s.budgetFields(s.contextFields()), "sql", s.SQL)
+}
+func (s querySnapshot) finishedFields() []interface{} {
+	f := append(s.contextFields(), "result", s.Result, "sql_duration_ms", s.Duration.Milliseconds())
+	if s.Wall.Milliseconds() != s.Duration.Milliseconds() {
+		f = append(f, "sql_wall_ms", s.Wall.Milliseconds())
 	}
 	if s.ErrorStage != "" {
 		f = append(f, "error_stage", s.ErrorStage)
 	}
-	if full || s.ContextState != "active" {
-		f = append(f, "context_state_at_start", s.ContextState)
+	return s.apiFields(s.readFields(f))
+}
+func (s querySnapshot) errorFields(err error, stage string, expired bool) []interface{} {
+	if stage == "query" {
+		s.ReadState = "not_started"
 	}
-	if full {
-		var rows interface{}
-		if s.Rows != nil {
-			rows = *s.Rows
-		}
-		f = append(f, "query_sequence", s.Sequence, "read_state", s.ReadState, "read_scope", s.ReadScope, "rows_read", rows)
-		for i, n := range apiNames {
-			var value interface{} = s.API[i].Milliseconds()
-			if s.RowAPI && (n == "next" || n == "scan" || n == "close") {
-				value = nil
-			}
-			f = append(f, n+"_ms", value)
-		}
+	f := append(s.budgetFields(s.contextFields()), "error", err, "error_stage", s.ErrorStage, "sql_duration_ms", s.Duration.Milliseconds(), "sql", s.SQL)
+	if stage != s.ErrorStage {
+		f = append(f, "error_stage_observed", stage)
 	}
-	return f
+	if expired {
+		f = append(f, "context_expired", true)
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		f = append(f, "timeout", true)
+	}
+	if expired || errors.Is(err, context.DeadlineExceeded) {
+		f = append(f, "sql_wall_ms", s.Wall.Milliseconds(), "start_offset_ms", s.Offset.Milliseconds())
+		f = s.apiFields(f)
+	}
+	return s.readFields(f)
+}
+func (s querySnapshot) topFields() []interface{} {
+	f := append(s.budgetFields(s.contextFields()), "state", s.State, "result", s.Result, "sql_phase", s.SQLPhase, "sql_duration_ms", s.Duration.Milliseconds(), "sql_wall_ms", s.Wall.Milliseconds(), "start_offset_ms", s.Offset.Milliseconds(), "sql", s.SQL)
+	if s.ErrorStage != "" {
+		f = append(f, "error_stage", s.ErrorStage)
+	}
+	return s.apiFields(s.readFields(f))
 }
 func (u *RunTrace) begin(ctx context.Context, sqlText string, row bool) *QueryTrace {
 	r := u.round
@@ -141,13 +199,13 @@ func (u *RunTrace) begin(ctx context.Context, sqlText string, row bool) *QueryTr
 	} else {
 		u.backgroundCalls++
 	}
-	var f []interface{}
+	var snapshot querySnapshot
 	if r.debug {
-		f = q.snapshotLocked(now).fields(true)
+		snapshot = q.snapshotLocked(now)
 	}
 	r.mu.Unlock()
 	if r.debug {
-		r.log.Debugw("sql_started", f...)
+		r.log.Debugw("sql_started", snapshot.startedFields()...)
 	}
 	q.enter("query")
 	return q
@@ -157,6 +215,7 @@ func (q *QueryTrace) enter(phase string) {
 	r.mu.Lock()
 	if q.data.State == "running" {
 		q.data.SQLPhase = phase
+		q.data.Observed |= 1 << apiIndex(phase)
 		q.previousStage = q.run.stages["worker"]
 		runStage := "read_rows"
 		if phase == "query" {
@@ -229,14 +288,11 @@ func (q *QueryTrace) observeFailure(err error, stage string, countRepeat bool) {
 			q.run.backgroundErrors++
 		}
 	}
-	f := q.snapshotLocked(r.clock.Now()).fields(true)
-	f = append(f, "error", err, "error_stage_observed", stage, "error_repeat_count", repeat-1, "context_expired", errors.Is(q.ctx.Err(), context.DeadlineExceeded), "timeout", errors.Is(err, context.DeadlineExceeded))
-	bg := q.run.detached
-	if !expected && !bg && !r.finished && errors.Is(err, context.DeadlineExceeded) {
-		r.reasons["sql_timeout"] = true
-	}
+	snapshot := q.snapshotLocked(r.clock.Now())
+	expired := errors.Is(q.ctx.Err(), context.DeadlineExceeded)
 	r.mu.Unlock()
 	if repeat == 1 {
+		f := snapshot.errorFields(err, stage, expired)
 		if expected {
 			r.log.Debugw("sql_probe_expected", f...)
 		} else {
@@ -279,9 +335,10 @@ func (q *QueryTrace) finish() {
 	s := q.snapshotLocked(q.data.End)
 	var f []interface{}
 	if r.debug {
-		f = s.fields(true)
 		for stage, n := range q.seenErrors {
-			f = append(f, stage+"_error_repeats", n-1)
+			if n > 1 {
+				f = append(f, stage+"_error_repeats", n-1)
+			}
 		}
 	}
 	if r.active[q] {
@@ -290,7 +347,7 @@ func (q *QueryTrace) finish() {
 	}
 	r.mu.Unlock()
 	if r.debug {
-		r.log.Debugw("sql_finished", f...)
+		r.log.Debugw("sql_finished", append(s.finishedFields(), f...)...)
 	}
 }
 func (q *QueryTrace) read(update func(*querySnapshot)) {

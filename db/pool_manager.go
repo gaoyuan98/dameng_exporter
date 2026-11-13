@@ -175,14 +175,14 @@ func (m *DBPoolManager) InitPools() error {
 		dsConfig := &m.config.DataSources[i]
 
 		if !dsConfig.Enabled {
-			m.logger.Info("数据源被禁用，跳过初始化",
+			m.logger.Desugar().Debug("数据源被禁用，跳过初始化",
 				zap.String("datasource", dsConfig.Name))
 			continue
 		}
 
 		// 运行时进行名称重复检查
 		if nameMap[dsConfig.Name] {
-			m.logger.Error("检测到重复的数据源名称",
+			m.logger.Desugar().Error("检测到重复的数据源名称",
 				zap.String("datasource", dsConfig.Name))
 			return fmt.Errorf("数据源名称重复: %s", dsConfig.Name)
 		}
@@ -195,7 +195,7 @@ func (m *DBPoolManager) InitPools() error {
 		}
 
 		if existingName, exists := hostMap[hostAddr]; exists {
-			m.logger.Error("检测到重复的数据源地址",
+			m.logger.Desugar().Error("检测到重复的数据源地址",
 				zap.String("host", hostAddr),
 				zap.String("existing_datasource", existingName),
 				zap.String("duplicate_datasource", dsConfig.Name))
@@ -208,7 +208,7 @@ func (m *DBPoolManager) InitPools() error {
 		pool, err := m.createPool(dsConfig)
 		if err != nil {
 
-			m.logger.Error("创建数据源连接池失败",
+			m.logger.Desugar().Error("创建数据源连接池失败",
 				zap.String("datasource", dsConfig.Name),
 				zap.Error(err))
 
@@ -220,14 +220,12 @@ func (m *DBPoolManager) InitPools() error {
 		// 初始化成功：放入健康列表供业务使用
 		m.pools[dsConfig.Name] = pool
 
-		m.logger.Info("成功创建数据源连接池",
-			zap.String("datasource", dsConfig.Name),
-			zap.String("host", dsConfig.DbHost))
+		m.logger.Infow("datasource_ready", "datasource", dsConfig.Name, "node_type", pool.GetNodeType())
 	}
 
 	// 步骤4：若全部失败，提示依赖后台自动恢复
 	if len(m.pools) == 0 {
-		m.logger.Warn("初始化阶段没有任何数据源连接成功，将依赖后台恢复机制")
+		m.logger.Desugar().Warn("初始化阶段没有任何数据源连接成功，将依赖后台恢复机制")
 	}
 
 	// 步骤5：更新全局实例并在解锁后启动后台监控
@@ -514,7 +512,7 @@ func (m *DBPoolManager) startBackgroundMonitor() {
 			healthPingEnabled = m.config.IsHealthPingEnabled()
 		}
 		if !healthPingEnabled {
-			m.logger.Info("已禁用周期性健康检查，仅在查询报错时触发降级与自动重试")
+			m.logger.Desugar().Info("已禁用周期性健康检查，仅在查询报错时触发降级与自动重试")
 		}
 
 		interval := time.Duration(retrySeconds) * time.Second
@@ -569,7 +567,7 @@ func (m *DBPoolManager) retryFailedDataSources() {
 		// 针对失败数据源尝试重新创建连接
 		pool, err := m.createPool(cfg)
 		if err != nil {
-			m.logger.Warn("重试建立数据源连接失败",
+			m.logger.Desugar().Warn("重试建立数据源连接失败",
 				zap.String("datasource", cfg.Name),
 				zap.Error(err))
 			m.noteFailedDataSource(cfg, err)
@@ -578,14 +576,14 @@ func (m *DBPoolManager) retryFailedDataSources() {
 
 		// 恢复成功后转入健康列表
 		if m.promoteToHealthy(cfg, pool) {
-			m.logger.Info("数据源连接恢复成功，已移入健康列表",
+			m.logger.Desugar().Info("数据源连接恢复成功，已移入健康列表",
 				zap.String("datasource", cfg.Name))
 		} else {
 			// 转移失败时关闭刚建立的多余连接
 			// 如果未能加入健康列表，需要释放刚刚创建的连接
 			if pool.DB != nil {
 				if closeErr := pool.DB.Close(); closeErr != nil {
-					m.logger.Error("重试后关闭多余连接失败",
+					m.logger.Desugar().Error("重试后关闭多余连接失败",
 						zap.String("datasource", cfg.Name),
 						zap.Error(closeErr))
 				}
@@ -608,7 +606,7 @@ func (m *DBPoolManager) promoteToHealthy(cfg *config.DataSourceConfig, pool *Dat
 	if existing := m.pools[cfg.Name]; existing != nil {
 		if existing.DB != nil {
 			if err := existing.DB.Close(); err != nil {
-				m.logger.Error("提升健康状态前关闭旧连接失败",
+				m.logger.Desugar().Error("提升健康状态前关闭旧连接失败",
 					zap.String("datasource", cfg.Name),
 					zap.Error(err))
 			}
@@ -650,7 +648,7 @@ func (m *DBPoolManager) checkHealthyPools() {
 		}
 
 		// 检测失败后执行降级流程
-		m.logger.Warn("健康数据源心跳检测失败，已转移至失败列表",
+		m.logger.Desugar().Warn("健康数据源心跳检测失败，已转移至失败列表",
 			zap.String("datasource", pool.Name),
 			zap.Error(err))
 		pool.markUnhealthy(time.Now())
@@ -825,7 +823,7 @@ func (m *DBPoolManager) Close() {
 	for name, pool := range m.pools {
 		if pool.DB != nil {
 			if err := pool.DB.Close(); err != nil {
-				m.logger.Error("关闭数据源连接池失败",
+				m.logger.Desugar().Error("关闭数据源连接池失败",
 					zap.String("datasource", name),
 					zap.Error(err))
 			}

@@ -69,7 +69,7 @@ func TestFastCountsAndPreflight(t *testing.T) {
 		collectWithLogging(make(chan prometheus.Metric, buffer), testLogPool(t, "fast", nil), c, round, true, 0)
 		round.finish(nil)
 		f := logs.FilterMessage("scrape_finished").All()[buffer/20].ContextMap()
-		if f["samples"] != int64(buffer) || f["dropped_samples"] != int64(20-buffer) {
+		if f["samples"] != int64(buffer) || optionalCount(f, "dropped_samples") != int64(20-buffer) {
 			t.Fatal(f)
 		}
 	}
@@ -96,7 +96,10 @@ func TestCustomCollectionKeepsBlockingInGlobalFastMode(t *testing.T) {
 	adapter.collectPool(make(chan prometheus.Metric, 1), pool, &config.CustomConfig{}, round)
 	round.finish(nil)
 	f := logs.FilterMessage("collector_finished").All()[0].ContextMap()
-	if f["mode"] != "blocking" || f["timeout_ms"] != int64(0) {
+	start := logs.FilterMessage("collector_started").All()[0].ContextMap()
+	if start["mode"] != nil || start["timeout_ms"] != nil || f["mode"] != nil || f["timeout_ms"] != nil || f["run_state"] != nil || logs.FilterMessage("collector_timeout").Len() != 0 {
 		t.Fatal(f)
 	}
 }
+
+func optionalCount(f map[string]interface{}, key string) int64 { n, _ := f[key].(int64); return n }

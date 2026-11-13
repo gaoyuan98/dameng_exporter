@@ -11,37 +11,20 @@ import (
 	"time"
 )
 
-func TestDiagnosticEncodingIsSingleLineAndReversible(t *testing.T) {
-	for _, console := range []bool{false, true} {
-		t.Run(map[bool]string{true: "console", false: "file"}[console], func(t *testing.T) {
-			var out bytes.Buffer
-			cfg := encoderConfig(console)
-			var enc zapcore.Encoder = zapcore.NewJSONEncoder(cfg)
-			if console {
-				enc = zapcore.NewConsoleEncoder(cfg)
-			}
-			l := zap.New(zapcore.NewCore(enc, zapcore.AddSync(&out), zap.DebugLevel))
-			query := "select 'quote\\value\"' -- comment\n\t/* multiline\n SQL */ " + strings.Repeat("x", 100000)
-			l.Sugar().Errorw("sql_error", "sql", query)
-			if strings.Count(out.String(), "\n") != 1 || (!console && strings.Contains(out.String(), "\x1b[")) || strings.Contains(out.String(), "stacktrace") {
-				t.Fatal("multiline, color or implicit stack in output")
-			}
-			text := out.String()
-			if console {
-				start := strings.Index(text, "{")
-				if start < 0 {
-					t.Fatal(text[:100])
-				}
-				text = text[start:]
-			}
-			var data map[string]interface{}
-			if err := json.Unmarshal([]byte(text), &data); err != nil {
-				t.Fatal(err)
-			}
-			if data["sql"] != query {
-				t.Fatal("SQL changed or truncated")
-			}
-		})
+func TestFileEncodingIsSingleLineAndReversible(t *testing.T) {
+	var out bytes.Buffer
+	l := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig(false)), zapcore.AddSync(&out), zap.DebugLevel))
+	query := "select 'quote\\value\"' -- comment\n\t/* multiline\n SQL */ " + strings.Repeat("x", 100000)
+	l.Sugar().Errorw("sql_error", "sql", query)
+	if strings.Count(out.String(), "\n") != 1 || strings.Contains(out.String(), "\x1b[") || strings.Contains(out.String(), "stacktrace") {
+		t.Fatal("multiline, color or implicit stack in output")
+	}
+	var data map[string]interface{}
+	if err := json.Unmarshal(out.Bytes(), &data); err != nil {
+		t.Fatal(err)
+	}
+	if data["sql"] != query {
+		t.Fatal("SQL changed or truncated")
 	}
 }
 func TestTimestampHasMilliseconds(t *testing.T) {

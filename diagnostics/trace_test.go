@@ -10,7 +10,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
 	"io"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -98,6 +97,12 @@ func event(t *testing.T, l *observer.ObservedLogs, name string) map[string]inter
 		t.Fatalf("missing event %s", name)
 	}
 	return all[len(all)-1].ContextMap()
+}
+func logCount(fields map[string]interface{}, key string) int64 {
+	if fields[key] == nil {
+		return 0
+	}
+	return fields[key].(int64)
 }
 func wait(t *testing.T, c <-chan struct{}) {
 	t.Helper()
@@ -235,7 +240,10 @@ func TestRowsAPIStagesAndCloseLifetime(t *testing.T) {
 			if f["sql_duration_ms"] != int64(3000) {
 				t.Fatal(f)
 			}
-			if stage == "row_scan" && (f["scan_ms"] != nil || f["close_ms"] != nil || f["row_scan_ms"] != int64(3000)) {
+			api := f["api_ms"].(map[string]int64)
+			_, scanObserved := api["scan"]
+			_, closeObserved := api["close"]
+			if stage == "row_scan" && (scanObserved || closeObserved || api["row_scan"] != int64(3000)) {
 				t.Fatal(f)
 			}
 		})
@@ -286,7 +294,7 @@ func TestReadErrorsKeepOriginalChain(t *testing.T) {
 			}
 			rows.Close()
 			q := event(t, logs, "sql_finished")
-			if logs.FilterMessage("sql_error").Len() != 1 || q["result"] != "error" || q["err_error_repeats"] != int64(max(0, calls-1)) {
+			if logs.FilterMessage("sql_error").Len() != 1 || q["result"] != "error" || logCount(q, "err_error_repeats") != int64(max(0, calls-1)) {
 				t.Fatal(logs.All())
 			}
 		})
@@ -319,7 +327,7 @@ func TestRowEmptyProbeAndPermission(t *testing.T) {
 			if kind == "probe" || kind == "empty_allowed" {
 				want = 0
 			}
-			if f["sql_error_calls"] != want || int64(logs.FilterMessage("sql_error").Len()) != want {
+			if logCount(f, "sql_error_calls") != want || int64(logs.FilterMessage("sql_error").Len()) != want {
 				t.Fatal(f)
 			}
 			if kind == "empty_required" && event(t, logs, "sql_finished")["rows_read"] != nil {
@@ -359,7 +367,7 @@ func TestDetachPerRunFreezesForeground(t *testing.T) {
 	b.Finish(0, 0, false)
 	r.Finish(nil)
 	f = event(t, logs, "scrape_finished")
-	if f["sql_calls"] != int64(1) || f["sql_error_calls"] != int64(0) || f["sql_unfinished_at_cutoff"] != int64(1) || f["frontend_timeout_runs"] != int64(1) {
+	if f["sql_calls"] != int64(1) || f["sql_error_calls"] != nil || f["sql_unfinished_at_cutoff"] != int64(1) || f["frontend_timeout_runs"] != int64(1) {
 		t.Fatal(f)
 	}
 	for _, e := range logs.FilterMessage("sql_error").All() {
@@ -400,7 +408,7 @@ func TestContextBudgetAndAlreadyExpiredAttempts(t *testing.T) {
 	if event(t, logs, "scrape_finished")["sql_calls"] != int64(2) {
 		t.Fatal("expired attempt not counted")
 	}
-	first := logs.FilterMessage("sql_finished").All()[0].ContextMap()
+	first := logs.FilterMessage("sql_started").All()[0].ContextMap()
 	if first["budget_remaining_ms_at_start"] != int64(30000) {
 		t.Fatal(first)
 	}
@@ -570,7 +578,7 @@ func TestReadScopeDoesNotConsumeAdditionalResultSets(t *testing.T) {
 			rows.Err()
 			rows.Close()
 			f := event(t, logs, "sql_finished")
-			if f["read_scope"] != scope || f["read_state"] != "complete" || raw.nextSets != 0 {
+			if f["read_scope"] != scope || f["read_state"] != nil || raw.nextSets != 0 {
 				t.Fatal(f)
 			}
 			if first && raw.index != 1 {
@@ -616,7 +624,7 @@ func TestExpiredContextDoesNotReclassifyOrdinaryDriverError(t *testing.T) {
 		t.Fatal(err)
 	}
 	f := event(t, logs, "sql_error")
-	if f["timeout"] != false || f["context_expired"] != true || logs.FilterMessage("scrape_diagnostic").Len() != 0 {
+	if f["timeout"] != nil || f["context_expired"] != true || logs.FilterMessage("scrape_diagnostic").Len() != 0 {
 		t.Fatal(f)
 	}
 	u.Finish(0, 0, false)
@@ -637,7 +645,7 @@ func TestCustomNamesAndActualContextBudgets(t *testing.T) {
 	events := logs.FilterMessage("sql_started").All()
 	for i, e := range events {
 		f := e.ContextMap()
-		if f["query_name"] != "" || f["query_index"] != int64(i+1) || f["budget_remaining_ms_at_start"] != int64((i+1)*10000) {
+		if f["query_name"] != nil || f["query_index"] != int64(i+1) || f["budget_remaining_ms_at_start"] != int64((i+1)*10000) {
 			t.Fatal(f)
 		}
 	}
@@ -652,7 +660,7 @@ func TestDurationTriggerAndZeroSQL(t *testing.T) {
 	wait(t, r.observed)
 	u.Finish(0, 0, false)
 	r.Finish(nil)
-	if logs.FilterMessage("scrape_diagnostic").Len() != 1 || logs.FilterMessage("sql_top").Len() != 0 || event(t, logs, "scrape_finished")["top_count"] != int64(0) {
+	if logs.FilterMessage("scrape_diagnostic").Len() != 1 || logs.FilterMessage("sql_top").Len() != 0 || event(t, logs, "scrape_finished")["top_emitted_count"] != nil {
 		t.Fatal(logs.All())
 	}
 }
@@ -703,10 +711,10 @@ func TestIssuesDoNotBypassDurationThreshold(t *testing.T) {
 				u.Finish(0, dropped, false)
 				r.Finish(nil)
 				f := event(t, logs, "scrape_finished")
-				if f["issue_runs"] != int64(1) || !strings.Contains(f["diagnostic_reasons"].(string), "unexpected_issue") {
+				if f["issue_runs"] != int64(1) {
 					t.Fatal("issue fact lost", f)
 				}
-				if logs.FilterMessage("scrape_diagnostic").Len() != 0 || logs.FilterMessage("sql_top").Len() != 0 || f["top_refreshed"] != false || f["last_top_snapshot_id"] != uint64(0) {
+				if logs.FilterMessage("scrape_diagnostic").Len() != 0 || logs.FilterMessage("sql_top").Len() != 0 || f["top_emitted_count"] != nil || f["snapshot_id"] != nil {
 					t.Fatal("issue bypassed duration gate at finish", f)
 				}
 				errorEvent := kind
@@ -722,7 +730,7 @@ func TestIssuesDoNotBypassDurationThreshold(t *testing.T) {
 					}
 				}
 				if kind == "sql_timeout" || kind == "frontend_timeout" || kind == "panic" {
-					if !strings.Contains(f["diagnostic_reasons"].(string), kind) {
+					if logs.FilterMessage(map[string]string{"sql_timeout": "sql_error", "frontend_timeout": "collector_timeout", "panic": "collector_panic"}[kind]).Len() != 1 {
 						t.Fatal("early trigger reason lost", f)
 					}
 				}
@@ -765,8 +773,7 @@ func TestEarlyIssueStillAllowsDurationTrigger(t *testing.T) {
 			u.Finish(0, 0, false)
 			r.Finish(nil)
 			f := event(t, logs, "scrape_finished")
-			reasons := f["diagnostic_reasons"].(string)
-			if !strings.Contains(reasons, kind) || !strings.Contains(reasons, "duration_threshold") || f["top_refreshed"] != false || f["last_top_snapshot_id"] != uint64(1) {
+			if event(t, logs, "scrape_diagnostic")["trigger"] != "duration_threshold" || logs.FilterMessage(map[string]string{"sql_timeout": "sql_error", "frontend_timeout": "collector_timeout", "panic": "collector_panic"}[kind]).Len() != 1 || f["top_emitted_count"] != nil || f["snapshot_id"] != uint64(1) {
 				t.Fatal("duration snapshot or reasons lost", f)
 			}
 		})
@@ -798,7 +805,7 @@ func TestFinishDurationThresholdBoundary(t *testing.T) {
 			if tt.wantTop {
 				wantCount = 1
 			}
-			if logs.FilterMessage("scrape_diagnostic").Len() != 0 || logs.FilterMessage("sql_top").Len() != wantCount || f["top_refreshed"] != tt.wantTop {
+			if logs.FilterMessage("scrape_diagnostic").Len() != 0 || logs.FilterMessage("sql_top").Len() != wantCount || (f["top_emitted_count"] != nil) != tt.wantTop {
 				t.Fatal("incorrect final duration gate", f)
 			}
 		})
@@ -969,8 +976,8 @@ func TestQueryStartCompletionAndCutoffRaceHasOneAttribution(t *testing.T) {
 		r.Finish(nil)
 		f := event(t, logs, "scrape_finished")
 		calls := f["sql_calls"].(int64)
-		unfinished := f["sql_unfinished_at_cutoff"].(int64)
-		if calls > 1 || unfinished > calls || f["frontend_timeout_runs"] != int64(1) || f["sql_error_calls"] != int64(0) {
+		unfinished := logCount(f, "sql_unfinished_at_cutoff")
+		if calls > 1 || unfinished > calls || f["frontend_timeout_runs"] != int64(1) || f["sql_error_calls"] != nil {
 			t.Fatal(f)
 		}
 	}

@@ -3,6 +3,7 @@ package diagnostics
 import (
 	"bytes"
 	"context"
+	"dameng_exporter/logger"
 	"database/sql/driver"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -21,19 +22,35 @@ func TestDiagnosticOutputEvidence(t *testing.T) {
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		t.Fatal(err)
 	}
-	for _, kind := range []string{"normal", "slow", "error", "debug"} {
-		var out bytes.Buffer
+	for _, kind := range []string{"normal", "slow", "error", "debug", "fast_background"} {
+		var out, console bytes.Buffer
 		level := zap.InfoLevel
 		if kind == "debug" {
 			level = zap.DebugLevel
 		}
-		cfg := zap.NewProductionEncoderConfig()
-		cfg.EncodeLevel = zapcore.CapitalLevelEncoder
-		cfg.EncodeTime = zapcore.ISO8601TimeEncoder
-		l := zap.New(zapcore.NewCore(zapcore.NewJSONEncoder(cfg), zapcore.AddSync(&out), level)).Sugar()
+		l := zap.New(logger.NewCore(zapcore.AddSync(&out), zapcore.AddSync(&console), level), zap.AddCaller()).Sugar()
 		c := newClock()
-		r := NewRound(Options{Clock: c, Threshold: 30 * time.Second, Logger: l})
-		u := r.NewRun("database", "fixture", "CustomMetrics", "blocking", 0)
+		r := NewRound(Options{Clock: c, Threshold: 30 * time.Second, Logger: logger.DiagnosticLogger{SugaredLogger: l}})
+		mode, budget := "blocking", time.Duration(0)
+		if kind == "fast_background" {
+			mode, budget = "fast", 5*time.Second
+		}
+		u := r.NewRun("database", "fixture", "CustomMetrics", mode, budget)
+		if kind == "fast_background" {
+			q := u.begin(context.Background(), "SELECT /* example */ COUNT(*) FROM SYSOBJECTS", false)
+			c.advance(budget)
+			u.Detach()
+			u.Finish(0, 0, false)
+			r.Finish(nil)
+			c.advance(time.Second)
+			q.leave()
+			q.failure(os.ErrPermission, "query")
+			q.finish()
+			u.BackgroundFinished()
+			saveEvidence(t, dir, kind, &out, &console)
+			continue
+		}
+
 		call := 0
 		db := openDB(t, func(context.Context, string, []driver.NamedValue) (driver.Rows, error) {
 			call++
@@ -71,7 +88,13 @@ func TestDiagnosticOutputEvidence(t *testing.T) {
 		cancel()
 		u.Finish(0, 0, false)
 		r.Finish(nil)
-		if err := os.WriteFile(filepath.Join(dir, kind+".jsonl"), out.Bytes(), 0644); err != nil {
+		saveEvidence(t, dir, kind, &out, &console)
+	}
+}
+func saveEvidence(t *testing.T, dir, kind string, file, console *bytes.Buffer) {
+	t.Helper()
+	for name, data := range map[string][]byte{kind + ".file.jsonl": file.Bytes(), kind + ".console.txt": console.Bytes()} {
+		if err := os.WriteFile(filepath.Join(dir, name), data, 0644); err != nil {
 			t.Fatal(err)
 		}
 	}

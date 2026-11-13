@@ -34,7 +34,10 @@ func collectTableFixture(t *testing.T, f businessFixture, conn *sql.DB) (cacheFa
 	run.Finish(int64(len(out)), 0, false)
 	round.Finish(nil)
 	fields := logs.FilterMessage("collector_finished").All()[0].ContextMap()
-	return cacheFacts{fields["cache_fallback"].(bool), fields["issue"].(bool), fields["data_origin"].(string)}, metricSnapshot(t, out)
+	fallback, _ := fields["cache_fallback"].(bool)
+	issue, _ := fields["issue"].(bool)
+	origin, _ := fields["data_origin"].(string)
+	return cacheFacts{fallback, issue, origin}, metricSnapshot(t, out)
 }
 
 func TestTableCacheRecoversAfterIncompleteRead(t *testing.T) {

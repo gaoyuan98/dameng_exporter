@@ -48,22 +48,17 @@ func InitLogger() {
 	fileWriter := zapcore.AddSync(lumberjackLogger)
 	consoleWriter := zapcore.AddSync(os.Stdout)
 
-	// 创建文件和控制台编码器
-	fileEncoder := zapcore.NewJSONEncoder(encoderConfig(false))
-	consoleEncoder := zapcore.NewConsoleEncoder(encoderConfig(true))
-
-	// 获取配置的日志级别
-	logLevel := getLogLevel(config.Global.GetLogLevel())
-
-	// 创建 zap 核心
-	core := zapcore.NewTee(
-		zapcore.NewCore(fileEncoder, zapcore.NewMultiWriteSyncer(fileWriter), logLevel),
-		zapcore.NewCore(consoleEncoder, zapcore.NewMultiWriteSyncer(consoleWriter), logLevel),
-	)
+	core := NewCore(fileWriter, consoleWriter, getLogLevel(config.Global.GetLogLevel()))
 
 	// 添加调用位置；需要堆栈的事件由调用点显式提供。
 	logger := zap.New(core, zap.AddCaller())
 	Logger = logger.Sugar()
+}
+
+// NewCore builds the same file/console pipeline used by the application and
+// diagnostic evidence tests. A structured event is written to the file once.
+func NewCore(file, console zapcore.WriteSyncer, level zapcore.LevelEnabler) zapcore.Core {
+	return zapcore.NewTee(zapcore.NewCore(zapcore.NewJSONEncoder(encoderConfig(false)), zapcore.Lock(file), level), NewConsoleCore(console, level))
 }
 
 func encoderConfig(console bool) zapcore.EncoderConfig {

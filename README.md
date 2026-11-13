@@ -231,7 +231,7 @@ GRANT SELECT ON V$ASMGROUP TO MONITOR_USER;
 
 > 📖 **配置参数详解**：查看 [参数配置指南](https://github.com/gaoyuan98/dameng_exporter/blob/master/docs/documents/参数配置指南.md) 了解所有参数的详细说明和使用示例。
 
-采集变慢或面板缺少指标时，参见[采集日志排查指南](docs/documents/采集日志排查指南.md)。未达到阈值时，INFO 每轮只输出一条 `scrape_finished`；只有达到整轮观察阈值，才输出诊断总览与最多五条带实际 SQL 模板的记录。SQL 错误、前台超时和 panic 记录异常事实，不单独触发 Top。`scrapeSlowThresholdMs` 默认 30000ms，0 关闭诊断总览与 SQL Top 输出。SQL 错误独立输出，DEBUG 记录全部 SQL 调用；旧 `collectorSlowThresholdMs` 配置已移除，加载时会报错。
+采集变慢或面板缺少指标时，参见[采集日志排查指南](docs/documents/采集日志排查指南.md)。控制台显示中文摘要，文件保留精简 JSON。正常 INFO 每轮一条采集完成摘要；错误显示定位信息与同级 SQL 详情，文件仍是一条完整事件。达到整轮 `scrapeSlowThresholdMs`（默认 30000ms）时输出诊断总览与最多五条 SQL 排名；0 关闭总览与排名，独立错误及前台超时继续记录。DEBUG 保留逐 SQL 过程，字段随事件选择；文件 `sql_started` 保留完整模板，结束记录不重复全文。文件字段迁移与时间口径详见排查指南。旧 `collectorSlowThresholdMs` 已移除，加载时会报错。
 
 1. 创建配置文件 `dameng_exporter.toml`：
 
@@ -394,7 +394,7 @@ cp docs/alertmanager/*.yml /etc/alertmanager/
    ```
    `registerCustomMetrics` 默认为 `true`，若显式设置为 `false` 将跳过自定义指标；`customMetricsFile` 必须指向实际存在的 `.metrics`、`.sql.toml` 或 `.queries.toml` 文件。
 2. 在 `custom_queries.metrics` 中新增一个或多个 `[[metric]]` 区块以定义 SQL 查询。
-3. 保存文件后重新启动 Exporter（或重新部署容器），日志中出现 `loaded X custom metric(s)` 表示加载成功。
+3. 保存文件后重新启动 Exporter（或重新部署容器），控制台出现“自定义指标加载完成”或文件事件 `custom_metrics_loaded` 表示加载成功。
 
 #### 指标定义模板
 

@@ -75,9 +75,7 @@ func newCollectionRun(round *collectionRound, scope, source, name, mode string, 
 		base = zap.NewNop().Sugar()
 	}
 	f := trace.Fields()
-	if sourceLabel != "" && sourceLabel != source {
-		base = base.With("datasource_label", sourceLabel)
-	}
+	_ = sourceLabel // datasource is already present in the trace context.
 	return &collectionRun{trace: trace, log: base.With(f...), base: base}
 }
 func (r *collectionRun) finish(_ *collectionRound, samples, dropped int64, w workerResult) {

@@ -109,5 +109,5 @@ func RegisterMultiSourceCollectors(reg *prometheus.Registry, poolManager *db.DBP
 	}
 	reg.MustRegister(&scrapeCollector{children: collectors, poolManager: poolManager})
 
-	logger.Logger.Infof("Registered %d collectors in multi-source mode", len(collectors))
+	logger.Logger.Infow("collectors_registered", "collectors", len(collectors))
 }

@@ -124,8 +124,7 @@ func buildCustomMetricsAdapter(poolManager *db.DBPoolManager) *CustomMetricsMult
 				loadedDataSources = append(loadedDataSources, ds.Name)
 
 				// 输出每个数据源的详细加载信息
-				logger.Logger.Infof("DataSource [%s] loaded %d custom metric(s) from %s",
-					ds.Name, metricsCount, ds.CustomMetricsFile)
+				logger.Logger.Infow("custom_metrics_loaded", "datasource", ds.Name, "definitions", metricsCount, "file", ds.CustomMetricsFile)
 
 				// 输出每个指标的详细信息
 				for _, metric := range customConfig.Metrics {
@@ -141,13 +140,13 @@ func buildCustomMetricsAdapter(poolManager *db.DBPoolManager) *CustomMetricsMult
 	}
 
 	if !needCustomMetrics {
-		logger.Logger.Info("No datasource requires custom metrics")
+		logger.Logger.Debug("No datasource requires custom metrics")
 		return nil
 	}
 
 	// 输出汇总信息
 	if len(loadedDataSources) > 0 {
-		logger.Logger.Infof("Successfully registered custom metrics adapter: Total %d metric(s) from %d datasource(s) [%s]",
+		logger.Logger.Debugf("Successfully registered custom metrics adapter: Total %d metric(s) from %d datasource(s) [%s]",
 			totalMetricsCount, len(loadedDataSources), strings.Join(loadedDataSources, ", "))
 	} else {
 		logger.Logger.Warn("Custom metrics adapter registered but no metrics were loaded successfully")
