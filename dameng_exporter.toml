@@ -2,11 +2,12 @@
 # 全局配置
 # ========================================
 logLevel = "debug"
+scrapeSlowThresholdMs = 30000
 [[datasource]]
 name = "prod_primary_01"
 description = "生产环境主库-订单系统"
 enabled = true
-dbHost = "192.168.112.179:5236"
+dbHost = "10.211.55.8:5236"
 #dbHost = "192.168.112.182:5236"
 dbUser = "SYSDBA"
 dbPwd = "Dameng123"  # 支持ENC()加密格式

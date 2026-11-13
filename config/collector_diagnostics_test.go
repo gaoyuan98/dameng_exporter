@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-func TestCollectorSlowThresholdLifecycle(t *testing.T) {
+func TestScrapeSlowThresholdLifecycle(t *testing.T) {
 	for _, tt := range []struct {
 		field string
 		want  int
-	}{{"", 5000}, {"collectorSlowThresholdMs = 0", 0}, {"collectorSlowThresholdMs = 67", 67}} {
+	}{{"", 30000}, {"scrapeSlowThresholdMs = 0", 0}, {"scrapeSlowThresholdMs = 67", 67}} {
 		t.Run(fmt.Sprint(tt.want), func(t *testing.T) {
 			path := filepath.Join(t.TempDir(), "exporter.toml")
 			content := tt.field + `\n[[datasource]]
@@ -33,7 +33,7 @@ dbPwd = "test-password"
 				t.Fatal(err)
 			}
 			g := &GlobalSettings{}
-			if g.GetCollectorSlowThresholdMs() != 5000 {
+			if g.GetScrapeSlowThresholdMs() != 30000 {
 				t.Fatal("missing global default")
 			}
 			for _, commandLine := range []bool{false, true} {
@@ -61,7 +61,7 @@ dbPwd = "test-password"
 				}
 				cfg.ApplyAllDefaults()
 				g.Init(cfg)
-				if cfg.CollectorSlowThresholdMs != tt.want || g.GetCollectorSlowThresholdMs() != tt.want || !strings.Contains(cfg.StringCategorized(), fmt.Sprintf("collectorSlowThresholdMs=%d", tt.want)) {
+				if cfg.ScrapeSlowThresholdMs != tt.want || g.GetScrapeSlowThresholdMs() != tt.want || !strings.Contains(cfg.StringCategorized(), fmt.Sprintf("scrapeSlowThresholdMs=%d", tt.want)) {
 					t.Fatalf("threshold lost: %+v", cfg)
 				}
 			}
@@ -69,12 +69,12 @@ dbPwd = "test-password"
 	}
 	cfg := MultiSourceConfig{}
 	cfg.ApplyAllDefaults()
-	if cfg.CollectorSlowThresholdMs != 0 {
+	if cfg.ScrapeSlowThresholdMs != 0 {
 		t.Fatal("direct zero must stay disabled")
 	}
 }
 
-func TestCollectorSlowThresholdValidation(t *testing.T) {
+func TestScrapeSlowThresholdValidation(t *testing.T) {
 	maxMS := int64(math.MaxInt64) / int64(time.Millisecond)
 	values := []int64{-1, 0, 1, maxMS}
 	if strconv.IntSize == 64 {
@@ -82,7 +82,7 @@ func TestCollectorSlowThresholdValidation(t *testing.T) {
 	}
 	for _, value := range values {
 		cfg := DefaultMultiSourceConfig
-		cfg.CollectorSlowThresholdMs = int(value)
+		cfg.ScrapeSlowThresholdMs = int(value)
 		ds := DefaultDataSourceConfig
 		ds.Name, ds.DbHost, ds.DbUser, ds.DbPwd = "test", "127.0.0.1:5236", "monitor", "test-password"
 		cfg.DataSources = []DataSourceConfig{ds}
@@ -97,6 +97,19 @@ func TestCollectorSlowThresholdValidation(t *testing.T) {
 		_, err = LoadMultiSourceConfig(path)
 		if (err != nil) != (value < 0 || value > maxMS) {
 			t.Fatalf("loaded value %d: %v", value, err)
+		}
+	}
+}
+
+func TestRemovedDiagnosticSettingRejected(t *testing.T) {
+	for _, content := range []string{"collectorSlowThresholdMs=0\n", "[[datasource]]\ncollectorSlowThresholdMs=1\n"} {
+		path := filepath.Join(t.TempDir(), "old.toml")
+		if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+			t.Fatal(err)
+		}
+		_, err := LoadMultiSourceConfig(path)
+		if err == nil || !strings.Contains(err.Error(), "已移除") || !strings.Contains(err.Error(), "scrapeSlowThresholdMs") {
+			t.Fatalf("old setting silently ignored: %v", err)
 		}
 	}
 }

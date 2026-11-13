@@ -6,11 +6,9 @@ import (
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"strings"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 )
 
 // 定义收集器结构体
@@ -64,6 +62,7 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 		// 缓存值格式: "idCode|buildType|innerVer"
 		parts := strings.Split(cachedValue, "|")
 		if len(parts) == 3 {
+			c.cache("cache", false)
 			c.log().Debugf("[%s] Using cached database version info", c.dataSource)
 			ch <- prometheus.MustNewConstMetric(
 				c.versionInfoDesc,
@@ -75,6 +74,7 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 			)
 			return
 		}
+		c.cache("database", true)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
@@ -83,11 +83,10 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 	// 尝试使用V2版本获取版本信息
 	versionInfo, err := c.getDbVersionV2(ctx, c.db)
 	if err != nil {
-		c.log().Desugar().Warn("V2 version query failed, falling back to V1 version", zap.Error(err))
+
 		// 如果V2版本失败，使用V1版本
 		dbVersion, err := c.getDbVersionV1(ctx, c.db)
 		if err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] exec getDbVersionV1 func error", c.dataSource), zap.Error(err))
 			return
 		}
 
@@ -131,13 +130,12 @@ func (c *DbVersionCollector) Collect(ch chan<- prometheus.Metric) {
 func (c *DbVersionCollector) getDbVersionV2(ctx context.Context, db *sql.DB) (*DbVersionInfo, error) {
 	var versionInfo DbVersionInfo
 
-	row := db.QueryRowContext(ctx, config.QueryVersionInfoSqlStr)
+	row := c.database(db).QueryRowContext(probeContext(ctx), config.QueryVersionInfoSqlStr)
 	err := row.Scan(&versionInfo.idCode, &versionInfo.buildType, &versionInfo.innerVer)
 	if err != nil {
 		return nil, err
 	}
 
-	c.log().Debugf("[%s] Check Database version Info V2 Success, version info: %+v", c.dataSource, versionInfo)
 	return &versionInfo, nil
 }
 
@@ -146,7 +144,7 @@ func (c *DbVersionCollector) getDbVersionV1(ctx context.Context, db *sql.DB) (st
 	var dbVersion string
 
 	query := `SELECT /*+DM_EXPORTER*/ position('BUILD_VERSION', to_char(TABLEDEF('SYS', 'V$INSTANCE'))) POS FROM dual`
-	row := db.QueryRowContext(ctx, query)
+	row := c.database(db).QueryRowContext(ctx, query)
 
 	var pos int
 	err := row.Scan(&pos)
@@ -160,7 +158,7 @@ func (c *DbVersionCollector) getDbVersionV1(ctx context.Context, db *sql.DB) (st
 		query = `SELECT /*+DM_EXPORTER*/ TOP 1 banner || ' ' || id_code VERSION FROM v$version WHERE banner LIKE 'DM Database Server%'`
 	}
 
-	row = db.QueryRowContext(ctx, query)
+	row = c.database(db).QueryRowContext(ctx, query)
 	err = row.Scan(&dbVersion)
 	if err != nil {
 		return "", fmt.Errorf("query error: %v", err)
@@ -176,6 +174,5 @@ func (c *DbVersionCollector) getDbVersionV1(ctx context.Context, db *sql.DB) (st
 		dbVersion = strings.TrimSpace(dbVersion)
 	}
 
-	c.log().Debugf("[%s] Check Database version Info V1 Success, version value %s", c.dataSource, dbVersion)
 	return dbVersion, nil
 }

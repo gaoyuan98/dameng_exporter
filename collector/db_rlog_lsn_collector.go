@@ -5,10 +5,9 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
+	"github.com/prometheus/client_golang/prometheus"
 	"sync"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -101,8 +100,8 @@ func (c *DbRedoLogLsnCollector) emitMetric(ch chan<- prometheus.Metric, lsnType 
 func (c *DbRedoLogLsnCollector) checkRlogView(ctx context.Context) bool {
 	c.viewCheckOnce.Do(func() {
 		var count int
-		if err := c.db.QueryRowContext(ctx, config.QueryRlogViewExists).Scan(&count); err != nil {
-			c.log().Warnf("[%s] Failed to check V$RLOG view existence: %v", c.dataSource, err)
+		if err := c.database(c.db).QueryRowContext(probeContext(ctx), config.QueryRlogViewExists).Scan(&count); err != nil {
+
 			c.viewExists = false
 			return
 		}
@@ -117,8 +116,8 @@ func (c *DbRedoLogLsnCollector) checkRlogView(ctx context.Context) bool {
 func (c *DbRedoLogLsnCollector) checkRlogColumns(ctx context.Context) bool {
 	c.columnCheckOnce.Do(func() {
 		var count int
-		if err := c.db.QueryRowContext(ctx, config.QueryRlogColumnsExist).Scan(&count); err != nil {
-			c.log().Warnf("[%s] Failed to check V$RLOG columns: %v", c.dataSource, err)
+		if err := c.database(c.db).QueryRowContext(probeContext(ctx), config.QueryRlogColumnsExist).Scan(&count); err != nil {
+
 			c.columnsExist = false
 			return
 		}
@@ -133,9 +132,9 @@ func (c *DbRedoLogLsnCollector) checkRlogColumns(ctx context.Context) bool {
 func (c *DbRedoLogLsnCollector) queryRlogInfo(ctx context.Context) (rlogLsnInfo, error) {
 	var result rlogLsnInfo
 
-	rows, err := c.db.QueryContext(ctx, config.QueryRedoLogLsnInfoSql)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryRedoLogLsnInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return result, err
 	}
 	defer rows.Close()
@@ -143,14 +142,13 @@ func (c *DbRedoLogLsnCollector) queryRlogInfo(ctx context.Context) (rlogLsnInfo,
 	for rows.Next() {
 		var row rlogLsnInfo
 		if err := rows.Scan(&row.ckptLsn, &row.fileLsn, &row.flushLsn, &row.curLsn); err != nil {
-			c.log().Warnf("[%s] Failed to scan V$RLOG row: %v", c.dataSource, err)
+
 			continue
 		}
 		result = mergeRlogInfo(result, row)
 	}
 
 	if err := rows.Err(); err != nil {
-		c.log().Warnf("[%s] Iterating V$RLOG rows failed: %v", c.dataSource, err)
 		return result, err
 	}
 

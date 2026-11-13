@@ -96,7 +96,6 @@ func (c *DmapProcessCollector) Collect(ch chan<- prometheus.Metric) {
 	// 获取数据库实例信息
 	dbInstanceInfo, err := c.getDbInstanceInfo(c.db)
 	if err != nil {
-		c.log().Errorf("Error getting DB instance info: %v\n", err)
 		return
 	}
 
@@ -105,7 +104,7 @@ func (c *DmapProcessCollector) Collect(ch chan<- prometheus.Metric) {
 	if c.lastPID != dbInstanceInfo.PID {
 		c.localInstallBinPath, err = c.getLocalInstallBinPath(dbInstanceInfo.PID)
 		if err != nil {
-			c.log().Warnf("获取数据库安装 bin 路径失败：%v。可能原因：Exporter 未部署在数据库主机、目标进程已退出或当前系统不支持 /proc 文件系统。若无需采集主机进程，可在配置文件的单个数据源registerHostMetrics设置为 false 关闭该功能。", err)
+			c.businessError("business_validation", err)
 			c.localInstallBinPath = ""
 			return
 		}
@@ -169,14 +168,14 @@ func (c *DmapProcessCollector) checkProcess(installBinPath, pid, processName str
 		output, err = exec.Command("sh", "-c", shellStr).Output()
 	}
 	if err != nil {
-		c.log().Errorw("Error checking process", "process_name", processName, "error", err)
+		c.businessError("business_validation", err)
 		return 0
 	}
 
 	processCount := strings.TrimSpace(string(output))
 	count, err := strconv.ParseFloat(processCount, 64)
 	if err != nil {
-		c.log().Errorf("Error parsing %s process count: %v\n", processName, err)
+		c.businessError("business_validation", err)
 		return 0
 	}
 
@@ -195,12 +194,11 @@ func (c *DmapProcessCollector) getDbInstanceInfo(db *sql.DB) (DBInstanceInfo, er
 		FROM V$DM_INI
 		WHERE PARA_NAME = 'CONFIG_PATH'
 	`
-	row := db.QueryRowContext(ctx, query)
+	row := c.database(db).QueryRowContext(ctx, query)
 	err := row.Scan(&info.DBInstancePath, &info.PID)
 	if err != nil {
 		return info, err
 	}
-	c.log().Debugf("DBInstanceInfo: %v\n", info)
 	return info, nil
 }
 

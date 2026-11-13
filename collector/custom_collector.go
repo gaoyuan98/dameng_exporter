@@ -3,14 +3,14 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
+	"dameng_exporter/diagnostics"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
-	"strings"
-	"time"
-
 	"github.com/duke-git/lancet/v2/convertor"
 	"github.com/prometheus/client_golang/prometheus"
+	"strings"
+	"time"
 )
 
 // CustomMetrics 结构体，封装多个 Prometheus Collectors
@@ -92,11 +92,17 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
+	run := cm.trace
+	if run == nil {
+		round := diagnostics.NewRound(diagnostics.Options{Logger: cm.log()})
+		run = round.NewRun("database", dsName, "CustomMetrics", "direct", 0)
+	}
 	// 遍历配置中的每个 Metric，执行查询并收集数据
-	for _, metric := range cm.sqlConfig.Metrics {
-		results, err := queryDynamicDatabase(ctx, cm.db, metric.Request)
+	for index, metric := range cm.sqlConfig.Metrics {
+		queryCtx := diagnostics.WithQueryOptions(ctx, diagnostics.QueryOptions{Purpose: "custom", Name: metric.Context, Index: index + 1, AllowEmpty: true})
+		results, err := queryDynamicDatabase(queryCtx, cm.db, metric.Request, run)
 		if err != nil {
-			utils.HandleDbQueryErrorWithSource(err, dsName, cm.log())
+			utils.HandleDbQueryErrorWithSource(err, dsName, run, cm.log())
 			continue
 		}
 
@@ -147,9 +153,9 @@ func (cm *CustomMetrics) Collect(ch chan<- prometheus.Metric) {
 }
 
 // queryDynamicDatabase 函数返回 SQL 查询结果，包括所有字段及数据
-func queryDynamicDatabase(ctx context.Context, db *sql.DB, query string) ([]map[string]interface{}, error) {
+func queryDynamicDatabase(ctx context.Context, db *sql.DB, query string, run *diagnostics.RunTrace) ([]map[string]interface{}, error) {
 
-	rows, err := db.QueryContext(ctx, query)
+	rows, err := diagnostics.Wrap(db, run).QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("数据库查询出错: %w", err)
 	}

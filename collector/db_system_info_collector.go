@@ -3,12 +3,11 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
+	"dameng_exporter/diagnostics"
 	"dameng_exporter/utils"
 	"database/sql"
-	"time"
-
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
+	"time"
 )
 
 // DBSystemInfoCollector 数据库系统信息采集器结构体
@@ -68,24 +67,20 @@ func (c *DBSystemInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect 采集指标
 func (c *DBSystemInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	c.CollectWithResult(ch)
-}
-
-func (c *DBSystemInfoCollector) CollectWithResult(ch chan<- prometheus.Metric) CollectorOutcome {
 
 	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
-		return databaseOutcome(OutcomeFailed, "datasource_unavailable")
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
+	ctx = diagnostics.WithQueryOptions(ctx, diagnostics.QueryOptions{ReadScope: "first_row", AllowEmpty: true})
 
 	// 使用统一的SQL查询获取系统信息
-	rows, err := c.db.QueryContext(ctx, config.QuerySystemInfoSqlStr)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QuerySystemInfoSqlStr)
 	if err != nil {
-		outcome := queryFailure(ctx, err)
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
-		return outcome
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
+		return
 	}
 	defer rows.Close()
 
@@ -94,16 +89,12 @@ func (c *DBSystemInfoCollector) CollectWithResult(ch chan<- prometheus.Metric) C
 	hasRow := rows.Next()
 	if hasRow {
 		if err := rows.Scan(&info.NCpu, &info.TotalPhySize, &info.TotalVirSize, &info.TotalDiskSize); err != nil {
-			c.log().Desugar().Error("Error scanning system info row",
-				zap.Error(err))
-			return databaseOutcome(OutcomeFailed, "scan_error")
+			return
 		}
 	}
 
 	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error("Error with system info rows",
-			zap.Error(err))
-		return databaseOutcome(OutcomeFailed, "rows_error")
+		return
 	}
 
 	// 1. 发送数据库系统基础信息指标（始终为1，系统信息在标签中）
@@ -153,8 +144,8 @@ func (c *DBSystemInfoCollector) CollectWithResult(ch chan<- prometheus.Metric) C
 		)
 	}
 	if !hasRow {
-		return databaseOutcome(OutcomeUnknown, "no_row_placeholder")
+		return
 	}
-	return databaseOutcome(OutcomeSuccess, "")
+	return
 
 }

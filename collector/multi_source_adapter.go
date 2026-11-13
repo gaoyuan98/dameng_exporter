@@ -3,18 +3,17 @@ package collector
 import (
 	"dameng_exporter/config"
 	"dameng_exporter/db"
+	"dameng_exporter/diagnostics"
 	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
-
-	"go.uber.org/zap"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // DataSourceAware 接口，用于标识支持数据源感知的采集器
@@ -101,9 +100,11 @@ func (a *MultiSourceAdapter) Describe(ch chan<- *prometheus.Desc) {
 	}
 }
 
-// Collect also supports standalone registration, without a shared scrape summary.
+// Collect supports standalone registration with its own round summary.
 func (a *MultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
-	a.collectWithRound(ch, nil)
+	round := newCollectionRound()
+	a.collectWithRound(ch, round)
+	round.finish(nil)
 }
 
 func (a *MultiSourceAdapter) collectWithRound(ch chan<- prometheus.Metric, round *collectionRound) {
@@ -127,17 +128,27 @@ func (a *MultiSourceAdapter) collectWithRound(ch chan<- prometheus.Metric, round
 // collectWithLogging measures the whole collector, including connection waits,
 // SQL, row processing and forwarding. It does not claim to measure SQL alone.
 func collectWithLogging(ch chan<- prometheus.Metric, p *db.DataSourcePool, collector MetricCollector, round *collectionRound, fast bool, timeout time.Duration) {
+	if round == nil {
+		round = newCollectionRound()
+		defer round.finish(nil)
+	}
 	mode := "blocking"
 	if fast {
 		mode = "fast"
 	}
+	if !fast {
+		timeout = 0
+	}
 	sourceLabel, injector := buildLabelContextFromPool(p)
 	run := newCollectionRun(round, "database", p.Name, getCollectorName(collector), mode, timeout, sourceLabel)
 	if aware, ok := collector.(interface{ SetCollectionLogger(*zap.SugaredLogger) }); ok {
-		aware.SetCollectionLogger(run.log)
+		aware.SetCollectionLogger(run.base)
+	}
+	if aware, ok := collector.(interface{ SetRunTrace(*diagnostics.RunTrace) }); ok {
+		aware.SetRunTrace(run.trace)
 	}
 	if err := utils.CheckDBConnectionWithSource(p.DB, p.Name, run.log); err != nil {
-		run.finish(round, 0, 0, workerResult{execution: "skipped", outcome: CollectorOutcome{State: OutcomeUnknown, Reason: "datasource_unavailable", DataOrigin: "unknown"}})
+		run.trace.Skip(err.Error())
 		return
 	}
 	buffer := 10
@@ -149,6 +160,8 @@ func collectWithLogging(ch chan<- prometheus.Metric, p *db.DataSourcePool, colle
 	// Only the forwarder writes these counters. Reading after forwardDone is safe.
 	var samples, dropped int64
 	go func() {
+		restore := run.trace.Stage("forwarder", "metric_forward")
+		defer restore()
 		for {
 			select {
 			case <-stopForward:
@@ -199,17 +212,16 @@ func collectWithLogging(ch chan<- prometheus.Metric, p *db.DataSourcePool, colle
 	}
 	result, timedOut := waitForWorker(done, deadline)
 	if timedOut {
+		run.trace.Detach()
 		close(stopForward)
-		result = workerResult{execution: "timeout", outcome: CollectorOutcome{State: OutcomeUnknown, Reason: "frontend_timeout", DataOrigin: "unknown"}}
+		result = workerResult{execution: "timeout"}
 	}
 	<-forwardDone
 	run.finish(round, samples, dropped, result)
 	if timedOut {
 		go func() {
-			final := <-done
-			run.diagnostic.Infow("collector_background_finished", "background_duration_ms", final.finishedAt.Sub(run.start).Milliseconds(),
-				"execution", final.execution, "outcome", final.outcome.State, "reason", final.outcome.Reason,
-				"data_origin", final.outcome.DataOrigin, "cache_fallback", final.outcome.CacheFallback)
+			<-done
+			run.trace.BackgroundFinished()
 		}()
 	}
 }

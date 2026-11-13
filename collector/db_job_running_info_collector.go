@@ -3,11 +3,10 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
+	"dameng_exporter/diagnostics"
 	"dameng_exporter/utils"
 	"database/sql"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -53,15 +52,16 @@ func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
+	ctx = diagnostics.WithQueryOptions(ctx, diagnostics.QueryOptions{ReadScope: "first_row", AllowEmpty: true})
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDbJobRunningInfoSqlStr)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryDbJobRunningInfoSqlStr)
 	if err != nil {
 		// 检查报错信息中是否包含 "v$dmmonitor" 字符串
 		if strings.Contains(err.Error(), "SYSJOB") {
 			c.log().Warnf("[%s] 数据库未开启定时任务功能，无法检查错误任务异常数量。请执行sql语句call SP_INIT_JOB_SYS(1); 开启定时作业的功能。（该报错不影响其他指标采集数据,也可忽略）", c.dataSource)
 			return
 		}
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -70,14 +70,11 @@ func (c *DbJobRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	var errorCountInfo ErrorCountInfo
 	if rows.Next() {
 		if err := rows.Scan(&errorCountInfo.ErrorNum); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			return
 		}
 	}
 
-	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
-	}
+	_ = rows.Err()
 	// 发送数据到 Prometheus
 
 	ch <- prometheus.MustNewConstMetric(c.jobErrorNumDesc, prometheus.GaugeValue, utils.NullInt64ToFloat64(errorCountInfo.ErrorNum))

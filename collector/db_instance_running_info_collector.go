@@ -3,12 +3,11 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
+	"dameng_exporter/diagnostics"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-
-	"go.uber.org/zap"
 	"strconv"
 	"time"
 	_ "time/tzdata"
@@ -115,10 +114,11 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
+	ctx = diagnostics.WithQueryOptions(ctx, diagnostics.QueryOptions{ReadScope: "first_row", AllowEmpty: true})
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDBInstanceRunningInfoSqlStr)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryDBInstanceRunningInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -128,7 +128,6 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	if rows.Next() {
 		var startTimeStr, statusStr, modeStr, trxNumStr, deadlockNumStr, threadNumStr string
 		if err := rows.Scan(&startTimeStr, &statusStr, &modeStr, &trxNumStr, &deadlockNumStr, &threadNumStr, &dbStartDay); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
 			return
 		}
 		status, _ = strconv.ParseFloat(statusStr, 64)
@@ -140,19 +139,19 @@ func (c *DBInstanceRunningInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		// 加载东八区（北京时间）时区
 		loc, err := time.LoadLocation("Asia/Shanghai")
 		if err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error loading time location", c.dataSource), zap.Error(err))
+			c.businessError("timezone_load", err)
 		}
 		// 解析时间字符串为 time.Time 类型，并指定东八区时区
 		startTime, err := time.ParseInLocation("2006-01-02 15:04:05", startTimeStr, loc)
 		if err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error parsing start time", c.dataSource), zap.Error(err))
+			c.businessError("start_time_parse", err)
 			// 如果转换失败则赋予默认时间值（此处使用东八区）
 			startTime = time.Date(2006, time.January, 1, 0, 0, 0, 0, loc)
 		}
 		/*		// 解析时间戳字符串为 time.Time 类型
 				startTime, err := time.Parse("2006-01-02 15:04:05", startTimeStr)
 				if err != nil {
-					c.log().Desugar().Error(fmt.Sprintf("[%s] Error parsing start time", c.dataSource), zap.Error(err))
+					c.businessError("start_time_parse", err)
 					// 如果转换失败则赋予默认时间值
 					var defaultTime = time.Date(2006, time.January, 1, 0, 0, 0, 0, loc)
 					startTime = defaultTime

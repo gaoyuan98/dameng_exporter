@@ -3,9 +3,12 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
+	"dameng_exporter/diagnostics"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zaptest/observer"
 	"reflect"
 	"sync"
 	"testing"
@@ -14,11 +17,24 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func collectTableFixture(t *testing.T, f businessFixture, conn *sql.DB) (CollectorOutcome, []string) {
+type cacheFacts struct {
+	CacheFallback, Issue bool
+	DataOrigin           string
+}
+
+func collectTableFixture(t *testing.T, f businessFixture, conn *sql.DB) (cacheFacts, []string) {
 	t.Helper()
+	core, logs := observer.New(zap.DebugLevel)
+	round := diagnostics.NewRound(diagnostics.Options{Logger: zap.New(core).Sugar()})
+	run := round.NewRun("database", "fixture", f.name, "blocking", 0)
+	c := fixtureCollector(f, conn)
+	c.(interface{ SetRunTrace(*diagnostics.RunTrace) }).SetRunTrace(run)
 	out := make(chan prometheus.Metric, 20)
-	result := fixtureCollector(f, conn).(ResultCollector).CollectWithResult(out)
-	return result, metricSnapshot(t, out)
+	c.Collect(out)
+	run.Finish(int64(len(out)), 0, false)
+	round.Finish(nil)
+	fields := logs.FilterMessage("collector_finished").All()[0].ContextMap()
+	return cacheFacts{fields["cache_fallback"].(bool), fields["issue"].(bool), fields["data_origin"].(string)}, metricSnapshot(t, out)
 }
 
 func TestTableCacheRecoversAfterIncompleteRead(t *testing.T) {
@@ -69,7 +85,7 @@ func TestTableCacheRecoversAfterIncompleteRead(t *testing.T) {
 					t.Fatalf("lost cache fallback: %+v", first)
 				}
 				if scenario == "corrupt cache empty" {
-					if first.State != OutcomeEmpty || len(samples) != 0 {
+					if len(samples) != 0 {
 						t.Fatalf("bad cache leaked into empty query: %+v %v", first, samples)
 					}
 					second, cached := collectTableFixture(t, f, conn)
@@ -78,11 +94,11 @@ func TestTableCacheRecoversAfterIncompleteRead(t *testing.T) {
 					}
 					return
 				}
-				wantState := OutcomePartial
+				wantFailed := false
 				if scenario == "rows failed" || scenario == "scan failed" || scenario == "corrupt cache query failed" {
-					wantState = OutcomeFailed
+					wantFailed = true
 				}
-				if first.State != wantState {
+				if !first.Issue {
 					t.Fatalf("unexpected first outcome: %+v", first)
 				}
 				perRow := 3
@@ -90,7 +106,7 @@ func TestTableCacheRecoversAfterIncompleteRead(t *testing.T) {
 					perRow = 2
 				}
 				wantSamples := perRow
-				if wantState == OutcomeFailed {
+				if wantFailed {
 					wantSamples = 0
 				}
 				if len(samples) != wantSamples {
@@ -101,7 +117,7 @@ func TestTableCacheRecoversAfterIncompleteRead(t *testing.T) {
 					t.Fatal("failed read wrote or deleted shared cache")
 				}
 				second, complete := collectTableFixture(t, f, conn)
-				if calls != 2 || second.State != OutcomeSuccess || second.CacheFallback != corrupt || len(complete) != 2*perRow {
+				if calls != 2 || (second.Issue && !corrupt) || second.CacheFallback != corrupt || len(complete) != 2*perRow {
 					t.Fatalf("recovery did not query complete data: %+v samples=%v calls=%d", second, complete, calls)
 				}
 				third, reused := collectTableFixture(t, f, conn)
@@ -137,7 +153,7 @@ func TestFailedTableReadCannotOverwriteConcurrentCompleteCache(t *testing.T) {
 			awaitDone(t, entered)
 			good, _ := fixtureDB(t, f, [][]driver.Value{f.row}, nil, nil, nil)
 			result, samples := collectTableFixture(t, f, good)
-			if result.State != OutcomeSuccess || !result.CacheFallback {
+			if !result.CacheFallback {
 				t.Fatalf("complete cache recovery failed: %+v", result)
 			}
 			before, found := config.GetFromCache(key)

@@ -6,7 +6,6 @@ import (
 	"dameng_exporter/utils"
 	"database/sql"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -57,9 +56,9 @@ func (c *DbDwWatcherInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDwWatcherInfoSql)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryDwWatcherInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -68,15 +67,13 @@ func (c *DbDwWatcherInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info DbDwWatcherInfo
 		if err := rows.Scan(&info.DwMode, &info.DwStatus, &info.AutoRestart, &info.DwStatusToNum); err != nil {
-			c.log().Desugar().Error("Error scanning row", zap.Error(err))
+
 			continue
 		}
 		dbDwWatcherInfos = append(dbDwWatcherInfos, info)
 	}
 
-	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error("Error with rows", zap.Error(err))
-	}
+	_ = rows.Err()
 
 	// 发送数据到 Prometheus
 	for _, info := range dbDwWatcherInfos {

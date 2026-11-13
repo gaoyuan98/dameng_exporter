@@ -37,7 +37,7 @@ func TestDynamicQueryRequiresCompleteRead(t *testing.T) {
 				return &outcomeRows{columns: 1, values: scenario.values, err: scenario.readErr}, nil
 			}})
 			t.Cleanup(func() { conn.Close() })
-			rows, err := queryDynamicDatabase(context.Background(), conn, "select value")
+			rows, err := queryDynamicDatabase(context.Background(), conn, "select value", nil)
 			cause := scenario.queryErr
 			if cause == nil {
 				cause = scenario.readErr
@@ -89,7 +89,31 @@ func TestCustomReadFailureKeepsOtherQueriesAndLogContext(t *testing.T) {
 	if fields["scrape_id"] != logs.FilterMessage("scrape_started").All()[0].ContextMap()["scrape_id"] || fields["datasource"] != "custom" || fields["collector"] != "CustomMetrics" {
 		t.Fatalf("uncorrelated read error: %v", fields)
 	}
-	if len(round.results) != 1 || round.results[0].Outcome != OutcomeUnknown || round.results[0].Errors != 1 || round.results[0].Samples != 2 {
-		t.Fatalf("wrong diagnostics: %+v", round.results)
+	round.finish(nil)
+	f := logs.FilterMessage("scrape_finished").All()[0].ContextMap()
+	if f["sql_error_calls"] != int64(1) || f["samples"] != int64(2) {
+		t.Fatal(f)
+	}
+}
+
+func TestCustomDuplicateSQLKeepsConfigurationIndices(t *testing.T) {
+	logs := setupCollectionLogTest(t)
+	pool := testLogPool(t, "custom", nil)
+	cfg := &config.CustomConfig{Metrics: []config.CustomMetric{{Context: "same", Request: "select identical", MetricsDesc: map[string]string{"0": "same"}}, {Context: "same", Request: "select identical", MetricsDesc: map[string]string{"0": "same"}}}}
+	round := newCollectionRound()
+	NewCustomMetricsMultiSourceAdapter(nil).collectPool(make(chan prometheus.Metric, 2), pool, cfg, round)
+	round.finish(nil)
+	events := logs.FilterMessage("sql_started").All()
+	if len(events) != 2 {
+		t.Fatal(events)
+	}
+	for i, e := range events {
+		f := e.ContextMap()
+		if f["query_name"] != "same" || f["query_index"] != int64(i+1) || f["sql"] != "select identical" {
+			t.Fatal(f)
+		}
+	}
+	if events[0].ContextMap()["query_id"] == events[1].ContextMap()["query_id"] {
+		t.Fatal("calls merged")
 	}
 }

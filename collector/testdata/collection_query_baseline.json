@@ -1,0 +1,1975 @@
+{
+  "coverage_0_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_QUEUE' AND COLNAME = 'WAITING' args=[]",
+      "SELECT /*+DM_EXPORTER*/ ARCH_TYPE, WAITING FROM V$ARCH_QUEUE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_0_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_QUEUE' AND COLNAME = 'WAITING' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_0_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_QUEUE' AND COLNAME = 'WAITING' args=[]",
+      "SELECT /*+DM_EXPORTER*/ ARCH_TYPE, WAITING FROM V$ARCH_QUEUE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_0_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_QUEUE' AND COLNAME = 'WAITING' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_0_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_QUEUE' AND COLNAME = 'WAITING' args=[]",
+      "SELECT /*+DM_EXPORTER*/ ARCH_TYPE, WAITING FROM V$ARCH_QUEUE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_0_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_QUEUE' AND COLNAME = 'WAITING' args=[]",
+      "SELECT /*+DM_EXPORTER*/ ARCH_TYPE, WAITING FROM V$ARCH_QUEUE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_0_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_QUEUE' AND COLNAME = 'WAITING' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_0_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_QUEUE' AND COLNAME = 'WAITING' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_10_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(LOG_TIME,'YYYY-MM-DD HH24:MI:SS') AS LOG_TIME,PID,LEVEL$ AS LEVEL,TXT FROM V$INSTANCE_LOG_HISTORY WHERE DATEDIFF(MINUTE, LOG_TIME, GETDATE()) \u003c= 5 AND LEVEL$ NOT IN ('INFO','WARN') ORDER BY SEQNO DESC; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_10_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(LOG_TIME,'YYYY-MM-DD HH24:MI:SS') AS LOG_TIME,PID,LEVEL$ AS LEVEL,TXT FROM V$INSTANCE_LOG_HISTORY WHERE DATEDIFF(MINUTE, LOG_TIME, GETDATE()) \u003c= 5 AND LEVEL$ NOT IN ('INFO','WARN') ORDER BY SEQNO DESC; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_10_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(LOG_TIME,'YYYY-MM-DD HH24:MI:SS') AS LOG_TIME,PID,LEVEL$ AS LEVEL,TXT FROM V$INSTANCE_LOG_HISTORY WHERE DATEDIFF(MINUTE, LOG_TIME, GETDATE()) \u003c= 5 AND LEVEL$ NOT IN ('INFO','WARN') ORDER BY SEQNO DESC; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_10_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(LOG_TIME,'YYYY-MM-DD HH24:MI:SS') AS LOG_TIME,PID,LEVEL$ AS LEVEL,TXT FROM V$INSTANCE_LOG_HISTORY WHERE DATEDIFF(MINUTE, LOG_TIME, GETDATE()) \u003c= 5 AND LEVEL$ NOT IN ('INFO','WARN') ORDER BY SEQNO DESC; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_10_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(LOG_TIME,'YYYY-MM-DD HH24:MI:SS') AS LOG_TIME,PID,LEVEL$ AS LEVEL,TXT FROM V$INSTANCE_LOG_HISTORY WHERE DATEDIFF(MINUTE, LOG_TIME, GETDATE()) \u003c= 5 AND LEVEL$ NOT IN ('INFO','WARN') ORDER BY SEQNO DESC; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_10_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(LOG_TIME,'YYYY-MM-DD HH24:MI:SS') AS LOG_TIME,PID,LEVEL$ AS LEVEL,TXT FROM V$INSTANCE_LOG_HISTORY WHERE DATEDIFF(MINUTE, LOG_TIME, GETDATE()) \u003c= 5 AND LEVEL$ NOT IN ('INFO','WARN') ORDER BY SEQNO DESC; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_10_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(LOG_TIME,'YYYY-MM-DD HH24:MI:SS') AS LOG_TIME,PID,LEVEL$ AS LEVEL,TXT FROM V$INSTANCE_LOG_HISTORY WHERE DATEDIFF(MINUTE, LOG_TIME, GETDATE()) \u003c= 5 AND LEVEL$ NOT IN ('INFO','WARN') ORDER BY SEQNO DESC; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_10_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(LOG_TIME,'YYYY-MM-DD HH24:MI:SS') AS LOG_TIME,PID,LEVEL$ AS LEVEL,TXT FROM V$INSTANCE_LOG_HISTORY WHERE DATEDIFF(MINUTE, LOG_TIME, GETDATE()) \u003c= 5 AND LEVEL$ NOT IN ('INFO','WARN') ORDER BY SEQNO DESC; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_11_dsc": {
+    "Queries": [
+      "\n        SELECT /*+DAMENG_EXPORTER*/\n               TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI:SS'),\n               CASE STATUS$ WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS STATUS,\n               CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,\n               (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,\n               (SELECT COUNT(*) FROM V$DEADLOCK_HISTORY) DEADLOCKNUM,\n               (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,\n               DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY\n        FROM V$INSTANCE args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dead_lock_num_total\", help: \"Number of deadlocks\", constLabels: {}, variableLabels: {}} {\"counter\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_mode_info\", help: \"Database mode, value info: primary = 1,normal = 2,standby = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_day\", help: \"Database instance start_day \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_time_info\", help: \"Database status time\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_status_info\", help: \"Database status, value info: open = 1,mount = 2,suspend = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_switching_occurs\", help: \"Database instance switching occurs， value info:  error is 0 , true is 1  \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_thread_num_info\", help: \"Number of threads\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_trx_num_info\", help: \"Number of transactions\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_11_empty": {
+    "Queries": [
+      "\n        SELECT /*+DAMENG_EXPORTER*/\n               TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI:SS'),\n               CASE STATUS$ WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS STATUS,\n               CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,\n               (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,\n               (SELECT COUNT(*) FROM V$DEADLOCK_HISTORY) DEADLOCKNUM,\n               (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,\n               DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY\n        FROM V$INSTANCE args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dead_lock_num_total\", help: \"Number of deadlocks\", constLabels: {}, variableLabels: {}} {\"counter\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_mode_info\", help: \"Database mode, value info: primary = 1,normal = 2,standby = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_day\", help: \"Database instance start_day \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_time_info\", help: \"Database status time\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_status_info\", help: \"Database status, value info: open = 1,mount = 2,suspend = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_switching_occurs\", help: \"Database instance switching occurs， value info:  error is 0 , true is 1  \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_thread_num_info\", help: \"Number of threads\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_trx_num_info\", help: \"Number of transactions\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_11_legacy": {
+    "Queries": [
+      "\n        SELECT /*+DAMENG_EXPORTER*/\n               TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI:SS'),\n               CASE STATUS$ WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS STATUS,\n               CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,\n               (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,\n               (SELECT COUNT(*) FROM V$DEADLOCK_HISTORY) DEADLOCKNUM,\n               (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,\n               DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY\n        FROM V$INSTANCE args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dead_lock_num_total\", help: \"Number of deadlocks\", constLabels: {}, variableLabels: {}} {\"counter\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_mode_info\", help: \"Database mode, value info: primary = 1,normal = 2,standby = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_day\", help: \"Database instance start_day \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_time_info\", help: \"Database status time\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_status_info\", help: \"Database status, value info: open = 1,mount = 2,suspend = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_switching_occurs\", help: \"Database instance switching occurs， value info:  error is 0 , true is 1  \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_thread_num_info\", help: \"Number of threads\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_trx_num_info\", help: \"Number of transactions\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_11_missing_columns": {
+    "Queries": [
+      "\n        SELECT /*+DAMENG_EXPORTER*/\n               TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI:SS'),\n               CASE STATUS$ WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS STATUS,\n               CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,\n               (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,\n               (SELECT COUNT(*) FROM V$DEADLOCK_HISTORY) DEADLOCKNUM,\n               (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,\n               DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY\n        FROM V$INSTANCE args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dead_lock_num_total\", help: \"Number of deadlocks\", constLabels: {}, variableLabels: {}} {\"counter\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_mode_info\", help: \"Database mode, value info: primary = 1,normal = 2,standby = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_day\", help: \"Database instance start_day \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_time_info\", help: \"Database status time\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_status_info\", help: \"Database status, value info: open = 1,mount = 2,suspend = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_switching_occurs\", help: \"Database instance switching occurs， value info:  error is 0 , true is 1  \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_thread_num_info\", help: \"Number of threads\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_trx_num_info\", help: \"Number of transactions\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_11_modern": {
+    "Queries": [
+      "\n        SELECT /*+DAMENG_EXPORTER*/\n               TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI:SS'),\n               CASE STATUS$ WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS STATUS,\n               CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,\n               (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,\n               (SELECT COUNT(*) FROM V$DEADLOCK_HISTORY) DEADLOCKNUM,\n               (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,\n               DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY\n        FROM V$INSTANCE args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dead_lock_num_total\", help: \"Number of deadlocks\", constLabels: {}, variableLabels: {}} {\"counter\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_mode_info\", help: \"Database mode, value info: primary = 1,normal = 2,standby = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_day\", help: \"Database instance start_day \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_time_info\", help: \"Database status time\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_status_info\", help: \"Database status, value info: open = 1,mount = 2,suspend = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_switching_occurs\", help: \"Database instance switching occurs， value info:  error is 0 , true is 1  \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_thread_num_info\", help: \"Number of threads\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_trx_num_info\", help: \"Number of transactions\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_11_partial_fields": {
+    "Queries": [
+      "\n        SELECT /*+DAMENG_EXPORTER*/\n               TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI:SS'),\n               CASE STATUS$ WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS STATUS,\n               CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,\n               (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,\n               (SELECT COUNT(*) FROM V$DEADLOCK_HISTORY) DEADLOCKNUM,\n               (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,\n               DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY\n        FROM V$INSTANCE args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dead_lock_num_total\", help: \"Number of deadlocks\", constLabels: {}, variableLabels: {}} {\"counter\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_mode_info\", help: \"Database mode, value info: primary = 1,normal = 2,standby = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_day\", help: \"Database instance start_day \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_time_info\", help: \"Database status time\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_status_info\", help: \"Database status, value info: open = 1,mount = 2,suspend = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_switching_occurs\", help: \"Database instance switching occurs， value info:  error is 0 , true is 1  \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_thread_num_info\", help: \"Number of threads\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_trx_num_info\", help: \"Number of transactions\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_11_probe_error": {
+    "Queries": [
+      "\n        SELECT /*+DAMENG_EXPORTER*/\n               TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI:SS'),\n               CASE STATUS$ WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS STATUS,\n               CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,\n               (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,\n               (SELECT COUNT(*) FROM V$DEADLOCK_HISTORY) DEADLOCKNUM,\n               (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,\n               DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY\n        FROM V$INSTANCE args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dead_lock_num_total\", help: \"Number of deadlocks\", constLabels: {}, variableLabels: {}} {\"counter\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_mode_info\", help: \"Database mode, value info: primary = 1,normal = 2,standby = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_day\", help: \"Database instance start_day \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_start_time_info\", help: \"Database status time\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_status_info\", help: \"Database status, value info: open = 1,mount = 2,suspend = 3 ,other = 4\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_switching_occurs\", help: \"Database instance switching occurs， value info:  error is 0 , true is 1  \", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_thread_num_info\", help: \"Number of threads\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}",
+      "Desc{fqName: \"dmdbms_trx_num_info\", help: \"Number of transactions\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_11_query_error": {
+    "Queries": [
+      "\n        SELECT /*+DAMENG_EXPORTER*/\n               TO_CHAR(START_TIME,'YYYY-MM-DD HH24:MI:SS'),\n               CASE STATUS$ WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS STATUS,\n               CASE MODE$ WHEN 'PRIMARY' THEN '1' WHEN 'NORMAL' THEN '2' WHEN 'STANDBY' THEN '3' ELSE '4' END AS MODE,\n               (SELECT COUNT(*) FROM V$TRXWAIT) TRXNUM,\n               (SELECT COUNT(*) FROM V$DEADLOCK_HISTORY) DEADLOCKNUM,\n               (SELECT COUNT(*) FROM V$THREADS) THREADSNUM,\n               DATEDIFF(SQL_TSI_DAY,START_TIME,sysdate) DBSTARTDAY\n        FROM V$INSTANCE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_12_dsc": {
+    "Queries": [
+      " SELECT /*+DM_EXPORTER*/ COUNT(*) error_num FROM (SELECT NAME,ERRINFO FROM SYSJOB.SYSJOBHISTORIES2 WHERE ERRCODE !=0 AND START_TIME \u003e= (SYSDATE-31) AND NAME  IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE\n  LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE  STEPS.\"TYPE\" = 6AND SCHE.VALID = 'Y'\n  GROUP BY SYSJOBS.NAME)\n  UNION ALL\n  SELECT NAME,ERRINFO FROM SYSJOB.SYSSTEPHISTORIES2 WHERE ERRCODE !=0 AND START_TIME  \u003e= (SYSDATE-31) AND NAME IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE STEPS.\"TYPE\" = 6 AND SCHE.VALID = 'Y' \n  GROUP BY SYSJOBS.NAME)) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_joblog_error_num\", help: \"dmdbms_joblog_error_num info information\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_12_empty": {
+    "Queries": [
+      " SELECT /*+DM_EXPORTER*/ COUNT(*) error_num FROM (SELECT NAME,ERRINFO FROM SYSJOB.SYSJOBHISTORIES2 WHERE ERRCODE !=0 AND START_TIME \u003e= (SYSDATE-31) AND NAME  IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE\n  LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE  STEPS.\"TYPE\" = 6AND SCHE.VALID = 'Y'\n  GROUP BY SYSJOBS.NAME)\n  UNION ALL\n  SELECT NAME,ERRINFO FROM SYSJOB.SYSSTEPHISTORIES2 WHERE ERRCODE !=0 AND START_TIME  \u003e= (SYSDATE-31) AND NAME IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE STEPS.\"TYPE\" = 6 AND SCHE.VALID = 'Y' \n  GROUP BY SYSJOBS.NAME)) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_joblog_error_num\", help: \"dmdbms_joblog_error_num info information\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_12_legacy": {
+    "Queries": [
+      " SELECT /*+DM_EXPORTER*/ COUNT(*) error_num FROM (SELECT NAME,ERRINFO FROM SYSJOB.SYSJOBHISTORIES2 WHERE ERRCODE !=0 AND START_TIME \u003e= (SYSDATE-31) AND NAME  IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE\n  LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE  STEPS.\"TYPE\" = 6AND SCHE.VALID = 'Y'\n  GROUP BY SYSJOBS.NAME)\n  UNION ALL\n  SELECT NAME,ERRINFO FROM SYSJOB.SYSSTEPHISTORIES2 WHERE ERRCODE !=0 AND START_TIME  \u003e= (SYSDATE-31) AND NAME IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE STEPS.\"TYPE\" = 6 AND SCHE.VALID = 'Y' \n  GROUP BY SYSJOBS.NAME)) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_joblog_error_num\", help: \"dmdbms_joblog_error_num info information\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_12_missing_columns": {
+    "Queries": [
+      " SELECT /*+DM_EXPORTER*/ COUNT(*) error_num FROM (SELECT NAME,ERRINFO FROM SYSJOB.SYSJOBHISTORIES2 WHERE ERRCODE !=0 AND START_TIME \u003e= (SYSDATE-31) AND NAME  IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE\n  LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE  STEPS.\"TYPE\" = 6AND SCHE.VALID = 'Y'\n  GROUP BY SYSJOBS.NAME)\n  UNION ALL\n  SELECT NAME,ERRINFO FROM SYSJOB.SYSSTEPHISTORIES2 WHERE ERRCODE !=0 AND START_TIME  \u003e= (SYSDATE-31) AND NAME IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE STEPS.\"TYPE\" = 6 AND SCHE.VALID = 'Y' \n  GROUP BY SYSJOBS.NAME)) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_joblog_error_num\", help: \"dmdbms_joblog_error_num info information\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_12_modern": {
+    "Queries": [
+      " SELECT /*+DM_EXPORTER*/ COUNT(*) error_num FROM (SELECT NAME,ERRINFO FROM SYSJOB.SYSJOBHISTORIES2 WHERE ERRCODE !=0 AND START_TIME \u003e= (SYSDATE-31) AND NAME  IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE\n  LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE  STEPS.\"TYPE\" = 6AND SCHE.VALID = 'Y'\n  GROUP BY SYSJOBS.NAME)\n  UNION ALL\n  SELECT NAME,ERRINFO FROM SYSJOB.SYSSTEPHISTORIES2 WHERE ERRCODE !=0 AND START_TIME  \u003e= (SYSDATE-31) AND NAME IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE STEPS.\"TYPE\" = 6 AND SCHE.VALID = 'Y' \n  GROUP BY SYSJOBS.NAME)) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_joblog_error_num\", help: \"dmdbms_joblog_error_num info information\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_12_partial_fields": {
+    "Queries": [
+      " SELECT /*+DM_EXPORTER*/ COUNT(*) error_num FROM (SELECT NAME,ERRINFO FROM SYSJOB.SYSJOBHISTORIES2 WHERE ERRCODE !=0 AND START_TIME \u003e= (SYSDATE-31) AND NAME  IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE\n  LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE  STEPS.\"TYPE\" = 6AND SCHE.VALID = 'Y'\n  GROUP BY SYSJOBS.NAME)\n  UNION ALL\n  SELECT NAME,ERRINFO FROM SYSJOB.SYSSTEPHISTORIES2 WHERE ERRCODE !=0 AND START_TIME  \u003e= (SYSDATE-31) AND NAME IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE STEPS.\"TYPE\" = 6 AND SCHE.VALID = 'Y' \n  GROUP BY SYSJOBS.NAME)) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_joblog_error_num\", help: \"dmdbms_joblog_error_num info information\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_12_probe_error": {
+    "Queries": [
+      " SELECT /*+DM_EXPORTER*/ COUNT(*) error_num FROM (SELECT NAME,ERRINFO FROM SYSJOB.SYSJOBHISTORIES2 WHERE ERRCODE !=0 AND START_TIME \u003e= (SYSDATE-31) AND NAME  IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE\n  LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE  STEPS.\"TYPE\" = 6AND SCHE.VALID = 'Y'\n  GROUP BY SYSJOBS.NAME)\n  UNION ALL\n  SELECT NAME,ERRINFO FROM SYSJOB.SYSSTEPHISTORIES2 WHERE ERRCODE !=0 AND START_TIME  \u003e= (SYSDATE-31) AND NAME IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE STEPS.\"TYPE\" = 6 AND SCHE.VALID = 'Y' \n  GROUP BY SYSJOBS.NAME)) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_joblog_error_num\", help: \"dmdbms_joblog_error_num info information\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_12_query_error": {
+    "Queries": [
+      " SELECT /*+DM_EXPORTER*/ COUNT(*) error_num FROM (SELECT NAME,ERRINFO FROM SYSJOB.SYSJOBHISTORIES2 WHERE ERRCODE !=0 AND START_TIME \u003e= (SYSDATE-31) AND NAME  IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE\n  LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE  STEPS.\"TYPE\" = 6AND SCHE.VALID = 'Y'\n  GROUP BY SYSJOBS.NAME)\n  UNION ALL\n  SELECT NAME,ERRINFO FROM SYSJOB.SYSSTEPHISTORIES2 WHERE ERRCODE !=0 AND START_TIME  \u003e= (SYSDATE-31) AND NAME IN (SELECT SYSJOBS.NAME\n  FROM SYSJOB.SYSJOBSCHEDULES SCHE LEFT JOIN SYSJOB.USER_JOBS USERJOB\n  ON SCHE.JOBID = USERJOB.JOB LEFT JOIN SYSJOB.SYSJOBSTEPS STEPS\n  ON SCHE.JOBID = STEPS.JOBID LEFT JOIN SYSJOB.SYSJOBS SYSJOBS ON SCHE.JOBID = SYSJOBS.ID       \n  WHERE STEPS.\"TYPE\" = 6 AND SCHE.VALID = 'Y' \n  GROUP BY SYSJOBS.NAME)) args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_13_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ CASE WHEN expired_date IS NULL THEN '' ELSE TO_CHAR(expired_date, 'yyyyMMdd')  END AS expired_date FROM V$LICENSE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_13_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ CASE WHEN expired_date IS NULL THEN '' ELSE TO_CHAR(expired_date, 'yyyyMMdd')  END AS expired_date FROM V$LICENSE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_13_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ CASE WHEN expired_date IS NULL THEN '' ELSE TO_CHAR(expired_date, 'yyyyMMdd')  END AS expired_date FROM V$LICENSE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_13_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ CASE WHEN expired_date IS NULL THEN '' ELSE TO_CHAR(expired_date, 'yyyyMMdd')  END AS expired_date FROM V$LICENSE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_13_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ CASE WHEN expired_date IS NULL THEN '' ELSE TO_CHAR(expired_date, 'yyyyMMdd')  END AS expired_date FROM V$LICENSE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_13_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ CASE WHEN expired_date IS NULL THEN '' ELSE TO_CHAR(expired_date, 'yyyyMMdd')  END AS expired_date FROM V$LICENSE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_13_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ CASE WHEN expired_date IS NULL THEN '' ELSE TO_CHAR(expired_date, 'yyyyMMdd')  END AS expired_date FROM V$LICENSE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_13_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ CASE WHEN expired_date IS NULL THEN '' ELSE TO_CHAR(expired_date, 'yyyyMMdd')  END AS expired_date FROM V$LICENSE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_14_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$LOG_HISTORY' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(RECTIME,'YYYY-MM-DD HH24:MI:SS') AS RECTIME FROM V$LOG_HISTORY ORDER BY RECTIME DESC LIMIT 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_redo_last_switch_time_seconds\", help: \"Unix timestamp of the last redo log switch; zero when unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_14_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$LOG_HISTORY' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_14_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$LOG_HISTORY' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(RECTIME,'YYYY-MM-DD HH24:MI:SS') AS RECTIME FROM V$LOG_HISTORY ORDER BY RECTIME DESC LIMIT 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_redo_last_switch_time_seconds\", help: \"Unix timestamp of the last redo log switch; zero when unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_14_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$LOG_HISTORY' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(RECTIME,'YYYY-MM-DD HH24:MI:SS') AS RECTIME FROM V$LOG_HISTORY ORDER BY RECTIME DESC LIMIT 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_redo_last_switch_time_seconds\", help: \"Unix timestamp of the last redo log switch; zero when unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_14_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$LOG_HISTORY' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(RECTIME,'YYYY-MM-DD HH24:MI:SS') AS RECTIME FROM V$LOG_HISTORY ORDER BY RECTIME DESC LIMIT 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_redo_last_switch_time_seconds\", help: \"Unix timestamp of the last redo log switch; zero when unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_14_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$LOG_HISTORY' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(RECTIME,'YYYY-MM-DD HH24:MI:SS') AS RECTIME FROM V$LOG_HISTORY ORDER BY RECTIME DESC LIMIT 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_redo_last_switch_time_seconds\", help: \"Unix timestamp of the last redo log switch; zero when unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_14_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$LOG_HISTORY' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_14_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$LOG_HISTORY' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_15_dsc": {
+    "Queries": [
+      "WITH stat_values AS (\n    SELECT \n        SUM(CASE WHEN ID IN (114, 115) THEN STAT_VAL END) AS hj_curr_val,\n        MAX(CASE WHEN ID = 145 THEN STAT_VAL END) AS hj_res_val,\n        MAX(CASE WHEN ID = 144 THEN STAT_VAL END) AS hj_total_val,\n        SUM(CASE WHEN ID = 116 THEN STAT_VAL END) AS hagr_curr_val,\n        MAX(CASE WHEN ID = 143 THEN STAT_VAL END) AS hagr_res_val,\n        MAX(CASE WHEN ID = 142 THEN STAT_VAL END) AS hagr_total_val,\n        SUM(CASE WHEN ID = 178 THEN STAT_VAL END) AS sort_curr_val,\n        MAX(CASE WHEN ID = 177 THEN STAT_VAL END) AS sort_total_val\n    FROM V$SYSSTAT \n    WHERE ID IN (114, 115, 116, 142, 143, 144, 145, 177, 178)\n)\nSELECT /*+DM_EXPORTER*/ ZONE_TYPE, CURR_VAL, RES_VAL, TOTAL_VAL\nFROM (\n    SELECT 'HJ ZONE' AS ZONE_TYPE, hj_curr_val AS CURR_VAL, hj_res_val AS RES_VAL, hj_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'HAGR ZONE' AS ZONE_TYPE, hagr_curr_val AS CURR_VAL, hagr_res_val AS RES_VAL, hagr_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'SORT ZONE' AS ZONE_TYPE, sort_curr_val AS CURR_VAL, NULL AS RES_VAL, sort_total_val AS TOTAL_VAL FROM stat_values\n)\n args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_15_empty": {
+    "Queries": [
+      "WITH stat_values AS (\n    SELECT \n        SUM(CASE WHEN ID IN (114, 115) THEN STAT_VAL END) AS hj_curr_val,\n        MAX(CASE WHEN ID = 145 THEN STAT_VAL END) AS hj_res_val,\n        MAX(CASE WHEN ID = 144 THEN STAT_VAL END) AS hj_total_val,\n        SUM(CASE WHEN ID = 116 THEN STAT_VAL END) AS hagr_curr_val,\n        MAX(CASE WHEN ID = 143 THEN STAT_VAL END) AS hagr_res_val,\n        MAX(CASE WHEN ID = 142 THEN STAT_VAL END) AS hagr_total_val,\n        SUM(CASE WHEN ID = 178 THEN STAT_VAL END) AS sort_curr_val,\n        MAX(CASE WHEN ID = 177 THEN STAT_VAL END) AS sort_total_val\n    FROM V$SYSSTAT \n    WHERE ID IN (114, 115, 116, 142, 143, 144, 145, 177, 178)\n)\nSELECT /*+DM_EXPORTER*/ ZONE_TYPE, CURR_VAL, RES_VAL, TOTAL_VAL\nFROM (\n    SELECT 'HJ ZONE' AS ZONE_TYPE, hj_curr_val AS CURR_VAL, hj_res_val AS RES_VAL, hj_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'HAGR ZONE' AS ZONE_TYPE, hagr_curr_val AS CURR_VAL, hagr_res_val AS RES_VAL, hagr_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'SORT ZONE' AS ZONE_TYPE, sort_curr_val AS CURR_VAL, NULL AS RES_VAL, sort_total_val AS TOTAL_VAL FROM stat_values\n)\n args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_15_legacy": {
+    "Queries": [
+      "WITH stat_values AS (\n    SELECT \n        SUM(CASE WHEN ID IN (114, 115) THEN STAT_VAL END) AS hj_curr_val,\n        MAX(CASE WHEN ID = 145 THEN STAT_VAL END) AS hj_res_val,\n        MAX(CASE WHEN ID = 144 THEN STAT_VAL END) AS hj_total_val,\n        SUM(CASE WHEN ID = 116 THEN STAT_VAL END) AS hagr_curr_val,\n        MAX(CASE WHEN ID = 143 THEN STAT_VAL END) AS hagr_res_val,\n        MAX(CASE WHEN ID = 142 THEN STAT_VAL END) AS hagr_total_val,\n        SUM(CASE WHEN ID = 178 THEN STAT_VAL END) AS sort_curr_val,\n        MAX(CASE WHEN ID = 177 THEN STAT_VAL END) AS sort_total_val\n    FROM V$SYSSTAT \n    WHERE ID IN (114, 115, 116, 142, 143, 144, 145, 177, 178)\n)\nSELECT /*+DM_EXPORTER*/ ZONE_TYPE, CURR_VAL, RES_VAL, TOTAL_VAL\nFROM (\n    SELECT 'HJ ZONE' AS ZONE_TYPE, hj_curr_val AS CURR_VAL, hj_res_val AS RES_VAL, hj_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'HAGR ZONE' AS ZONE_TYPE, hagr_curr_val AS CURR_VAL, hagr_res_val AS RES_VAL, hagr_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'SORT ZONE' AS ZONE_TYPE, sort_curr_val AS CURR_VAL, NULL AS RES_VAL, sort_total_val AS TOTAL_VAL FROM stat_values\n)\n args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_15_missing_columns": {
+    "Queries": [
+      "WITH stat_values AS (\n    SELECT \n        SUM(CASE WHEN ID IN (114, 115) THEN STAT_VAL END) AS hj_curr_val,\n        MAX(CASE WHEN ID = 145 THEN STAT_VAL END) AS hj_res_val,\n        MAX(CASE WHEN ID = 144 THEN STAT_VAL END) AS hj_total_val,\n        SUM(CASE WHEN ID = 116 THEN STAT_VAL END) AS hagr_curr_val,\n        MAX(CASE WHEN ID = 143 THEN STAT_VAL END) AS hagr_res_val,\n        MAX(CASE WHEN ID = 142 THEN STAT_VAL END) AS hagr_total_val,\n        SUM(CASE WHEN ID = 178 THEN STAT_VAL END) AS sort_curr_val,\n        MAX(CASE WHEN ID = 177 THEN STAT_VAL END) AS sort_total_val\n    FROM V$SYSSTAT \n    WHERE ID IN (114, 115, 116, 142, 143, 144, 145, 177, 178)\n)\nSELECT /*+DM_EXPORTER*/ ZONE_TYPE, CURR_VAL, RES_VAL, TOTAL_VAL\nFROM (\n    SELECT 'HJ ZONE' AS ZONE_TYPE, hj_curr_val AS CURR_VAL, hj_res_val AS RES_VAL, hj_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'HAGR ZONE' AS ZONE_TYPE, hagr_curr_val AS CURR_VAL, hagr_res_val AS RES_VAL, hagr_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'SORT ZONE' AS ZONE_TYPE, sort_curr_val AS CURR_VAL, NULL AS RES_VAL, sort_total_val AS TOTAL_VAL FROM stat_values\n)\n args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_15_modern": {
+    "Queries": [
+      "WITH stat_values AS (\n    SELECT \n        SUM(CASE WHEN ID IN (114, 115) THEN STAT_VAL END) AS hj_curr_val,\n        MAX(CASE WHEN ID = 145 THEN STAT_VAL END) AS hj_res_val,\n        MAX(CASE WHEN ID = 144 THEN STAT_VAL END) AS hj_total_val,\n        SUM(CASE WHEN ID = 116 THEN STAT_VAL END) AS hagr_curr_val,\n        MAX(CASE WHEN ID = 143 THEN STAT_VAL END) AS hagr_res_val,\n        MAX(CASE WHEN ID = 142 THEN STAT_VAL END) AS hagr_total_val,\n        SUM(CASE WHEN ID = 178 THEN STAT_VAL END) AS sort_curr_val,\n        MAX(CASE WHEN ID = 177 THEN STAT_VAL END) AS sort_total_val\n    FROM V$SYSSTAT \n    WHERE ID IN (114, 115, 116, 142, 143, 144, 145, 177, 178)\n)\nSELECT /*+DM_EXPORTER*/ ZONE_TYPE, CURR_VAL, RES_VAL, TOTAL_VAL\nFROM (\n    SELECT 'HJ ZONE' AS ZONE_TYPE, hj_curr_val AS CURR_VAL, hj_res_val AS RES_VAL, hj_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'HAGR ZONE' AS ZONE_TYPE, hagr_curr_val AS CURR_VAL, hagr_res_val AS RES_VAL, hagr_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'SORT ZONE' AS ZONE_TYPE, sort_curr_val AS CURR_VAL, NULL AS RES_VAL, sort_total_val AS TOTAL_VAL FROM stat_values\n)\n args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_15_partial_fields": {
+    "Queries": [
+      "WITH stat_values AS (\n    SELECT \n        SUM(CASE WHEN ID IN (114, 115) THEN STAT_VAL END) AS hj_curr_val,\n        MAX(CASE WHEN ID = 145 THEN STAT_VAL END) AS hj_res_val,\n        MAX(CASE WHEN ID = 144 THEN STAT_VAL END) AS hj_total_val,\n        SUM(CASE WHEN ID = 116 THEN STAT_VAL END) AS hagr_curr_val,\n        MAX(CASE WHEN ID = 143 THEN STAT_VAL END) AS hagr_res_val,\n        MAX(CASE WHEN ID = 142 THEN STAT_VAL END) AS hagr_total_val,\n        SUM(CASE WHEN ID = 178 THEN STAT_VAL END) AS sort_curr_val,\n        MAX(CASE WHEN ID = 177 THEN STAT_VAL END) AS sort_total_val\n    FROM V$SYSSTAT \n    WHERE ID IN (114, 115, 116, 142, 143, 144, 145, 177, 178)\n)\nSELECT /*+DM_EXPORTER*/ ZONE_TYPE, CURR_VAL, RES_VAL, TOTAL_VAL\nFROM (\n    SELECT 'HJ ZONE' AS ZONE_TYPE, hj_curr_val AS CURR_VAL, hj_res_val AS RES_VAL, hj_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'HAGR ZONE' AS ZONE_TYPE, hagr_curr_val AS CURR_VAL, hagr_res_val AS RES_VAL, hagr_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'SORT ZONE' AS ZONE_TYPE, sort_curr_val AS CURR_VAL, NULL AS RES_VAL, sort_total_val AS TOTAL_VAL FROM stat_values\n)\n args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_15_probe_error": {
+    "Queries": [
+      "WITH stat_values AS (\n    SELECT \n        SUM(CASE WHEN ID IN (114, 115) THEN STAT_VAL END) AS hj_curr_val,\n        MAX(CASE WHEN ID = 145 THEN STAT_VAL END) AS hj_res_val,\n        MAX(CASE WHEN ID = 144 THEN STAT_VAL END) AS hj_total_val,\n        SUM(CASE WHEN ID = 116 THEN STAT_VAL END) AS hagr_curr_val,\n        MAX(CASE WHEN ID = 143 THEN STAT_VAL END) AS hagr_res_val,\n        MAX(CASE WHEN ID = 142 THEN STAT_VAL END) AS hagr_total_val,\n        SUM(CASE WHEN ID = 178 THEN STAT_VAL END) AS sort_curr_val,\n        MAX(CASE WHEN ID = 177 THEN STAT_VAL END) AS sort_total_val\n    FROM V$SYSSTAT \n    WHERE ID IN (114, 115, 116, 142, 143, 144, 145, 177, 178)\n)\nSELECT /*+DM_EXPORTER*/ ZONE_TYPE, CURR_VAL, RES_VAL, TOTAL_VAL\nFROM (\n    SELECT 'HJ ZONE' AS ZONE_TYPE, hj_curr_val AS CURR_VAL, hj_res_val AS RES_VAL, hj_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'HAGR ZONE' AS ZONE_TYPE, hagr_curr_val AS CURR_VAL, hagr_res_val AS RES_VAL, hagr_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'SORT ZONE' AS ZONE_TYPE, sort_curr_val AS CURR_VAL, NULL AS RES_VAL, sort_total_val AS TOTAL_VAL FROM stat_values\n)\n args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_15_query_error": {
+    "Queries": [
+      "WITH stat_values AS (\n    SELECT \n        SUM(CASE WHEN ID IN (114, 115) THEN STAT_VAL END) AS hj_curr_val,\n        MAX(CASE WHEN ID = 145 THEN STAT_VAL END) AS hj_res_val,\n        MAX(CASE WHEN ID = 144 THEN STAT_VAL END) AS hj_total_val,\n        SUM(CASE WHEN ID = 116 THEN STAT_VAL END) AS hagr_curr_val,\n        MAX(CASE WHEN ID = 143 THEN STAT_VAL END) AS hagr_res_val,\n        MAX(CASE WHEN ID = 142 THEN STAT_VAL END) AS hagr_total_val,\n        SUM(CASE WHEN ID = 178 THEN STAT_VAL END) AS sort_curr_val,\n        MAX(CASE WHEN ID = 177 THEN STAT_VAL END) AS sort_total_val\n    FROM V$SYSSTAT \n    WHERE ID IN (114, 115, 116, 142, 143, 144, 145, 177, 178)\n)\nSELECT /*+DM_EXPORTER*/ ZONE_TYPE, CURR_VAL, RES_VAL, TOTAL_VAL\nFROM (\n    SELECT 'HJ ZONE' AS ZONE_TYPE, hj_curr_val AS CURR_VAL, hj_res_val AS RES_VAL, hj_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'HAGR ZONE' AS ZONE_TYPE, hagr_curr_val AS CURR_VAL, hagr_res_val AS RES_VAL, hagr_total_val AS TOTAL_VAL FROM stat_values\n    UNION ALL\n    SELECT 'SORT ZONE' AS ZONE_TYPE, sort_curr_val AS CURR_VAL, NULL AS RES_VAL, sort_total_val AS TOTAL_VAL FROM stat_values\n)\n args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_16_dsc": {
+    "Queries": [
+      "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(DW_CONN_TIME,'YYYY-MM-DD HH24:MI:SS') AS DW_CONN_TIME,MON_CONFIRM,MON_ID,MON_IP,MON_VERSION,MID FROM V$DMMONITOR args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_16_empty": {
+    "Queries": [
+      "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_16_legacy": {
+    "Queries": [
+      "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(DW_CONN_TIME,'YYYY-MM-DD HH24:MI:SS') AS DW_CONN_TIME,MON_CONFIRM,MON_ID,MON_IP,MON_VERSION,MID FROM V$DMMONITOR args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_16_missing_columns": {
+    "Queries": [
+      "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(DW_CONN_TIME,'YYYY-MM-DD HH24:MI:SS') AS DW_CONN_TIME,MON_CONFIRM,MON_ID,MON_IP,MON_VERSION,MID FROM V$DMMONITOR args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_16_modern": {
+    "Queries": [
+      "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(DW_CONN_TIME,'YYYY-MM-DD HH24:MI:SS') AS DW_CONN_TIME,MON_CONFIRM,MON_ID,MON_IP,MON_VERSION,MID FROM V$DMMONITOR args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_16_partial_fields": {
+    "Queries": [
+      "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(DW_CONN_TIME,'YYYY-MM-DD HH24:MI:SS') AS DW_CONN_TIME,MON_CONFIRM,MON_ID,MON_IP,MON_VERSION,MID FROM V$DMMONITOR args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_16_probe_error": {
+    "Queries": [
+      "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_16_query_error": {
+    "Queries": [
+      "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_17_dsc": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_17_empty": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_17_legacy": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_17_missing_columns": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_17_modern": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_17_partial_fields": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_17_probe_error": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_17_query_error": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ para_name,para_value from v$dm_ini where para_name in  ( 'MAX_SESSIONS','REDOS_BUF_NUM','REDOS_BUF_SIZE','PORT_NUM') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_18_dsc": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ OBJ_NUM,IS_RUNNING,PURG_FOR_TS from V$PURGE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_18_empty": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ OBJ_NUM,IS_RUNNING,PURG_FOR_TS from V$PURGE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_18_legacy": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ OBJ_NUM,IS_RUNNING,PURG_FOR_TS from V$PURGE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_18_missing_columns": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ OBJ_NUM,IS_RUNNING,PURG_FOR_TS from V$PURGE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_18_modern": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ OBJ_NUM,IS_RUNNING,PURG_FOR_TS from V$PURGE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_18_partial_fields": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ OBJ_NUM,IS_RUNNING,PURG_FOR_TS from V$PURGE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_18_probe_error": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ OBJ_NUM,IS_RUNNING,PURG_FOR_TS from V$PURGE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_18_query_error": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ OBJ_NUM,IS_RUNNING,PURG_FOR_TS from V$PURGE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_19_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ task_mem_used, task_num FROM v$rapply_sys args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_19_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ task_mem_used, task_num FROM v$rapply_sys args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_19_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ task_mem_used, task_num FROM v$rapply_sys args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_19_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ task_mem_used, task_num FROM v$rapply_sys args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_19_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ task_mem_used, task_num FROM v$rapply_sys args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_19_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ task_mem_used, task_num FROM v$rapply_sys args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_19_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ task_mem_used, task_num FROM v$rapply_sys args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_19_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ task_mem_used, task_num FROM v$rapply_sys args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_1_dsc": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_SEND_INFO' AND COLNAME IN ('LAST_SEND_CODE','LAST_SEND_DESC') args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO' args=[]",
+      "SELECT  /*+DM_EXPORTER*/ \n   S.ARCH_DEST,  S.ARCH_TYPE, \n   CASE WHEN A.RPKG_LSN IS NOT NULL THEN S.MAX_SEND_LSN - A.RPKG_LSN ELSE 0 END AS LSN_DIFFERENCE, \n       LAST_SEND_CODE, \n       LAST_SEND_DESC, \n       TO_CHAR(LAST_START_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_START_TIME, \n       TO_CHAR(LAST_END_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_END_TIME, \n       LAST_SEND_TIME \n  FROM V$ARCH_SEND_INFO S\n  LEFT JOIN (\n       SELECT DEST_NAME, DSC_SEQNO, MAX(RPKG_LSN) AS RPKG_LSN\n       FROM V$ARCH_APPLY_INFO\n       GROUP BY DEST_NAME, DSC_SEQNO\n  ) A ON S.ARCH_DEST = A.DEST_NAME\n     AND A.DSC_SEQNO = (SELECT DSC_SEQNO FROM V$INSTANCE); args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_1_empty": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_SEND_INFO' AND COLNAME IN ('LAST_SEND_CODE','LAST_SEND_DESC') args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO' args=[]",
+      "SELECT /*+DM_EXPORTER*/ ARCH_DEST,ARCH_TYPE,(MAX_SEND_LSN - LAST_SEND_LSN) AS LSN_DIFFERENCE,'' AS LAST_SEND_CODE,'' AS LAST_SEND_DESC,TO_CHAR(LAST_START_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_START_TIME,TO_CHAR(LAST_END_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_END_TIME,LAST_SEND_TIME FROM V$ARCH_SEND_INFO args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_1_legacy": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_SEND_INFO' AND COLNAME IN ('LAST_SEND_CODE','LAST_SEND_DESC') args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO' args=[]",
+      "SELECT /*+DM_EXPORTER*/ ARCH_DEST,ARCH_TYPE,(MAX_SEND_LSN - LAST_SEND_LSN) AS LSN_DIFFERENCE,'' AS LAST_SEND_CODE,'' AS LAST_SEND_DESC,TO_CHAR(LAST_START_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_START_TIME,TO_CHAR(LAST_END_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_END_TIME,LAST_SEND_TIME FROM V$ARCH_SEND_INFO args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_1_missing_columns": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_SEND_INFO' AND COLNAME IN ('LAST_SEND_CODE','LAST_SEND_DESC') args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO' args=[]",
+      "SELECT  /*+DM_EXPORTER*/ \n   S.ARCH_DEST,  S.ARCH_TYPE, \n   CASE WHEN A.RPKG_LSN IS NOT NULL THEN S.MAX_SEND_LSN - A.RPKG_LSN ELSE 0 END AS LSN_DIFFERENCE, \n       '' AS LAST_SEND_CODE, \n       '' AS LAST_SEND_DESC, \n       TO_CHAR(LAST_START_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_START_TIME, \n       TO_CHAR(LAST_END_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_END_TIME, \n       LAST_SEND_TIME \n  FROM V$ARCH_SEND_INFO S\n  LEFT JOIN (\n       SELECT DEST_NAME, MAX(RPKG_LSN) AS RPKG_LSN\n       FROM V$ARCH_APPLY_INFO\n       GROUP BY DEST_NAME\n  ) A ON S.ARCH_DEST = A.DEST_NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_1_modern": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_SEND_INFO' AND COLNAME IN ('LAST_SEND_CODE','LAST_SEND_DESC') args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO' args=[]",
+      "SELECT  /*+DM_EXPORTER*/ \n   S.ARCH_DEST,  S.ARCH_TYPE, \n   CASE WHEN A.RPKG_LSN IS NOT NULL THEN S.MAX_SEND_LSN - A.RPKG_LSN ELSE 0 END AS LSN_DIFFERENCE, \n       LAST_SEND_CODE, \n       LAST_SEND_DESC, \n       TO_CHAR(LAST_START_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_START_TIME, \n       TO_CHAR(LAST_END_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_END_TIME, \n       LAST_SEND_TIME \n  FROM V$ARCH_SEND_INFO S\n  LEFT JOIN (\n       SELECT DEST_NAME, MAX(RPKG_LSN) AS RPKG_LSN\n       FROM V$ARCH_APPLY_INFO\n       GROUP BY DEST_NAME\n  ) A ON S.ARCH_DEST = A.DEST_NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_1_partial_fields": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_SEND_INFO' AND COLNAME IN ('LAST_SEND_CODE','LAST_SEND_DESC') args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO' args=[]",
+      "SELECT  /*+DM_EXPORTER*/ \n   S.ARCH_DEST,  S.ARCH_TYPE, \n   CASE WHEN A.RPKG_LSN IS NOT NULL THEN S.MAX_SEND_LSN - A.RPKG_LSN ELSE 0 END AS LSN_DIFFERENCE, \n       LAST_SEND_CODE, \n       LAST_SEND_DESC, \n       TO_CHAR(LAST_START_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_START_TIME, \n       TO_CHAR(LAST_END_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_END_TIME, \n       LAST_SEND_TIME \n  FROM V$ARCH_SEND_INFO S\n  LEFT JOIN (\n       SELECT DEST_NAME, MAX(RPKG_LSN) AS RPKG_LSN\n       FROM V$ARCH_APPLY_INFO\n       GROUP BY DEST_NAME\n  ) A ON S.ARCH_DEST = A.DEST_NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_1_probe_error": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ARCH_SEND_INFO' AND COLNAME IN ('LAST_SEND_CODE','LAST_SEND_DESC') args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ARCH_APPLY_INFO' args=[]",
+      "SELECT /*+DM_EXPORTER*/ ARCH_DEST,ARCH_TYPE,(MAX_SEND_LSN - LAST_SEND_LSN) AS LSN_DIFFERENCE,'' AS LAST_SEND_CODE,'' AS LAST_SEND_DESC,TO_CHAR(LAST_START_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_START_TIME,TO_CHAR(LAST_END_TIME,'YYYY-MM-DD HH24:MI:SS') AS LAST_END_TIME,LAST_SEND_TIME FROM V$ARCH_SEND_INFO args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_1_query_error": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_20_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NVL(TIMESTAMPDIFF(SQL_TSI_SECOND, APPLY_CMT_TIME, LAST_CMT_TIME), 0) TIMEDIFF FROM V$RAPPLY_STAT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_20_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NVL(TIMESTAMPDIFF(SQL_TSI_SECOND, APPLY_CMT_TIME, LAST_CMT_TIME), 0) TIMEDIFF FROM V$RAPPLY_STAT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_20_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NVL(TIMESTAMPDIFF(SQL_TSI_SECOND, APPLY_CMT_TIME, LAST_CMT_TIME), 0) TIMEDIFF FROM V$RAPPLY_STAT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_20_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NVL(TIMESTAMPDIFF(SQL_TSI_SECOND, APPLY_CMT_TIME, LAST_CMT_TIME), 0) TIMEDIFF FROM V$RAPPLY_STAT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_20_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NVL(TIMESTAMPDIFF(SQL_TSI_SECOND, APPLY_CMT_TIME, LAST_CMT_TIME), 0) TIMEDIFF FROM V$RAPPLY_STAT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_20_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NVL(TIMESTAMPDIFF(SQL_TSI_SECOND, APPLY_CMT_TIME, LAST_CMT_TIME), 0) TIMEDIFF FROM V$RAPPLY_STAT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_20_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NVL(TIMESTAMPDIFF(SQL_TSI_SECOND, APPLY_CMT_TIME, LAST_CMT_TIME), 0) TIMEDIFF FROM V$RAPPLY_STAT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_20_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NVL(TIMESTAMPDIFF(SQL_TSI_SECOND, APPLY_CMT_TIME, LAST_CMT_TIME), 0) TIMEDIFF FROM V$RAPPLY_STAT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_21_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ FILE_ID,PATH,CREATE_TIME,RLOG_SIZE FROM V$RLOGFILE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_21_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ FILE_ID,PATH,CREATE_TIME,RLOG_SIZE FROM V$RLOGFILE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_21_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ FILE_ID,PATH,CREATE_TIME,RLOG_SIZE FROM V$RLOGFILE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_21_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ FILE_ID,PATH,CREATE_TIME,RLOG_SIZE FROM V$RLOGFILE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_21_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ FILE_ID,PATH,CREATE_TIME,RLOG_SIZE FROM V$RLOGFILE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_21_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ FILE_ID,PATH,CREATE_TIME,RLOG_SIZE FROM V$RLOGFILE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_21_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ FILE_ID,PATH,CREATE_TIME,RLOG_SIZE FROM V$RLOGFILE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_21_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ FILE_ID,PATH,CREATE_TIME,RLOG_SIZE FROM V$RLOGFILE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_22_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$RLOG' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$RLOG' AND COLNAME IN ('CKPT_LSN','FILE_LSN','FLUSH_LSN','CUR_LSN') args=[]",
+      "SELECT /*+DM_EXPORTER*/ CKPT_LSN,FILE_LSN,FLUSH_LSN,CUR_LSN FROM V$RLOG args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_22_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$RLOG' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_22_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$RLOG' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$RLOG' AND COLNAME IN ('CKPT_LSN','FILE_LSN','FLUSH_LSN','CUR_LSN') args=[]",
+      "SELECT /*+DM_EXPORTER*/ CKPT_LSN,FILE_LSN,FLUSH_LSN,CUR_LSN FROM V$RLOG args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_22_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$RLOG' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$RLOG' AND COLNAME IN ('CKPT_LSN','FILE_LSN','FLUSH_LSN','CUR_LSN') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_22_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$RLOG' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$RLOG' AND COLNAME IN ('CKPT_LSN','FILE_LSN','FLUSH_LSN','CUR_LSN') args=[]",
+      "SELECT /*+DM_EXPORTER*/ CKPT_LSN,FILE_LSN,FLUSH_LSN,CUR_LSN FROM V$RLOG args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_22_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$RLOG' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$RLOG' AND COLNAME IN ('CKPT_LSN','FILE_LSN','FLUSH_LSN','CUR_LSN') args=[]",
+      "SELECT /*+DM_EXPORTER*/ CKPT_LSN,FILE_LSN,FLUSH_LSN,CUR_LSN FROM V$RLOG args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_22_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$RLOG' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_22_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$RLOG' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_23_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/\n        DECODE(STATE, NULL, 'UNKNOWN', STATE) AS STATE_TYPE,\n        COUNT(SESS_ID) AS COUNT_VAL\n        FROM V$SESSIONS\n        WHERE (APPNAME IS NULL OR APPNAME \u003c\u003e ?)\n        GROUP BY STATE args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":\"dameng_exporter\"}]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"ACTIVE\"}]}",
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"IDLE\"}]}"
+    ]
+  },
+  "coverage_23_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/\n        DECODE(STATE, NULL, 'UNKNOWN', STATE) AS STATE_TYPE,\n        COUNT(SESS_ID) AS COUNT_VAL\n        FROM V$SESSIONS\n        WHERE (APPNAME IS NULL OR APPNAME \u003c\u003e ?)\n        GROUP BY STATE args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":\"dameng_exporter\"}]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"ACTIVE\"}]}",
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"IDLE\"}]}"
+    ]
+  },
+  "coverage_23_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/\n        DECODE(STATE, NULL, 'UNKNOWN', STATE) AS STATE_TYPE,\n        COUNT(SESS_ID) AS COUNT_VAL\n        FROM V$SESSIONS\n        WHERE (APPNAME IS NULL OR APPNAME \u003c\u003e ?)\n        GROUP BY STATE args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":\"dameng_exporter\"}]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"ACTIVE\"}]}",
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"IDLE\"}]}"
+    ]
+  },
+  "coverage_23_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/\n        DECODE(STATE, NULL, 'UNKNOWN', STATE) AS STATE_TYPE,\n        COUNT(SESS_ID) AS COUNT_VAL\n        FROM V$SESSIONS\n        WHERE (APPNAME IS NULL OR APPNAME \u003c\u003e ?)\n        GROUP BY STATE args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":\"dameng_exporter\"}]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"ACTIVE\"}]}",
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"IDLE\"}]}"
+    ]
+  },
+  "coverage_23_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/\n        DECODE(STATE, NULL, 'UNKNOWN', STATE) AS STATE_TYPE,\n        COUNT(SESS_ID) AS COUNT_VAL\n        FROM V$SESSIONS\n        WHERE (APPNAME IS NULL OR APPNAME \u003c\u003e ?)\n        GROUP BY STATE args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":\"dameng_exporter\"}]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"ACTIVE\"}]}",
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"IDLE\"}]}"
+    ]
+  },
+  "coverage_23_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/\n        DECODE(STATE, NULL, 'UNKNOWN', STATE) AS STATE_TYPE,\n        COUNT(SESS_ID) AS COUNT_VAL\n        FROM V$SESSIONS\n        WHERE (APPNAME IS NULL OR APPNAME \u003c\u003e ?)\n        GROUP BY STATE args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":\"dameng_exporter\"}]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"ACTIVE\"}]}",
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"IDLE\"}]}"
+    ]
+  },
+  "coverage_23_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/\n        DECODE(STATE, NULL, 'UNKNOWN', STATE) AS STATE_TYPE,\n        COUNT(SESS_ID) AS COUNT_VAL\n        FROM V$SESSIONS\n        WHERE (APPNAME IS NULL OR APPNAME \u003c\u003e ?)\n        GROUP BY STATE args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":\"dameng_exporter\"}]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"ACTIVE\"}]}",
+      "Desc{fqName: \"dmdbms_session_type_info\", help: \"Number of database sessions type status\", constLabels: {}, variableLabels: {session_type}} {\"gauge\":{\"value\":0},\"label\":[{\"name\":\"session_type\",\"value\":\"IDLE\"}]}"
+    ]
+  },
+  "coverage_23_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/\n        DECODE(STATE, NULL, 'UNKNOWN', STATE) AS STATE_TYPE,\n        COUNT(SESS_ID) AS COUNT_VAL\n        FROM V$SESSIONS\n        WHERE (APPNAME IS NULL OR APPNAME \u003c\u003e ?)\n        GROUP BY STATE args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":\"dameng_exporter\"}]"
+    ],
+    "Samples": []
+  },
+  "coverage_24_dsc": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ *  from ( SELECT DATEDIFF(MS,LAST_RECV_TIME,SYSDATE) EXEC_TIME,\n                            DBMS_LOB.SUBSTR(SF_GET_SESSION_SQL(SESS_ID)) SLOW_SQL,\n                            SESS_ID,\n                            CURR_SCH,\n                            THRD_ID,\n                            LAST_RECV_TIME,\n                            SUBSTR(CLNT_IP,8,13) CONN_IP\n                       FROM V$SESSIONS\n                      WHERE  1=1 \n                   and STATE='ACTIVE'\n                   ORDER BY 1 DESC) \n             where EXEC_TIME \u003e= ? and LAST_RECV_TIME \u003e TO_TIMESTAMP('2000-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') LIMIT ? args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":10000},{\"Name\":\"\",\"Ordinal\":2,\"Value\":10}]"
+    ],
+    "Samples": []
+  },
+  "coverage_24_empty": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ *  from ( SELECT DATEDIFF(MS,LAST_RECV_TIME,SYSDATE) EXEC_TIME,\n                            DBMS_LOB.SUBSTR(SF_GET_SESSION_SQL(SESS_ID)) SLOW_SQL,\n                            SESS_ID,\n                            CURR_SCH,\n                            THRD_ID,\n                            LAST_RECV_TIME,\n                            SUBSTR(CLNT_IP,8,13) CONN_IP\n                       FROM V$SESSIONS\n                      WHERE  1=1 \n                   and STATE='ACTIVE'\n                   ORDER BY 1 DESC) \n             where EXEC_TIME \u003e= ? and LAST_RECV_TIME \u003e TO_TIMESTAMP('2000-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') LIMIT ? args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":10000},{\"Name\":\"\",\"Ordinal\":2,\"Value\":10}]"
+    ],
+    "Samples": []
+  },
+  "coverage_24_legacy": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ *  from ( SELECT DATEDIFF(MS,LAST_RECV_TIME,SYSDATE) EXEC_TIME,\n                            DBMS_LOB.SUBSTR(SF_GET_SESSION_SQL(SESS_ID)) SLOW_SQL,\n                            SESS_ID,\n                            CURR_SCH,\n                            THRD_ID,\n                            LAST_RECV_TIME,\n                            SUBSTR(CLNT_IP,8,13) CONN_IP\n                       FROM V$SESSIONS\n                      WHERE  1=1 \n                   and STATE='ACTIVE'\n                   ORDER BY 1 DESC) \n             where EXEC_TIME \u003e= ? and LAST_RECV_TIME \u003e TO_TIMESTAMP('2000-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') LIMIT ? args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":10000},{\"Name\":\"\",\"Ordinal\":2,\"Value\":10}]"
+    ],
+    "Samples": []
+  },
+  "coverage_24_missing_columns": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ *  from ( SELECT DATEDIFF(MS,LAST_RECV_TIME,SYSDATE) EXEC_TIME,\n                            DBMS_LOB.SUBSTR(SF_GET_SESSION_SQL(SESS_ID)) SLOW_SQL,\n                            SESS_ID,\n                            CURR_SCH,\n                            THRD_ID,\n                            LAST_RECV_TIME,\n                            SUBSTR(CLNT_IP,8,13) CONN_IP\n                       FROM V$SESSIONS\n                      WHERE  1=1 \n                   and STATE='ACTIVE'\n                   ORDER BY 1 DESC) \n             where EXEC_TIME \u003e= ? and LAST_RECV_TIME \u003e TO_TIMESTAMP('2000-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') LIMIT ? args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":10000},{\"Name\":\"\",\"Ordinal\":2,\"Value\":10}]"
+    ],
+    "Samples": []
+  },
+  "coverage_24_modern": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ *  from ( SELECT DATEDIFF(MS,LAST_RECV_TIME,SYSDATE) EXEC_TIME,\n                            DBMS_LOB.SUBSTR(SF_GET_SESSION_SQL(SESS_ID)) SLOW_SQL,\n                            SESS_ID,\n                            CURR_SCH,\n                            THRD_ID,\n                            LAST_RECV_TIME,\n                            SUBSTR(CLNT_IP,8,13) CONN_IP\n                       FROM V$SESSIONS\n                      WHERE  1=1 \n                   and STATE='ACTIVE'\n                   ORDER BY 1 DESC) \n             where EXEC_TIME \u003e= ? and LAST_RECV_TIME \u003e TO_TIMESTAMP('2000-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') LIMIT ? args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":10000},{\"Name\":\"\",\"Ordinal\":2,\"Value\":10}]"
+    ],
+    "Samples": []
+  },
+  "coverage_24_partial_fields": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ *  from ( SELECT DATEDIFF(MS,LAST_RECV_TIME,SYSDATE) EXEC_TIME,\n                            DBMS_LOB.SUBSTR(SF_GET_SESSION_SQL(SESS_ID)) SLOW_SQL,\n                            SESS_ID,\n                            CURR_SCH,\n                            THRD_ID,\n                            LAST_RECV_TIME,\n                            SUBSTR(CLNT_IP,8,13) CONN_IP\n                       FROM V$SESSIONS\n                      WHERE  1=1 \n                   and STATE='ACTIVE'\n                   ORDER BY 1 DESC) \n             where EXEC_TIME \u003e= ? and LAST_RECV_TIME \u003e TO_TIMESTAMP('2000-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') LIMIT ? args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":10000},{\"Name\":\"\",\"Ordinal\":2,\"Value\":10}]"
+    ],
+    "Samples": []
+  },
+  "coverage_24_probe_error": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ *  from ( SELECT DATEDIFF(MS,LAST_RECV_TIME,SYSDATE) EXEC_TIME,\n                            DBMS_LOB.SUBSTR(SF_GET_SESSION_SQL(SESS_ID)) SLOW_SQL,\n                            SESS_ID,\n                            CURR_SCH,\n                            THRD_ID,\n                            LAST_RECV_TIME,\n                            SUBSTR(CLNT_IP,8,13) CONN_IP\n                       FROM V$SESSIONS\n                      WHERE  1=1 \n                   and STATE='ACTIVE'\n                   ORDER BY 1 DESC) \n             where EXEC_TIME \u003e= ? and LAST_RECV_TIME \u003e TO_TIMESTAMP('2000-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') LIMIT ? args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":10000},{\"Name\":\"\",\"Ordinal\":2,\"Value\":10}]"
+    ],
+    "Samples": []
+  },
+  "coverage_24_query_error": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ *  from ( SELECT DATEDIFF(MS,LAST_RECV_TIME,SYSDATE) EXEC_TIME,\n                            DBMS_LOB.SUBSTR(SF_GET_SESSION_SQL(SESS_ID)) SLOW_SQL,\n                            SESS_ID,\n                            CURR_SCH,\n                            THRD_ID,\n                            LAST_RECV_TIME,\n                            SUBSTR(CLNT_IP,8,13) CONN_IP\n                       FROM V$SESSIONS\n                      WHERE  1=1 \n                   and STATE='ACTIVE'\n                   ORDER BY 1 DESC) \n             where EXEC_TIME \u003e= ? and LAST_RECV_TIME \u003e TO_TIMESTAMP('2000-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS') LIMIT ? args=[{\"Name\":\"\",\"Ordinal\":1,\"Value\":10000},{\"Name\":\"\",\"Ordinal\":2,\"Value\":10}]"
+    ],
+    "Samples": []
+  },
+  "coverage_25_dsc": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count','transaction deadlock count') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_25_empty": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count','transaction deadlock count') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_25_legacy": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count','transaction deadlock count') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_25_missing_columns": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count','transaction deadlock count') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_25_modern": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count','transaction deadlock count') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_25_partial_fields": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count','transaction deadlock count') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_25_probe_error": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count','transaction deadlock count') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_25_query_error": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/  NAME,STAT_VAL from v$sysstat where name in ('select statements','insert statements','delete statements','update statements','ddl statements','transaction total count','select statements in pl/sql','insert statements in pl/sql','delete statements in pl/sql','update statements in pl/sql','DDL in pl/sql count','dynamic exec in pl/sql','DB time(ms)','parse time(ms)','hard parse time(ms)','latch wait time(ms)','mutex wait time(ms)','io wait time(ms)','trx lock wait time(ms)','redo sync wait time(ms)','redo sync wait time for commit(ms)','parse count','parser errors','hard parse count','plan total count','plan cache hit count','logic read count','recycle logic read count','physical read count','physical multi read count','physical write count','transaction deadlock count') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_26_dsc": {
+    "Queries": [
+      "SELECT  /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$SYSTEM_EVENT' args=[]",
+      "SELECT  /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$SYSTEM_EVENT' AND COLNAME IN ('EVENT','TOTAL_WAITS') args=[]",
+      "SELECT /*+DM_EXPORTER*/ EVENT, TOTAL_WAITS FROM V$SYSTEM_EVENT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_26_empty": {
+    "Queries": [
+      "SELECT  /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$SYSTEM_EVENT' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_26_legacy": {
+    "Queries": [
+      "SELECT  /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$SYSTEM_EVENT' args=[]",
+      "SELECT  /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$SYSTEM_EVENT' AND COLNAME IN ('EVENT','TOTAL_WAITS') args=[]",
+      "SELECT /*+DM_EXPORTER*/ EVENT, TOTAL_WAITS FROM V$SYSTEM_EVENT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_26_missing_columns": {
+    "Queries": [
+      "SELECT  /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$SYSTEM_EVENT' args=[]",
+      "SELECT  /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$SYSTEM_EVENT' AND COLNAME IN ('EVENT','TOTAL_WAITS') args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_26_modern": {
+    "Queries": [
+      "SELECT  /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$SYSTEM_EVENT' args=[]",
+      "SELECT  /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$SYSTEM_EVENT' AND COLNAME IN ('EVENT','TOTAL_WAITS') args=[]",
+      "SELECT /*+DM_EXPORTER*/ EVENT, TOTAL_WAITS FROM V$SYSTEM_EVENT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_26_partial_fields": {
+    "Queries": [
+      "SELECT  /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$SYSTEM_EVENT' args=[]",
+      "SELECT  /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$SYSTEM_EVENT' AND COLNAME IN ('EVENT','TOTAL_WAITS') args=[]",
+      "SELECT /*+DM_EXPORTER*/ EVENT, TOTAL_WAITS FROM V$SYSTEM_EVENT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_26_probe_error": {
+    "Queries": [
+      "SELECT  /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$SYSTEM_EVENT' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_26_query_error": {
+    "Queries": [
+      "SELECT  /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$SYSTEM_EVENT' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_27_dsc": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE,TOTAL_VIR_SIZE,TOTAL_DISK_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"\"},{\"name\":\"total_disk_size\",\"value\":\"\"},{\"name\":\"total_phy_size\",\"value\":\"\"},{\"name\":\"total_vir_size\",\"value\":\"\"}]}"
+    ]
+  },
+  "coverage_27_empty": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE,TOTAL_VIR_SIZE,TOTAL_DISK_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"\"},{\"name\":\"total_disk_size\",\"value\":\"\"},{\"name\":\"total_phy_size\",\"value\":\"\"},{\"name\":\"total_vir_size\",\"value\":\"\"}]}"
+    ]
+  },
+  "coverage_27_legacy": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE,TOTAL_VIR_SIZE,TOTAL_DISK_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"\"},{\"name\":\"total_disk_size\",\"value\":\"\"},{\"name\":\"total_phy_size\",\"value\":\"\"},{\"name\":\"total_vir_size\",\"value\":\"\"}]}"
+    ]
+  },
+  "coverage_27_missing_columns": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE,TOTAL_VIR_SIZE,TOTAL_DISK_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"\"},{\"name\":\"total_disk_size\",\"value\":\"\"},{\"name\":\"total_phy_size\",\"value\":\"\"},{\"name\":\"total_vir_size\",\"value\":\"\"}]}"
+    ]
+  },
+  "coverage_27_modern": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE,TOTAL_VIR_SIZE,TOTAL_DISK_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"\"},{\"name\":\"total_disk_size\",\"value\":\"\"},{\"name\":\"total_phy_size\",\"value\":\"\"},{\"name\":\"total_vir_size\",\"value\":\"\"}]}"
+    ]
+  },
+  "coverage_27_partial_fields": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE,TOTAL_VIR_SIZE,TOTAL_DISK_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"\"},{\"name\":\"total_disk_size\",\"value\":\"\"},{\"name\":\"total_phy_size\",\"value\":\"\"},{\"name\":\"total_vir_size\",\"value\":\"\"}]}"
+    ]
+  },
+  "coverage_27_probe_error": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE,TOTAL_VIR_SIZE,TOTAL_DISK_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1 args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_system_base_info\", help: \"Database system base information metrics (always 1 with system info in labels)\", constLabels: {}, variableLabels: {n_cpu,total_phy_size,total_vir_size,total_disk_size}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"n_cpu\",\"value\":\"\"},{\"name\":\"total_disk_size\",\"value\":\"\"},{\"name\":\"total_phy_size\",\"value\":\"\"},{\"name\":\"total_vir_size\",\"value\":\"\"}]}"
+    ]
+  },
+  "coverage_27_query_error": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ N_CPU,TOTAL_PHY_SIZE,TOTAL_VIR_SIZE,TOTAL_DISK_SIZE FROM V$SYSTEMINFO WHERE ROWNUM = 1 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_28_dsc": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ PATH,\n            TO_CHAR(TOTAL_SIZE*PAGE) AS TOTAL_SIZE,\n            TO_CHAR(FREE_SIZE*PAGE)AS FREE_SIZE,\n            AUTO_EXTEND,\n            NEXT_SIZE,\n            MAX_SIZE\n    FROM V$DATAFILE; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_28_empty": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ PATH,\n            TO_CHAR(TOTAL_SIZE*PAGE) AS TOTAL_SIZE,\n            TO_CHAR(FREE_SIZE*PAGE)AS FREE_SIZE,\n            AUTO_EXTEND,\n            NEXT_SIZE,\n            MAX_SIZE\n    FROM V$DATAFILE; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_28_legacy": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ PATH,\n            TO_CHAR(TOTAL_SIZE*PAGE) AS TOTAL_SIZE,\n            TO_CHAR(FREE_SIZE*PAGE)AS FREE_SIZE,\n            AUTO_EXTEND,\n            NEXT_SIZE,\n            MAX_SIZE\n    FROM V$DATAFILE; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_28_missing_columns": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ PATH,\n            TO_CHAR(TOTAL_SIZE*PAGE) AS TOTAL_SIZE,\n            TO_CHAR(FREE_SIZE*PAGE)AS FREE_SIZE,\n            AUTO_EXTEND,\n            NEXT_SIZE,\n            MAX_SIZE\n    FROM V$DATAFILE; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_28_modern": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ PATH,\n            TO_CHAR(TOTAL_SIZE*PAGE) AS TOTAL_SIZE,\n            TO_CHAR(FREE_SIZE*PAGE)AS FREE_SIZE,\n            AUTO_EXTEND,\n            NEXT_SIZE,\n            MAX_SIZE\n    FROM V$DATAFILE; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_28_partial_fields": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ PATH,\n            TO_CHAR(TOTAL_SIZE*PAGE) AS TOTAL_SIZE,\n            TO_CHAR(FREE_SIZE*PAGE)AS FREE_SIZE,\n            AUTO_EXTEND,\n            NEXT_SIZE,\n            MAX_SIZE\n    FROM V$DATAFILE; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_28_probe_error": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ PATH,\n            TO_CHAR(TOTAL_SIZE*PAGE) AS TOTAL_SIZE,\n            TO_CHAR(FREE_SIZE*PAGE)AS FREE_SIZE,\n            AUTO_EXTEND,\n            NEXT_SIZE,\n            MAX_SIZE\n    FROM V$DATAFILE; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_28_query_error": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ PATH,\n            TO_CHAR(TOTAL_SIZE*PAGE) AS TOTAL_SIZE,\n            TO_CHAR(FREE_SIZE*PAGE)AS FREE_SIZE,\n            AUTO_EXTEND,\n            NEXT_SIZE,\n            MAX_SIZE\n    FROM V$DATAFILE; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_29_dsc": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ B.TABLESPACE_NAME\n       ,B.FILES\n       ,ROUND(B.BYTES) ASSIGNED_TOTAL_MB\n       ,ROUND(NVL(A.FREE_SPACE,0)) ASSIGNED_FREE_MB\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/B.BYTES*100,2) \"USEDSZ_RT%\"\n       ,ROUND(B.EXTENSIBLE_SPACE) EXTENS_MB\n       ,ROUND((NVL(A.FREE_SPACE,0)+B.EXTENSIBLE_SPACE)/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2) \"TOTAL_FREE%\"\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2)  \"ACTUSED_RT%\"\n  FROM (SELECT TABLESPACE_NAME,SUM(BYTES)/1024/1024 FREE_SPACE FROM\n        DBA_FREE_SPACE GROUP BY TABLESPACE_NAME) A,\n       (SELECT TABLESPACE_NAME\n               ,COUNT(TABLESPACE_NAME) FILES\n               ,SUM(DECODE(AUTOEXTENSIBLE,'NO',0,DECODE(SIGN(MAXBYTES-BYTES),1,MAXBYTES-BYTES,0)))/1024/1024 EXTENSIBLE_SPACE\n               ,SUM(BYTES)/1024/1024 BYTES\n          FROM DBA_DATA_FILES\n         GROUP BY TABLESPACE_NAME) B\n WHERE A.TABLESPACE_NAME(+)=B.TABLESPACE_NAME\nORDER BY 7 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_29_empty": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ B.TABLESPACE_NAME\n       ,B.FILES\n       ,ROUND(B.BYTES) ASSIGNED_TOTAL_MB\n       ,ROUND(NVL(A.FREE_SPACE,0)) ASSIGNED_FREE_MB\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/B.BYTES*100,2) \"USEDSZ_RT%\"\n       ,ROUND(B.EXTENSIBLE_SPACE) EXTENS_MB\n       ,ROUND((NVL(A.FREE_SPACE,0)+B.EXTENSIBLE_SPACE)/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2) \"TOTAL_FREE%\"\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2)  \"ACTUSED_RT%\"\n  FROM (SELECT TABLESPACE_NAME,SUM(BYTES)/1024/1024 FREE_SPACE FROM\n        DBA_FREE_SPACE GROUP BY TABLESPACE_NAME) A,\n       (SELECT TABLESPACE_NAME\n               ,COUNT(TABLESPACE_NAME) FILES\n               ,SUM(DECODE(AUTOEXTENSIBLE,'NO',0,DECODE(SIGN(MAXBYTES-BYTES),1,MAXBYTES-BYTES,0)))/1024/1024 EXTENSIBLE_SPACE\n               ,SUM(BYTES)/1024/1024 BYTES\n          FROM DBA_DATA_FILES\n         GROUP BY TABLESPACE_NAME) B\n WHERE A.TABLESPACE_NAME(+)=B.TABLESPACE_NAME\nORDER BY 7 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_29_legacy": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ B.TABLESPACE_NAME\n       ,B.FILES\n       ,ROUND(B.BYTES) ASSIGNED_TOTAL_MB\n       ,ROUND(NVL(A.FREE_SPACE,0)) ASSIGNED_FREE_MB\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/B.BYTES*100,2) \"USEDSZ_RT%\"\n       ,ROUND(B.EXTENSIBLE_SPACE) EXTENS_MB\n       ,ROUND((NVL(A.FREE_SPACE,0)+B.EXTENSIBLE_SPACE)/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2) \"TOTAL_FREE%\"\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2)  \"ACTUSED_RT%\"\n  FROM (SELECT TABLESPACE_NAME,SUM(BYTES)/1024/1024 FREE_SPACE FROM\n        DBA_FREE_SPACE GROUP BY TABLESPACE_NAME) A,\n       (SELECT TABLESPACE_NAME\n               ,COUNT(TABLESPACE_NAME) FILES\n               ,SUM(DECODE(AUTOEXTENSIBLE,'NO',0,DECODE(SIGN(MAXBYTES-BYTES),1,MAXBYTES-BYTES,0)))/1024/1024 EXTENSIBLE_SPACE\n               ,SUM(BYTES)/1024/1024 BYTES\n          FROM DBA_DATA_FILES\n         GROUP BY TABLESPACE_NAME) B\n WHERE A.TABLESPACE_NAME(+)=B.TABLESPACE_NAME\nORDER BY 7 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_29_missing_columns": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ B.TABLESPACE_NAME\n       ,B.FILES\n       ,ROUND(B.BYTES) ASSIGNED_TOTAL_MB\n       ,ROUND(NVL(A.FREE_SPACE,0)) ASSIGNED_FREE_MB\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/B.BYTES*100,2) \"USEDSZ_RT%\"\n       ,ROUND(B.EXTENSIBLE_SPACE) EXTENS_MB\n       ,ROUND((NVL(A.FREE_SPACE,0)+B.EXTENSIBLE_SPACE)/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2) \"TOTAL_FREE%\"\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2)  \"ACTUSED_RT%\"\n  FROM (SELECT TABLESPACE_NAME,SUM(BYTES)/1024/1024 FREE_SPACE FROM\n        DBA_FREE_SPACE GROUP BY TABLESPACE_NAME) A,\n       (SELECT TABLESPACE_NAME\n               ,COUNT(TABLESPACE_NAME) FILES\n               ,SUM(DECODE(AUTOEXTENSIBLE,'NO',0,DECODE(SIGN(MAXBYTES-BYTES),1,MAXBYTES-BYTES,0)))/1024/1024 EXTENSIBLE_SPACE\n               ,SUM(BYTES)/1024/1024 BYTES\n          FROM DBA_DATA_FILES\n         GROUP BY TABLESPACE_NAME) B\n WHERE A.TABLESPACE_NAME(+)=B.TABLESPACE_NAME\nORDER BY 7 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_29_modern": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ B.TABLESPACE_NAME\n       ,B.FILES\n       ,ROUND(B.BYTES) ASSIGNED_TOTAL_MB\n       ,ROUND(NVL(A.FREE_SPACE,0)) ASSIGNED_FREE_MB\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/B.BYTES*100,2) \"USEDSZ_RT%\"\n       ,ROUND(B.EXTENSIBLE_SPACE) EXTENS_MB\n       ,ROUND((NVL(A.FREE_SPACE,0)+B.EXTENSIBLE_SPACE)/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2) \"TOTAL_FREE%\"\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2)  \"ACTUSED_RT%\"\n  FROM (SELECT TABLESPACE_NAME,SUM(BYTES)/1024/1024 FREE_SPACE FROM\n        DBA_FREE_SPACE GROUP BY TABLESPACE_NAME) A,\n       (SELECT TABLESPACE_NAME\n               ,COUNT(TABLESPACE_NAME) FILES\n               ,SUM(DECODE(AUTOEXTENSIBLE,'NO',0,DECODE(SIGN(MAXBYTES-BYTES),1,MAXBYTES-BYTES,0)))/1024/1024 EXTENSIBLE_SPACE\n               ,SUM(BYTES)/1024/1024 BYTES\n          FROM DBA_DATA_FILES\n         GROUP BY TABLESPACE_NAME) B\n WHERE A.TABLESPACE_NAME(+)=B.TABLESPACE_NAME\nORDER BY 7 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_29_partial_fields": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ B.TABLESPACE_NAME\n       ,B.FILES\n       ,ROUND(B.BYTES) ASSIGNED_TOTAL_MB\n       ,ROUND(NVL(A.FREE_SPACE,0)) ASSIGNED_FREE_MB\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/B.BYTES*100,2) \"USEDSZ_RT%\"\n       ,ROUND(B.EXTENSIBLE_SPACE) EXTENS_MB\n       ,ROUND((NVL(A.FREE_SPACE,0)+B.EXTENSIBLE_SPACE)/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2) \"TOTAL_FREE%\"\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2)  \"ACTUSED_RT%\"\n  FROM (SELECT TABLESPACE_NAME,SUM(BYTES)/1024/1024 FREE_SPACE FROM\n        DBA_FREE_SPACE GROUP BY TABLESPACE_NAME) A,\n       (SELECT TABLESPACE_NAME\n               ,COUNT(TABLESPACE_NAME) FILES\n               ,SUM(DECODE(AUTOEXTENSIBLE,'NO',0,DECODE(SIGN(MAXBYTES-BYTES),1,MAXBYTES-BYTES,0)))/1024/1024 EXTENSIBLE_SPACE\n               ,SUM(BYTES)/1024/1024 BYTES\n          FROM DBA_DATA_FILES\n         GROUP BY TABLESPACE_NAME) B\n WHERE A.TABLESPACE_NAME(+)=B.TABLESPACE_NAME\nORDER BY 7 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_29_probe_error": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ B.TABLESPACE_NAME\n       ,B.FILES\n       ,ROUND(B.BYTES) ASSIGNED_TOTAL_MB\n       ,ROUND(NVL(A.FREE_SPACE,0)) ASSIGNED_FREE_MB\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/B.BYTES*100,2) \"USEDSZ_RT%\"\n       ,ROUND(B.EXTENSIBLE_SPACE) EXTENS_MB\n       ,ROUND((NVL(A.FREE_SPACE,0)+B.EXTENSIBLE_SPACE)/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2) \"TOTAL_FREE%\"\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2)  \"ACTUSED_RT%\"\n  FROM (SELECT TABLESPACE_NAME,SUM(BYTES)/1024/1024 FREE_SPACE FROM\n        DBA_FREE_SPACE GROUP BY TABLESPACE_NAME) A,\n       (SELECT TABLESPACE_NAME\n               ,COUNT(TABLESPACE_NAME) FILES\n               ,SUM(DECODE(AUTOEXTENSIBLE,'NO',0,DECODE(SIGN(MAXBYTES-BYTES),1,MAXBYTES-BYTES,0)))/1024/1024 EXTENSIBLE_SPACE\n               ,SUM(BYTES)/1024/1024 BYTES\n          FROM DBA_DATA_FILES\n         GROUP BY TABLESPACE_NAME) B\n WHERE A.TABLESPACE_NAME(+)=B.TABLESPACE_NAME\nORDER BY 7 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_29_query_error": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ B.TABLESPACE_NAME\n       ,B.FILES\n       ,ROUND(B.BYTES) ASSIGNED_TOTAL_MB\n       ,ROUND(NVL(A.FREE_SPACE,0)) ASSIGNED_FREE_MB\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/B.BYTES*100,2) \"USEDSZ_RT%\"\n       ,ROUND(B.EXTENSIBLE_SPACE) EXTENS_MB\n       ,ROUND((NVL(A.FREE_SPACE,0)+B.EXTENSIBLE_SPACE)/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2) \"TOTAL_FREE%\"\n       ,ROUND((B.BYTES-NVL(A.FREE_SPACE,0))/(B.BYTES+B.EXTENSIBLE_SPACE)*100,2)  \"ACTUSED_RT%\"\n  FROM (SELECT TABLESPACE_NAME,SUM(BYTES)/1024/1024 FREE_SPACE FROM\n        DBA_FREE_SPACE GROUP BY TABLESPACE_NAME) A,\n       (SELECT TABLESPACE_NAME\n               ,COUNT(TABLESPACE_NAME) FILES\n               ,SUM(DECODE(AUTOEXTENSIBLE,'NO',0,DECODE(SIGN(MAXBYTES-BYTES),1,MAXBYTES-BYTES,0)))/1024/1024 EXTENSIBLE_SPACE\n               ,SUM(BYTES)/1024/1024 BYTES\n          FROM DBA_DATA_FILES\n         GROUP BY TABLESPACE_NAME) B\n WHERE A.TABLESPACE_NAME(+)=B.TABLESPACE_NAME\nORDER BY 7 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_2_dsc": {
+    "Queries": [
+      "select /*+DMDB_CHECK_FLAG*/ PARA_VALUE from v$dm_ini where para_name='ARCH_INI' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case arch_status when 'VALID' then 'VALID' when 'INVALID' then 'INVALID' when 'ASYNC_SEND' then 'ASYNC_SEND' else 'UNKNOWN' end ARCH_STATUS from v$arch_status where arch_type='LOCAL' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case when ARCH_STATUS = 'INVALID' then 0 when ARCH_STATUS = 'VALID' then 1 when ARCH_STATUS = 'ASYNC_SEND' then 2 when ARCH_STATUS is null or trim(ARCH_STATUS) = '' then -3 else -2 end ARCH_STATUS,ARCH_TYPE,ARCH_DEST,ARCH_SRC from v$arch_status args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_status\", help: \"Information about DM database archive status, value info: invalid = 0, valid = 1, async_send = 2, unknown = -2, no_enable = -1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_2_empty": {
+    "Queries": [
+      "select /*+DMDB_CHECK_FLAG*/ PARA_VALUE from v$dm_ini where para_name='ARCH_INI' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case arch_status when 'VALID' then 'VALID' when 'INVALID' then 'INVALID' when 'ASYNC_SEND' then 'ASYNC_SEND' else 'UNKNOWN' end ARCH_STATUS from v$arch_status where arch_type='LOCAL' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case when ARCH_STATUS = 'INVALID' then 0 when ARCH_STATUS = 'VALID' then 1 when ARCH_STATUS = 'ASYNC_SEND' then 2 when ARCH_STATUS is null or trim(ARCH_STATUS) = '' then -3 else -2 end ARCH_STATUS,ARCH_TYPE,ARCH_DEST,ARCH_SRC from v$arch_status args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_status\", help: \"Information about DM database archive status, value info: invalid = 0, valid = 1, async_send = 2, unknown = -2, no_enable = -1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_2_legacy": {
+    "Queries": [
+      "select /*+DMDB_CHECK_FLAG*/ PARA_VALUE from v$dm_ini where para_name='ARCH_INI' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case arch_status when 'VALID' then 'VALID' when 'INVALID' then 'INVALID' when 'ASYNC_SEND' then 'ASYNC_SEND' else 'UNKNOWN' end ARCH_STATUS from v$arch_status where arch_type='LOCAL' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case when ARCH_STATUS = 'INVALID' then 0 when ARCH_STATUS = 'VALID' then 1 when ARCH_STATUS = 'ASYNC_SEND' then 2 when ARCH_STATUS is null or trim(ARCH_STATUS) = '' then -3 else -2 end ARCH_STATUS,ARCH_TYPE,ARCH_DEST,ARCH_SRC from v$arch_status args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_status\", help: \"Information about DM database archive status, value info: invalid = 0, valid = 1, async_send = 2, unknown = -2, no_enable = -1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_2_missing_columns": {
+    "Queries": [
+      "select /*+DMDB_CHECK_FLAG*/ PARA_VALUE from v$dm_ini where para_name='ARCH_INI' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case arch_status when 'VALID' then 'VALID' when 'INVALID' then 'INVALID' when 'ASYNC_SEND' then 'ASYNC_SEND' else 'UNKNOWN' end ARCH_STATUS from v$arch_status where arch_type='LOCAL' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case when ARCH_STATUS = 'INVALID' then 0 when ARCH_STATUS = 'VALID' then 1 when ARCH_STATUS = 'ASYNC_SEND' then 2 when ARCH_STATUS is null or trim(ARCH_STATUS) = '' then -3 else -2 end ARCH_STATUS,ARCH_TYPE,ARCH_DEST,ARCH_SRC from v$arch_status args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_status\", help: \"Information about DM database archive status, value info: invalid = 0, valid = 1, async_send = 2, unknown = -2, no_enable = -1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_2_modern": {
+    "Queries": [
+      "select /*+DMDB_CHECK_FLAG*/ PARA_VALUE from v$dm_ini where para_name='ARCH_INI' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case arch_status when 'VALID' then 'VALID' when 'INVALID' then 'INVALID' when 'ASYNC_SEND' then 'ASYNC_SEND' else 'UNKNOWN' end ARCH_STATUS from v$arch_status where arch_type='LOCAL' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case when ARCH_STATUS = 'INVALID' then 0 when ARCH_STATUS = 'VALID' then 1 when ARCH_STATUS = 'ASYNC_SEND' then 2 when ARCH_STATUS is null or trim(ARCH_STATUS) = '' then -3 else -2 end ARCH_STATUS,ARCH_TYPE,ARCH_DEST,ARCH_SRC from v$arch_status args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_status\", help: \"Information about DM database archive status, value info: invalid = 0, valid = 1, async_send = 2, unknown = -2, no_enable = -1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_2_partial_fields": {
+    "Queries": [
+      "select /*+DMDB_CHECK_FLAG*/ PARA_VALUE from v$dm_ini where para_name='ARCH_INI' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case arch_status when 'VALID' then 'VALID' when 'INVALID' then 'INVALID' when 'ASYNC_SEND' then 'ASYNC_SEND' else 'UNKNOWN' end ARCH_STATUS from v$arch_status where arch_type='LOCAL' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case when ARCH_STATUS = 'INVALID' then 0 when ARCH_STATUS = 'VALID' then 1 when ARCH_STATUS = 'ASYNC_SEND' then 2 when ARCH_STATUS is null or trim(ARCH_STATUS) = '' then -3 else -2 end ARCH_STATUS,ARCH_TYPE,ARCH_DEST,ARCH_SRC from v$arch_status args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_status\", help: \"Information about DM database archive status, value info: invalid = 0, valid = 1, async_send = 2, unknown = -2, no_enable = -1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_2_probe_error": {
+    "Queries": [
+      "select /*+DMDB_CHECK_FLAG*/ PARA_VALUE from v$dm_ini where para_name='ARCH_INI' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case arch_status when 'VALID' then 'VALID' when 'INVALID' then 'INVALID' when 'ASYNC_SEND' then 'ASYNC_SEND' else 'UNKNOWN' end ARCH_STATUS from v$arch_status where arch_type='LOCAL' args=[]",
+      "select /*+DMDB_CHECK_FLAG*/ case when ARCH_STATUS = 'INVALID' then 0 when ARCH_STATUS = 'VALID' then 1 when ARCH_STATUS = 'ASYNC_SEND' then 2 when ARCH_STATUS is null or trim(ARCH_STATUS) = '' then -3 else -2 end ARCH_STATUS,ARCH_TYPE,ARCH_DEST,ARCH_SRC from v$arch_status args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_status\", help: \"Information about DM database archive status, value info: invalid = 0, valid = 1, async_send = 2, unknown = -2, no_enable = -1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_2_query_error": {
+    "Queries": [
+      "select /*+DMDB_CHECK_FLAG*/ PARA_VALUE from v$dm_ini where para_name='ARCH_INI' args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_status\", help: \"Information about DM database archive status, value info: invalid = 0, valid = 1, async_send = 2, unknown = -2, no_enable = -1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":-2}}"
+    ]
+  },
+  "coverage_30_dsc": {
+    "Queries": [
+      "SELECT \n       /*+DM_EXPORTER*/ \n       A.USERNAME ,\n       NULL AS RN_FLAG,\n       CASE WHEN A.ACCOUNT_STATUS = 'OPEN' THEN 0 ELSE 1 END AS ACCOUNT_STATUS,\n       TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE,\n       to_char(round(datediff(DAY,TO_CHAR(sysdate,'YYYY-MM-DD HH24:MI:SS'),TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS')),2)) AS EXPIRY_DATE_DAY,\n       A.DEFAULT_TABLESPACE,\n       A.PROFILE,\n       TO_CHAR(A.CREATED,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME\n  FROM DBA_USERS A\n WHERE A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR'); args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_30_empty": {
+    "Queries": [
+      "SELECT \n       /*+DM_EXPORTER*/ \n       A.USERNAME ,\n       NULL AS RN_FLAG,\n       CASE WHEN A.ACCOUNT_STATUS = 'OPEN' THEN 0 ELSE 1 END AS ACCOUNT_STATUS,\n       TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE,\n       to_char(round(datediff(DAY,TO_CHAR(sysdate,'YYYY-MM-DD HH24:MI:SS'),TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS')),2)) AS EXPIRY_DATE_DAY,\n       A.DEFAULT_TABLESPACE,\n       A.PROFILE,\n       TO_CHAR(A.CREATED,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME\n  FROM DBA_USERS A\n WHERE A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR'); args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_30_legacy": {
+    "Queries": [
+      "SELECT \n       /*+DM_EXPORTER*/ \n       A.USERNAME ,\n       NULL AS RN_FLAG,\n       CASE WHEN A.ACCOUNT_STATUS = 'OPEN' THEN 0 ELSE 1 END AS ACCOUNT_STATUS,\n       TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE,\n       to_char(round(datediff(DAY,TO_CHAR(sysdate,'YYYY-MM-DD HH24:MI:SS'),TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS')),2)) AS EXPIRY_DATE_DAY,\n       A.DEFAULT_TABLESPACE,\n       A.PROFILE,\n       TO_CHAR(A.CREATED,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME\n  FROM DBA_USERS A\n WHERE A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR'); args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_30_missing_columns": {
+    "Queries": [
+      "SELECT \n       /*+DM_EXPORTER*/ \n       A.USERNAME ,\n       NULL AS RN_FLAG,\n       CASE WHEN A.ACCOUNT_STATUS = 'OPEN' THEN 0 ELSE 1 END AS ACCOUNT_STATUS,\n       TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE,\n       to_char(round(datediff(DAY,TO_CHAR(sysdate,'YYYY-MM-DD HH24:MI:SS'),TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS')),2)) AS EXPIRY_DATE_DAY,\n       A.DEFAULT_TABLESPACE,\n       A.PROFILE,\n       TO_CHAR(A.CREATED,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME\n  FROM DBA_USERS A\n WHERE A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR'); args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_30_modern": {
+    "Queries": [
+      "SELECT \n       /*+DM_EXPORTER*/ \n       A.USERNAME ,\n       NULL AS RN_FLAG,\n       CASE WHEN A.ACCOUNT_STATUS = 'OPEN' THEN 0 ELSE 1 END AS ACCOUNT_STATUS,\n       TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE,\n       to_char(round(datediff(DAY,TO_CHAR(sysdate,'YYYY-MM-DD HH24:MI:SS'),TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS')),2)) AS EXPIRY_DATE_DAY,\n       A.DEFAULT_TABLESPACE,\n       A.PROFILE,\n       TO_CHAR(A.CREATED,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME\n  FROM DBA_USERS A\n WHERE A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR'); args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_30_partial_fields": {
+    "Queries": [
+      "SELECT \n       /*+DM_EXPORTER*/ \n       A.USERNAME ,\n       NULL AS RN_FLAG,\n       CASE WHEN A.ACCOUNT_STATUS = 'OPEN' THEN 0 ELSE 1 END AS ACCOUNT_STATUS,\n       TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE,\n       to_char(round(datediff(DAY,TO_CHAR(sysdate,'YYYY-MM-DD HH24:MI:SS'),TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS')),2)) AS EXPIRY_DATE_DAY,\n       A.DEFAULT_TABLESPACE,\n       A.PROFILE,\n       TO_CHAR(A.CREATED,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME\n  FROM DBA_USERS A\n WHERE A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR'); args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_30_probe_error": {
+    "Queries": [
+      "SELECT \n       /*+DM_EXPORTER*/ \n       A.USERNAME ,\n       NULL AS RN_FLAG,\n       CASE WHEN A.ACCOUNT_STATUS = 'OPEN' THEN 0 ELSE 1 END AS ACCOUNT_STATUS,\n       TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE,\n       to_char(round(datediff(DAY,TO_CHAR(sysdate,'YYYY-MM-DD HH24:MI:SS'),TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS')),2)) AS EXPIRY_DATE_DAY,\n       A.DEFAULT_TABLESPACE,\n       A.PROFILE,\n       TO_CHAR(A.CREATED,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME\n  FROM DBA_USERS A\n WHERE A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR'); args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_30_query_error": {
+    "Queries": [
+      "SELECT \n       /*+DM_EXPORTER*/ \n       A.USERNAME ,\n       NULL AS RN_FLAG,\n       CASE WHEN A.ACCOUNT_STATUS = 'OPEN' THEN 0 ELSE 1 END AS ACCOUNT_STATUS,\n       TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS') AS EXPIRY_DATE,\n       to_char(round(datediff(DAY,TO_CHAR(sysdate,'YYYY-MM-DD HH24:MI:SS'),TO_CHAR(A.EXPIRY_DATE,'YYYY-MM-DD HH24:MI:SS')),2)) AS EXPIRY_DATE_DAY,\n       A.DEFAULT_TABLESPACE,\n       A.PROFILE,\n       TO_CHAR(A.CREATED,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME\n  FROM DBA_USERS A\n WHERE A.USERNAME NOT IN('SYS','SYSSSO','SYSAUDITOR'); args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_31_dsc": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ ID_CODE\n      ,BUILD_TYPE\n      ,       TO_NUMBER(SUBSTR(VER,1,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,3,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,5,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,7,2),'XX') AS INNER_VER\n  FROM (SELECT DECODE(SUBSTR(VER,1,2),'03','企业版','05','安全版','02','标准版','其他') AS BUILD_TYPE\n              ,RAWTOHEX(CAST(SUBSTR(VER,3) AS INT)) AS VER\n          FROM (SELECT REGEXP_SUBSTR(ID_CODE,'[^-]+',1,1) AS VER)\n       ) args=[]",
+      "SELECT /*+DM_EXPORTER*/ position('BUILD_VERSION', to_char(TABLEDEF('SYS', 'V$INSTANCE'))) POS FROM dual args=[]",
+      "SELECT /*+DM_EXPORTER*/ svr_version || '-' || BUILD_VERSION VERSION FROM v$instance args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_version\", help: \"Information about DM database version\", constLabels: {}, variableLabels: {db_version_str,build_type,inner_ver}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"build_type\",\"value\":\"\"},{\"name\":\"db_version_str\",\"value\":\"8\"},{\"name\":\"inner_ver\",\"value\":\"\"}]}"
+    ]
+  },
+  "coverage_31_empty": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ ID_CODE\n      ,BUILD_TYPE\n      ,       TO_NUMBER(SUBSTR(VER,1,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,3,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,5,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,7,2),'XX') AS INNER_VER\n  FROM (SELECT DECODE(SUBSTR(VER,1,2),'03','企业版','05','安全版','02','标准版','其他') AS BUILD_TYPE\n              ,RAWTOHEX(CAST(SUBSTR(VER,3) AS INT)) AS VER\n          FROM (SELECT REGEXP_SUBSTR(ID_CODE,'[^-]+',1,1) AS VER)\n       ) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_version\", help: \"Information about DM database version\", constLabels: {}, variableLabels: {db_version_str,build_type,inner_ver}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"build_type\",\"value\":\"release\"},{\"name\":\"db_version_str\",\"value\":\"8\"},{\"name\":\"inner_ver\",\"value\":\"1\"}]}"
+    ]
+  },
+  "coverage_31_legacy": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ ID_CODE\n      ,BUILD_TYPE\n      ,       TO_NUMBER(SUBSTR(VER,1,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,3,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,5,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,7,2),'XX') AS INNER_VER\n  FROM (SELECT DECODE(SUBSTR(VER,1,2),'03','企业版','05','安全版','02','标准版','其他') AS BUILD_TYPE\n              ,RAWTOHEX(CAST(SUBSTR(VER,3) AS INT)) AS VER\n          FROM (SELECT REGEXP_SUBSTR(ID_CODE,'[^-]+',1,1) AS VER)\n       ) args=[]",
+      "SELECT /*+DM_EXPORTER*/ position('BUILD_VERSION', to_char(TABLEDEF('SYS', 'V$INSTANCE'))) POS FROM dual args=[]",
+      "SELECT /*+DM_EXPORTER*/ TOP 1 banner || ' ' || id_code VERSION FROM v$version WHERE banner LIKE 'DM Database Server%' args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_version\", help: \"Information about DM database version\", constLabels: {}, variableLabels: {db_version_str,build_type,inner_ver}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"build_type\",\"value\":\"\"},{\"name\":\"db_version_str\",\"value\":\"8\"},{\"name\":\"inner_ver\",\"value\":\"\"}]}"
+    ]
+  },
+  "coverage_31_missing_columns": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ ID_CODE\n      ,BUILD_TYPE\n      ,       TO_NUMBER(SUBSTR(VER,1,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,3,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,5,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,7,2),'XX') AS INNER_VER\n  FROM (SELECT DECODE(SUBSTR(VER,1,2),'03','企业版','05','安全版','02','标准版','其他') AS BUILD_TYPE\n              ,RAWTOHEX(CAST(SUBSTR(VER,3) AS INT)) AS VER\n          FROM (SELECT REGEXP_SUBSTR(ID_CODE,'[^-]+',1,1) AS VER)\n       ) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_version\", help: \"Information about DM database version\", constLabels: {}, variableLabels: {db_version_str,build_type,inner_ver}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"build_type\",\"value\":\"release\"},{\"name\":\"db_version_str\",\"value\":\"8\"},{\"name\":\"inner_ver\",\"value\":\"1\"}]}"
+    ]
+  },
+  "coverage_31_modern": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ ID_CODE\n      ,BUILD_TYPE\n      ,       TO_NUMBER(SUBSTR(VER,1,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,3,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,5,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,7,2),'XX') AS INNER_VER\n  FROM (SELECT DECODE(SUBSTR(VER,1,2),'03','企业版','05','安全版','02','标准版','其他') AS BUILD_TYPE\n              ,RAWTOHEX(CAST(SUBSTR(VER,3) AS INT)) AS VER\n          FROM (SELECT REGEXP_SUBSTR(ID_CODE,'[^-]+',1,1) AS VER)\n       ) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_version\", help: \"Information about DM database version\", constLabels: {}, variableLabels: {db_version_str,build_type,inner_ver}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"build_type\",\"value\":\"release\"},{\"name\":\"db_version_str\",\"value\":\"8\"},{\"name\":\"inner_ver\",\"value\":\"1\"}]}"
+    ]
+  },
+  "coverage_31_partial_fields": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ ID_CODE\n      ,BUILD_TYPE\n      ,       TO_NUMBER(SUBSTR(VER,1,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,3,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,5,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,7,2),'XX') AS INNER_VER\n  FROM (SELECT DECODE(SUBSTR(VER,1,2),'03','企业版','05','安全版','02','标准版','其他') AS BUILD_TYPE\n              ,RAWTOHEX(CAST(SUBSTR(VER,3) AS INT)) AS VER\n          FROM (SELECT REGEXP_SUBSTR(ID_CODE,'[^-]+',1,1) AS VER)\n       ) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_version\", help: \"Information about DM database version\", constLabels: {}, variableLabels: {db_version_str,build_type,inner_ver}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"build_type\",\"value\":\"release\"},{\"name\":\"db_version_str\",\"value\":\"8\"},{\"name\":\"inner_ver\",\"value\":\"1\"}]}"
+    ]
+  },
+  "coverage_31_probe_error": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ ID_CODE\n      ,BUILD_TYPE\n      ,       TO_NUMBER(SUBSTR(VER,1,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,3,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,5,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,7,2),'XX') AS INNER_VER\n  FROM (SELECT DECODE(SUBSTR(VER,1,2),'03','企业版','05','安全版','02','标准版','其他') AS BUILD_TYPE\n              ,RAWTOHEX(CAST(SUBSTR(VER,3) AS INT)) AS VER\n          FROM (SELECT REGEXP_SUBSTR(ID_CODE,'[^-]+',1,1) AS VER)\n       ) args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_version\", help: \"Information about DM database version\", constLabels: {}, variableLabels: {db_version_str,build_type,inner_ver}} {\"gauge\":{\"value\":1},\"label\":[{\"name\":\"build_type\",\"value\":\"release\"},{\"name\":\"db_version_str\",\"value\":\"8\"},{\"name\":\"inner_ver\",\"value\":\"1\"}]}"
+    ]
+  },
+  "coverage_31_query_error": {
+    "Queries": [
+      "SELECT /*+DAMENG_EXPORTER*/ ID_CODE\n      ,BUILD_TYPE\n      ,       TO_NUMBER(SUBSTR(VER,1,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,3,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,5,2),'XX')\n       ||'.'||TO_NUMBER(SUBSTR(VER,7,2),'XX') AS INNER_VER\n  FROM (SELECT DECODE(SUBSTR(VER,1,2),'03','企业版','05','安全版','02','标准版','其他') AS BUILD_TYPE\n              ,RAWTOHEX(CAST(SUBSTR(VER,3) AS INT)) AS VER\n          FROM (SELECT REGEXP_SUBSTR(ID_CODE,'[^-]+',1,1) AS VER)\n       ) args=[]",
+      "SELECT /*+DM_EXPORTER*/ position('BUILD_VERSION', to_char(TABLEDEF('SYS', 'V$INSTANCE'))) POS FROM dual args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_32_dsc": {
+    "Queries": [
+      "\n\t\tSELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE AS DB_INSTANCE_PATH, (SELECT PID from V$PROCESS) PID\n\t\tFROM V$DM_INI\n\t\tWHERE PARA_NAME = 'CONFIG_PATH'\n\t args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dmagent_process_is_exit\", help: \"Information about DM database dmagent process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmap_process_is_exit\", help: \"Information about DM database dmap process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmmonitor_process_is_exit\", help: \"Information about DM database dmmonitor process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmserver_process_is_exit\", help: \"Information about DM database dmserver process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmwatcher_process_is_exit\", help: \"Information about DM database dmwatcher process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_32_empty": {
+    "Queries": [
+      "\n\t\tSELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE AS DB_INSTANCE_PATH, (SELECT PID from V$PROCESS) PID\n\t\tFROM V$DM_INI\n\t\tWHERE PARA_NAME = 'CONFIG_PATH'\n\t args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dmagent_process_is_exit\", help: \"Information about DM database dmagent process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmap_process_is_exit\", help: \"Information about DM database dmap process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmmonitor_process_is_exit\", help: \"Information about DM database dmmonitor process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmserver_process_is_exit\", help: \"Information about DM database dmserver process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmwatcher_process_is_exit\", help: \"Information about DM database dmwatcher process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_32_legacy": {
+    "Queries": [
+      "\n\t\tSELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE AS DB_INSTANCE_PATH, (SELECT PID from V$PROCESS) PID\n\t\tFROM V$DM_INI\n\t\tWHERE PARA_NAME = 'CONFIG_PATH'\n\t args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dmagent_process_is_exit\", help: \"Information about DM database dmagent process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmap_process_is_exit\", help: \"Information about DM database dmap process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmmonitor_process_is_exit\", help: \"Information about DM database dmmonitor process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmserver_process_is_exit\", help: \"Information about DM database dmserver process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmwatcher_process_is_exit\", help: \"Information about DM database dmwatcher process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_32_missing_columns": {
+    "Queries": [
+      "\n\t\tSELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE AS DB_INSTANCE_PATH, (SELECT PID from V$PROCESS) PID\n\t\tFROM V$DM_INI\n\t\tWHERE PARA_NAME = 'CONFIG_PATH'\n\t args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dmagent_process_is_exit\", help: \"Information about DM database dmagent process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmap_process_is_exit\", help: \"Information about DM database dmap process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmmonitor_process_is_exit\", help: \"Information about DM database dmmonitor process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmserver_process_is_exit\", help: \"Information about DM database dmserver process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmwatcher_process_is_exit\", help: \"Information about DM database dmwatcher process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_32_modern": {
+    "Queries": [
+      "\n\t\tSELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE AS DB_INSTANCE_PATH, (SELECT PID from V$PROCESS) PID\n\t\tFROM V$DM_INI\n\t\tWHERE PARA_NAME = 'CONFIG_PATH'\n\t args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dmagent_process_is_exit\", help: \"Information about DM database dmagent process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmap_process_is_exit\", help: \"Information about DM database dmap process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmmonitor_process_is_exit\", help: \"Information about DM database dmmonitor process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmserver_process_is_exit\", help: \"Information about DM database dmserver process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmwatcher_process_is_exit\", help: \"Information about DM database dmwatcher process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_32_partial_fields": {
+    "Queries": [
+      "\n\t\tSELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE AS DB_INSTANCE_PATH, (SELECT PID from V$PROCESS) PID\n\t\tFROM V$DM_INI\n\t\tWHERE PARA_NAME = 'CONFIG_PATH'\n\t args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dmagent_process_is_exit\", help: \"Information about DM database dmagent process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmap_process_is_exit\", help: \"Information about DM database dmap process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmmonitor_process_is_exit\", help: \"Information about DM database dmmonitor process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmserver_process_is_exit\", help: \"Information about DM database dmserver process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmwatcher_process_is_exit\", help: \"Information about DM database dmwatcher process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_32_probe_error": {
+    "Queries": [
+      "\n\t\tSELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE AS DB_INSTANCE_PATH, (SELECT PID from V$PROCESS) PID\n\t\tFROM V$DM_INI\n\t\tWHERE PARA_NAME = 'CONFIG_PATH'\n\t args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dmagent_process_is_exit\", help: \"Information about DM database dmagent process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmap_process_is_exit\", help: \"Information about DM database dmap process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmmonitor_process_is_exit\", help: \"Information about DM database dmmonitor process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmserver_process_is_exit\", help: \"Information about DM database dmserver process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}",
+      "Desc{fqName: \"dmdbms_dmwatcher_process_is_exit\", help: \"Information about DM database dmwatcher process existence\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":1}}"
+    ]
+  },
+  "coverage_32_query_error": {
+    "Queries": [
+      "\n\t\tSELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE AS DB_INSTANCE_PATH, (SELECT PID from V$PROCESS) PID\n\t\tFROM V$DM_INI\n\t\tWHERE PARA_NAME = 'CONFIG_PATH'\n\t args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_33_dsc": {
+    "Queries": [
+      "select coverage args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_33_empty": {
+    "Queries": [
+      "select coverage args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_33_legacy": {
+    "Queries": [
+      "select coverage args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_33_missing_columns": {
+    "Queries": [
+      "select coverage args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_33_modern": {
+    "Queries": [
+      "select coverage args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_33_partial_fields": {
+    "Queries": [
+      "select coverage args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_33_probe_error": {
+    "Queries": [
+      "select coverage args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_33_query_error": {
+    "Queries": [
+      "select coverage args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_3_dsc": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DMDB_CHECK_FLAG*/ CASE arch_status WHEN 'VALID' THEN '1' WHEN 'INVALID' THEN '0' END FROM v$arch_status WHERE arch_type='LOCAL' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(CREATE_TIME,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME FROM V$ARCH_FILE  WHERE STATUS = 'ACTIVE' ORDER BY create_time DESC LIMIT 1; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_last_create_time_seconds\", help: \"Latest archive log creation time in Unix seconds; zero when archive logs are unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_3_empty": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DMDB_CHECK_FLAG*/ CASE arch_status WHEN 'VALID' THEN '1' WHEN 'INVALID' THEN '0' END FROM v$arch_status WHERE arch_type='LOCAL' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(CREATE_TIME,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME FROM V$ARCH_FILE  WHERE STATUS = 'ACTIVE' ORDER BY create_time DESC LIMIT 1; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_last_create_time_seconds\", help: \"Latest archive log creation time in Unix seconds; zero when archive logs are unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_3_legacy": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DMDB_CHECK_FLAG*/ CASE arch_status WHEN 'VALID' THEN '1' WHEN 'INVALID' THEN '0' END FROM v$arch_status WHERE arch_type='LOCAL' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(CREATE_TIME,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME FROM V$ARCH_FILE  WHERE STATUS = 'ACTIVE' ORDER BY create_time DESC LIMIT 1; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_last_create_time_seconds\", help: \"Latest archive log creation time in Unix seconds; zero when archive logs are unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_3_missing_columns": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DMDB_CHECK_FLAG*/ CASE arch_status WHEN 'VALID' THEN '1' WHEN 'INVALID' THEN '0' END FROM v$arch_status WHERE arch_type='LOCAL' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(CREATE_TIME,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME FROM V$ARCH_FILE  WHERE STATUS = 'ACTIVE' ORDER BY create_time DESC LIMIT 1; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_last_create_time_seconds\", help: \"Latest archive log creation time in Unix seconds; zero when archive logs are unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_3_modern": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DMDB_CHECK_FLAG*/ CASE arch_status WHEN 'VALID' THEN '1' WHEN 'INVALID' THEN '0' END FROM v$arch_status WHERE arch_type='LOCAL' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(CREATE_TIME,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME FROM V$ARCH_FILE  WHERE STATUS = 'ACTIVE' ORDER BY create_time DESC LIMIT 1; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_last_create_time_seconds\", help: \"Latest archive log creation time in Unix seconds; zero when archive logs are unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_3_partial_fields": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DMDB_CHECK_FLAG*/ CASE arch_status WHEN 'VALID' THEN '1' WHEN 'INVALID' THEN '0' END FROM v$arch_status WHERE arch_type='LOCAL' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(CREATE_TIME,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME FROM V$ARCH_FILE  WHERE STATUS = 'ACTIVE' ORDER BY create_time DESC LIMIT 1; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_last_create_time_seconds\", help: \"Latest archive log creation time in Unix seconds; zero when archive logs are unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_3_probe_error": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]",
+      "SELECT /*+DMDB_CHECK_FLAG*/ CASE arch_status WHEN 'VALID' THEN '1' WHEN 'INVALID' THEN '0' END FROM v$arch_status WHERE arch_type='LOCAL' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(CREATE_TIME,'YYYY-MM-DD HH24:MI:SS') AS CREATE_TIME FROM V$ARCH_FILE  WHERE STATUS = 'ACTIVE' ORDER BY create_time DESC LIMIT 1; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_last_create_time_seconds\", help: \"Latest archive log creation time in Unix seconds; zero when archive logs are unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_3_query_error": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ PARA_VALUE FROM v$dm_ini WHERE para_name='ARCH_INI' args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_arch_last_create_time_seconds\", help: \"Latest archive log creation time in Unix seconds; zero when archive logs are unavailable\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_4_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ASMGROUP' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ASMGROUP' AND COLNAME = 'TYPE' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(GROUP_ID) GROUP_ID\n       ,GROUP_NAME\n       ,TYPE\n       ,TOTAL_MB\n       ,FREE_MB\n       ,ROUND((TOTAL_MB - FREE_MB + 0.0) / NULLIF(TOTAL_MB, 0) * 100, 2) USED_PCT\n  FROM V$ASMGROUP\n ORDER BY 6 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_4_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ASMGROUP' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_4_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ASMGROUP' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ASMGROUP' AND COLNAME = 'TYPE' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(GROUP_ID) GROUP_ID\n       ,GROUP_NAME\n       ,TYPE\n       ,TOTAL_MB\n       ,FREE_MB\n       ,ROUND((TOTAL_MB - FREE_MB + 0.0) / NULLIF(TOTAL_MB, 0) * 100, 2) USED_PCT\n  FROM V$ASMGROUP\n ORDER BY 6 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_4_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ASMGROUP' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ASMGROUP' AND COLNAME = 'TYPE' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_4_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ASMGROUP' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ASMGROUP' AND COLNAME = 'TYPE' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(GROUP_ID) GROUP_ID\n       ,GROUP_NAME\n       ,TYPE\n       ,TOTAL_MB\n       ,FREE_MB\n       ,ROUND((TOTAL_MB - FREE_MB + 0.0) / NULLIF(TOTAL_MB, 0) * 100, 2) USED_PCT\n  FROM V$ASMGROUP\n ORDER BY 6 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_4_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ASMGROUP' args=[]",
+      "SELECT /*+DM_EXPORTER*/ COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$ASMGROUP' AND COLNAME = 'TYPE' args=[]",
+      "SELECT /*+DM_EXPORTER*/ TO_CHAR(GROUP_ID) GROUP_ID\n       ,GROUP_NAME\n       ,TYPE\n       ,TOTAL_MB\n       ,FREE_MB\n       ,ROUND((TOTAL_MB - FREE_MB + 0.0) / NULLIF(TOTAL_MB, 0) * 100, 2) USED_PCT\n  FROM V$ASMGROUP\n ORDER BY 6 args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_4_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ASMGROUP' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_4_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$ASMGROUP' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_5_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NAME,ROUND(SUM(RAT_HIT) /COUNT(*),4) HIT_RATE FROM V$BUFFERPOOL WHERE NAME ='FAST' GROUP BY NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_5_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NAME,ROUND(SUM(RAT_HIT) /COUNT(*),4) HIT_RATE FROM V$BUFFERPOOL WHERE NAME ='FAST' GROUP BY NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_5_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NAME,ROUND(SUM(RAT_HIT) /COUNT(*),4) HIT_RATE FROM V$BUFFERPOOL WHERE NAME ='FAST' GROUP BY NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_5_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NAME,ROUND(SUM(RAT_HIT) /COUNT(*),4) HIT_RATE FROM V$BUFFERPOOL WHERE NAME ='FAST' GROUP BY NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_5_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NAME,ROUND(SUM(RAT_HIT) /COUNT(*),4) HIT_RATE FROM V$BUFFERPOOL WHERE NAME ='FAST' GROUP BY NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_5_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NAME,ROUND(SUM(RAT_HIT) /COUNT(*),4) HIT_RATE FROM V$BUFFERPOOL WHERE NAME ='FAST' GROUP BY NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_5_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NAME,ROUND(SUM(RAT_HIT) /COUNT(*),4) HIT_RATE FROM V$BUFFERPOOL WHERE NAME ='FAST' GROUP BY NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_5_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ NAME,ROUND(SUM(RAT_HIT) /COUNT(*),4) HIT_RATE FROM V$BUFFERPOOL WHERE NAME ='FAST' GROUP BY NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_6_dsc": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_6_empty": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_6_legacy": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_6_missing_columns": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_6_modern": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_6_partial_fields": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_6_probe_error": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_6_query_error": {
+    "Queries": [
+      "select /*+DM_EXPORTER*/ CKPT_TOTAL_COUNT,CKPT_RESERVE_COUNT,CKPT_FLUSHED_PAGES,CKPT_TIME_USED from V$CKPT args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_7_dsc": {
+    "Queries": [
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'LRU_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DDL_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DISABLED_DICT_NUM' args=[]",
+      "SELECT /*+DM_EXPORTER*/ LRU_DISCARD, DDL_DISCARD, DISABLED_DICT_NUM FROM V$DB_CACHE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_7_empty": {
+    "Queries": [
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'LRU_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DDL_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DISABLED_DICT_NUM' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_7_legacy": {
+    "Queries": [
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'LRU_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DDL_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DISABLED_DICT_NUM' args=[]",
+      "SELECT /*+DM_EXPORTER*/ LRU_DISCARD, DDL_DISCARD, DISABLED_DICT_NUM FROM V$DB_CACHE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_7_missing_columns": {
+    "Queries": [
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'LRU_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DDL_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DISABLED_DICT_NUM' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_7_modern": {
+    "Queries": [
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'LRU_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DDL_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DISABLED_DICT_NUM' args=[]",
+      "SELECT /*+DM_EXPORTER*/ LRU_DISCARD, DDL_DISCARD, DISABLED_DICT_NUM FROM V$DB_CACHE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_7_partial_fields": {
+    "Queries": [
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'LRU_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DDL_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DISABLED_DICT_NUM' args=[]",
+      "SELECT /*+DM_EXPORTER*/ LRU_DISCARD, NULL AS DDL_DISCARD, NULL AS DISABLED_DICT_NUM FROM V$DB_CACHE args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_7_probe_error": {
+    "Queries": [
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'LRU_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DDL_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DISABLED_DICT_NUM' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_7_query_error": {
+    "Queries": [
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'LRU_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DDL_DISCARD' args=[]",
+      "SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = 'DISABLED_DICT_NUM' args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_8_dsc": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ 1 FROM DUAL; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dual_info\", help: \"Information about DM database query dual table info,return false is 0, true is 1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_8_empty": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ 1 FROM DUAL; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dual_info\", help: \"Information about DM database query dual table info,return false is 0, true is 1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_8_legacy": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ 1 FROM DUAL; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dual_info\", help: \"Information about DM database query dual table info,return false is 0, true is 1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_8_missing_columns": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ 1 FROM DUAL; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dual_info\", help: \"Information about DM database query dual table info,return false is 0, true is 1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_8_modern": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ 1 FROM DUAL; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dual_info\", help: \"Information about DM database query dual table info,return false is 0, true is 1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_8_partial_fields": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ 1 FROM DUAL; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dual_info\", help: \"Information about DM database query dual table info,return false is 0, true is 1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_8_probe_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ 1 FROM DUAL; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dual_info\", help: \"Information about DM database query dual table info,return false is 0, true is 1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_8_query_error": {
+    "Queries": [
+      "SELECT /*+DM_EXPORTER*/ 1 FROM DUAL; args=[]"
+    ],
+    "Samples": [
+      "Desc{fqName: \"dmdbms_dual_info\", help: \"Information about DM database query dual table info,return false is 0, true is 1\", constLabels: {}, variableLabels: {}} {\"gauge\":{\"value\":0}}"
+    ]
+  },
+  "coverage_9_dsc": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ WATCHER.DW_MODE,WATCHER.DW_STATUS,WATCHER.AUTO_RESTART,CASE WATCHER.DW_STATUS WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS DW_STATUS_TO_NUM FROM V$DMWATCHER WATCHER LEFT JOIN  V$INSTANCE INSTANCE ON INSTANCE.INSTANCE_NAME = WATCHER.INST_NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_9_empty": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ WATCHER.DW_MODE,WATCHER.DW_STATUS,WATCHER.AUTO_RESTART,CASE WATCHER.DW_STATUS WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS DW_STATUS_TO_NUM FROM V$DMWATCHER WATCHER LEFT JOIN  V$INSTANCE INSTANCE ON INSTANCE.INSTANCE_NAME = WATCHER.INST_NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_9_legacy": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ WATCHER.DW_MODE,WATCHER.DW_STATUS,WATCHER.AUTO_RESTART,CASE WATCHER.DW_STATUS WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS DW_STATUS_TO_NUM FROM V$DMWATCHER WATCHER LEFT JOIN  V$INSTANCE INSTANCE ON INSTANCE.INSTANCE_NAME = WATCHER.INST_NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_9_missing_columns": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ WATCHER.DW_MODE,WATCHER.DW_STATUS,WATCHER.AUTO_RESTART,CASE WATCHER.DW_STATUS WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS DW_STATUS_TO_NUM FROM V$DMWATCHER WATCHER LEFT JOIN  V$INSTANCE INSTANCE ON INSTANCE.INSTANCE_NAME = WATCHER.INST_NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_9_modern": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ WATCHER.DW_MODE,WATCHER.DW_STATUS,WATCHER.AUTO_RESTART,CASE WATCHER.DW_STATUS WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS DW_STATUS_TO_NUM FROM V$DMWATCHER WATCHER LEFT JOIN  V$INSTANCE INSTANCE ON INSTANCE.INSTANCE_NAME = WATCHER.INST_NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_9_partial_fields": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ WATCHER.DW_MODE,WATCHER.DW_STATUS,WATCHER.AUTO_RESTART,CASE WATCHER.DW_STATUS WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS DW_STATUS_TO_NUM FROM V$DMWATCHER WATCHER LEFT JOIN  V$INSTANCE INSTANCE ON INSTANCE.INSTANCE_NAME = WATCHER.INST_NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_9_probe_error": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ WATCHER.DW_MODE,WATCHER.DW_STATUS,WATCHER.AUTO_RESTART,CASE WATCHER.DW_STATUS WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS DW_STATUS_TO_NUM FROM V$DMWATCHER WATCHER LEFT JOIN  V$INSTANCE INSTANCE ON INSTANCE.INSTANCE_NAME = WATCHER.INST_NAME; args=[]"
+    ],
+    "Samples": []
+  },
+  "coverage_9_query_error": {
+    "Queries": [
+      "SELECT /*+DMDB_CHECK_FLAG*/ WATCHER.DW_MODE,WATCHER.DW_STATUS,WATCHER.AUTO_RESTART,CASE WATCHER.DW_STATUS WHEN 'OPEN' THEN '1' WHEN 'MOUNT' THEN '2' WHEN 'SUSPEND' THEN '3' ELSE '4' END AS DW_STATUS_TO_NUM FROM V$DMWATCHER WATCHER LEFT JOIN  V$INSTANCE INSTANCE ON INSTANCE.INSTANCE_NAME = WATCHER.INST_NAME; args=[]"
+    ],
+    "Samples": []
+  }
+}

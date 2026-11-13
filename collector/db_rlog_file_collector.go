@@ -5,10 +5,9 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
+	"github.com/prometheus/client_golang/prometheus"
 	"strconv"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // RLOG 日志文件记录
@@ -57,9 +56,9 @@ func (c *DbRlogFileCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryRlogFileListSql)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryRlogFileListSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -67,15 +66,13 @@ func (c *DbRlogFileCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var row rlogFileRow
 		if err := rows.Scan(&row.fileID, &row.path, &row.createTime, &row.size); err != nil {
-			c.log().Warnf("[%s] Failed to scan V$RLOGFILE row: %v", c.dataSource, err)
+
 			continue
 		}
 		c.emitMetric(ch, row)
 	}
 
-	if err := rows.Err(); err != nil {
-		c.log().Warnf("[%s] Iterating V$RLOGFILE rows failed: %v", c.dataSource, err)
-	}
+	_ = rows.Err()
 }
 
 func (c *DbRlogFileCollector) emitMetric(ch chan<- prometheus.Metric, row rlogFileRow) {

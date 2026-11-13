@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"strconv"
 	"time"
 )
@@ -55,9 +54,9 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDbGrantInfoSql)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryDbGrantInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -66,13 +65,12 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info DbLicenseInfo
 		if err := rows.Scan(&info.ExpiredDate); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+
 			continue
 		}
 		licenseInfos = append(licenseInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 
@@ -83,7 +81,7 @@ func (c *DbLicenseCollector) Collect(ch chan<- prometheus.Metric) {
 		if expiredDateStr != "" {
 			expiredDate, err := time.Parse("20060102", expiredDateStr)
 			if err != nil {
-				c.log().Desugar().Error(fmt.Sprintf("[%s] Error parsing date", c.dataSource), zap.Error(err))
+				c.businessError("license_date_parse", err)
 				continue
 			}
 			betweenDay := expiredDate.Sub(time.Now()).Hours() / 24

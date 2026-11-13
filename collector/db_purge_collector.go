@@ -5,9 +5,8 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
-	"time"
-
 	"github.com/prometheus/client_golang/prometheus"
+	"time"
 )
 
 type PurgeCollector struct {
@@ -69,9 +68,9 @@ func (c *PurgeCollector) getPurgeInfos() ([]PurgeInfo, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.dbPool.QueryContext(ctx, config.QueryPurgeInfoSqlStr)
+	rows, err := c.database(c.dbPool).QueryContext(ctx, config.QueryPurgeInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return nil, err
 	}
 	defer rows.Close()
@@ -83,14 +82,13 @@ func (c *PurgeCollector) getPurgeInfos() ([]PurgeInfo, error) {
 		var isRunning, purgeForTs sql.NullString
 		err := rows.Scan(&info.ObjNum, &isRunning, &purgeForTs)
 		if err != nil {
-			c.log().Errorf("[%s] Error scanning purge row: %v", c.dataSource, err)
+
 			continue
 		}
 		purgeInfos = append(purgeInfos, info)
 	}
 
 	if err = rows.Err(); err != nil {
-		c.log().Errorf("[%s] Error iterating purge rows: %v", c.dataSource, err)
 		return nil, err
 	}
 

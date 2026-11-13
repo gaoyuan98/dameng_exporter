@@ -3,11 +3,10 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
+	"dameng_exporter/diagnostics"
 	"dameng_exporter/utils"
 	"database/sql"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -52,6 +51,7 @@ func (c *DbDualInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
+	ctx = diagnostics.WithQueryOptions(ctx, diagnostics.QueryOptions{ReadScope: "first_row", AllowEmpty: true})
 
 	dualValue := c.QueryDualInfo(ctx)
 
@@ -66,16 +66,15 @@ func (c *DbDualInfoCollector) Collect(ch chan<- prometheus.Metric) {
 
 func (c *DbDualInfoCollector) QueryDualInfo(ctx context.Context) float64 {
 	var dualValue float64
-	rows, err := c.db.QueryContext(ctx, config.QueryDualInfoSql)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryDualInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return DB_DUAL_FAILUR
 	}
 	defer rows.Close()
 	rows.Next()
 	err = rows.Scan(&dualValue)
 	if err != nil {
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning dual value", c.dataSource), zap.Error(err))
 		return DB_DUAL_FAILUR
 	}
 

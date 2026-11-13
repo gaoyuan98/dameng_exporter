@@ -3,15 +3,14 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
+	"dameng_exporter/diagnostics"
 	"dameng_exporter/utils"
 	"database/sql"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 )
 
 // DictCacheInfo 数据字典缓存信息结构体
@@ -70,8 +69,8 @@ func (c *DbDictCacheCollector) checkDictCacheFields(ctx context.Context) []strin
 		for _, field := range fields {
 			query := fmt.Sprintf("SELECT COUNT(*) FROM V$DYNAMIC_TABLE_COLUMNS WHERE TABNAME = 'V$DB_CACHE' AND COLNAME = '%s'", field)
 			var count int
-			if err := c.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
-				c.log().Warnf("[%s] Failed to check V$DB_CACHE field %s: %v", c.dataSource, field, err)
+			if err := c.database(c.db).QueryRowContext(probeContext(ctx), query).Scan(&count); err != nil {
+
 				continue
 			}
 			if count > 0 {
@@ -150,7 +149,7 @@ func (c *DbDictCacheCollector) Collect(ch chan<- prometheus.Metric) {
 
 	// 执行查询
 	var dictCacheInfo DictCacheInfo
-	err := c.db.QueryRowContext(ctx, query).Scan(
+	err := c.database(c.db).QueryRowContext(diagnostics.WithQueryOptions(ctx, diagnostics.QueryOptions{AllowEmpty: true}), query).Scan(
 		&dictCacheInfo.lruDiscard,
 		&dictCacheInfo.ddlDiscard,
 		&dictCacheInfo.disabledDictNum,
@@ -159,8 +158,6 @@ func (c *DbDictCacheCollector) Collect(ch chan<- prometheus.Metric) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.log().Debugf("[%s] No dictionary cache data available", c.dataSource)
-		} else {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error querying dictionary cache info", c.dataSource), zap.Error(err))
 		}
 		return
 	}

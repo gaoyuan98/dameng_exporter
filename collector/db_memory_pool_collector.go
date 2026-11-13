@@ -5,9 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -66,9 +64,9 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryMemoryPoolInfoSqlStr)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryMemoryPoolInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -76,14 +74,12 @@ func (c *DbMemoryPoolInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info MemoryPoolInfo
 		if err := rows.Scan(&info.ZoneType, &info.CurrVal, &info.ResVal, &info.TotalVal); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+
 			continue
 		}
 		memoryPoolInfos = append(memoryPoolInfos, info)
 	}
-	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
-	}
+	_ = rows.Err()
 	// 发送数据到 Prometheus
 	for _, info := range memoryPoolInfos {
 		ch <- prometheus.MustNewConstMetric(c.totalPoolDesc, prometheus.GaugeValue, utils.NullFloat64ToFloat64(info.TotalVal), utils.NullStringToString(info.ZoneType))

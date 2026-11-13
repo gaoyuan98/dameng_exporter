@@ -2,9 +2,8 @@ package collector
 
 import (
 	"dameng_exporter/config"
-	"runtime"
-
 	"github.com/prometheus/client_golang/prometheus"
+	"runtime"
 )
 
 // Build variables that will be set at compile time via -ldflags

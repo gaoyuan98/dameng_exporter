@@ -30,8 +30,17 @@ func LoadMultiSourceConfig(configFile string) (*MultiSourceConfig, error) {
 
 	// 解析TOML配置
 	var raw rawMultiSourceConfig
-	if _, err := toml.Decode(string(content), &raw); err != nil {
+	metadata, err := toml.Decode(string(content), &raw)
+	if err != nil {
 		return nil, fmt.Errorf("failed to parse config file as TOML: %w", err)
+	}
+
+	for _, key := range metadata.Keys() {
+		for _, part := range key {
+			if part == "collectorSlowThresholdMs" {
+				return nil, fmt.Errorf("collectorSlowThresholdMs 已移除，请使用全局 scrapeSlowThresholdMs")
+			}
+		}
 	}
 
 	config := raw.toConfig()
@@ -56,30 +65,30 @@ func LoadMultiSourceConfig(configFile string) (*MultiSourceConfig, error) {
 
 // rawMultiSourceConfig 对应配置文件的原始映射，使用指针布尔字段以保留“是否显式配置”信息。
 type rawMultiSourceConfig struct {
-	CollectorSlowThresholdMs *int                  `toml:"collectorSlowThresholdMs"`
-	ListenAddress            string                `toml:"listenAddress"`
-	MetricPath               string                `toml:"metricPath"`
-	Version                  string                `toml:"version"`
-	LogMaxSize               int                   `toml:"logMaxSize"`
-	LogMaxBackups            int                   `toml:"logMaxBackups"`
-	LogMaxAge                int                   `toml:"logMaxAge"`
-	LogLevel                 string                `toml:"logLevel"`
-	EncodeConfigPwd          bool                  `toml:"encodeConfigPwd"`
-	EnableBasicAuth          bool                  `toml:"enableBasicAuth"`
-	BasicAuthUsername        string                `toml:"basicAuthUsername"`
-	BasicAuthPassword        string                `toml:"basicAuthPassword"`
-	GlobalTimeoutSeconds     int                   `toml:"globalTimeoutSeconds"`
-	CollectionMode           string                `toml:"collectionMode"`
-	RetryIntervalSeconds     int                   `toml:"retryIntervalSeconds"`
-	EnableHealthPing         *bool                 `toml:"enableHealthPing"`
-	DataSources              []rawDataSourceConfig `toml:"datasource"`
+	ScrapeSlowThresholdMs *int                  `toml:"scrapeSlowThresholdMs"`
+	ListenAddress         string                `toml:"listenAddress"`
+	MetricPath            string                `toml:"metricPath"`
+	Version               string                `toml:"version"`
+	LogMaxSize            int                   `toml:"logMaxSize"`
+	LogMaxBackups         int                   `toml:"logMaxBackups"`
+	LogMaxAge             int                   `toml:"logMaxAge"`
+	LogLevel              string                `toml:"logLevel"`
+	EncodeConfigPwd       bool                  `toml:"encodeConfigPwd"`
+	EnableBasicAuth       bool                  `toml:"enableBasicAuth"`
+	BasicAuthUsername     string                `toml:"basicAuthUsername"`
+	BasicAuthPassword     string                `toml:"basicAuthPassword"`
+	GlobalTimeoutSeconds  int                   `toml:"globalTimeoutSeconds"`
+	CollectionMode        string                `toml:"collectionMode"`
+	RetryIntervalSeconds  int                   `toml:"retryIntervalSeconds"`
+	EnableHealthPing      *bool                 `toml:"enableHealthPing"`
+	DataSources           []rawDataSourceConfig `toml:"datasource"`
 }
 
 // toConfig 将原始结构转换为应用了默认值的最终配置结构。
 func (raw rawMultiSourceConfig) toConfig() *MultiSourceConfig {
 	cfg := DefaultMultiSourceConfig
-	if raw.CollectorSlowThresholdMs != nil {
-		cfg.CollectorSlowThresholdMs = *raw.CollectorSlowThresholdMs
+	if raw.ScrapeSlowThresholdMs != nil {
+		cfg.ScrapeSlowThresholdMs = *raw.ScrapeSlowThresholdMs
 	}
 
 	if raw.ListenAddress != "" {

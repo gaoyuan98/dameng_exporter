@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"dameng_exporter/config"
+	"dameng_exporter/diagnostics"
 	"dameng_exporter/logger"
 	"database/sql"
 	"errors"
@@ -659,6 +660,9 @@ func (m *DBPoolManager) checkHealthyPools() {
 
 // demoteToFailed 将健康连接降级为失败列表并关闭连接
 func (m *DBPoolManager) demoteToFailed(pool *DataSourcePool, reason error, logs ...*zap.SugaredLogger) {
+	m.demoteObserved(pool, reason, nil, logs...)
+}
+func (m *DBPoolManager) demoteObserved(pool *DataSourcePool, reason error, run *diagnostics.RunTrace, logs ...*zap.SugaredLogger) {
 	if pool == nil {
 		return
 	}
@@ -679,7 +683,10 @@ func (m *DBPoolManager) demoteToFailed(pool *DataSourcePool, reason error, logs 
 
 	if dbToClose != nil {
 		// 关闭无效连接，释放资源
-		if err := dbToClose.Close(); err != nil {
+		restore := run.Stage("worker", "pool_close")
+		err := dbToClose.Close()
+		restore()
+		if err != nil {
 			m.collectionLogger(logs).Desugar().Error("关闭异常数据源连接失败",
 				zap.String("datasource", pool.Name),
 				zap.Error(err))
@@ -689,6 +696,9 @@ func (m *DBPoolManager) demoteToFailed(pool *DataSourcePool, reason error, logs 
 
 // MarkDatasourceFailed 将指定数据源标记为失败状态，供采集器检测失败时快速降级
 func (m *DBPoolManager) MarkDatasourceFailed(name string, reason error, logs ...*zap.SugaredLogger) {
+	m.MarkDatasourceFailedObserved(name, reason, nil, logs...)
+}
+func (m *DBPoolManager) MarkDatasourceFailedObserved(name string, reason error, run *diagnostics.RunTrace, logs ...*zap.SugaredLogger) {
 	if m == nil || name == "" {
 		return
 	}
@@ -706,7 +716,7 @@ func (m *DBPoolManager) MarkDatasourceFailed(name string, reason error, logs ...
 			m.collectionLogger(logs).Desugar().Warn("采集器检测到连接异常，执行快速降级",
 				zap.String("datasource", name))
 		}
-		m.demoteToFailed(pool, reason, logs...)
+		m.demoteObserved(pool, reason, run, logs...)
 		return
 	}
 

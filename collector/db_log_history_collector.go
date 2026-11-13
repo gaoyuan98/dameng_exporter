@@ -3,12 +3,12 @@ package collector
 import (
 	"context"
 	"dameng_exporter/config"
+	"dameng_exporter/diagnostics"
 	"dameng_exporter/utils"
 	"database/sql"
+	"github.com/prometheus/client_golang/prometheus"
 	"sync"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // DbLogHistoryCollector 负责暴露 redo 日志切换时间相关指标。
@@ -58,19 +58,20 @@ func (c *DbLogHistoryCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	var rectime sql.NullString
-	err := c.db.QueryRowContext(ctx, config.QueryRedoLogHistorySql).Scan(&rectime)
+	err := c.database(c.db).QueryRowContext(diagnostics.WithQueryOptions(ctx, diagnostics.QueryOptions{AllowEmpty: true}), config.QueryRedoLogHistorySql).Scan(&rectime)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ch <- prometheus.MustNewConstMetric(c.redoLastSwitchTimeDesc, prometheus.GaugeValue, 0)
 		} else {
-			utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+			utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		}
 		return
 	}
 
 	lastSwitchTime, err := utils.NullStringTimeToUnixSeconds(rectime)
 	if err != nil {
-		c.log().Warnf("[%s] Failed to parse redo log rectime %q: %v", c.dataSource, utils.NullStringToString(rectime), err)
+
+		c.businessError("redo_time_parse", err)
 		lastSwitchTime = 0
 	}
 
@@ -81,8 +82,8 @@ func (c *DbLogHistoryCollector) Collect(ch chan<- prometheus.Metric) {
 func (c *DbLogHistoryCollector) checkLogHistoryViewExists(ctx context.Context) bool {
 	c.viewCheckOnce.Do(func() {
 		var count int
-		if err := c.db.QueryRowContext(ctx, config.QueryRedoLogHistoryViewExistsSql).Scan(&count); err != nil {
-			c.log().Warnf("[%s] Failed to check V$LOG_HISTORY view existence: %v", c.dataSource, err)
+		if err := c.database(c.db).QueryRowContext(probeContext(ctx), config.QueryRedoLogHistoryViewExistsSql).Scan(&count); err != nil {
+
 			c.viewExists = false
 			return
 		}

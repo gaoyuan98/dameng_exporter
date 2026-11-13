@@ -5,12 +5,9 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
-	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"sync"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 )
 
 // DbArchQueueInfo 归档队列等待信息
@@ -63,9 +60,9 @@ func (c *DbArchQueueCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	rows, err := c.db.QueryContext(ctx, config.QueryArchQueueWaitingSql)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryArchQueueWaitingSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -73,7 +70,7 @@ func (c *DbArchQueueCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info DbArchQueueInfo
 		if err := rows.Scan(&info.archType, &info.waiting); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning V$ARCH_QUEUE row", c.dataSource), zap.Error(err))
+
 			continue
 		}
 
@@ -89,16 +86,14 @@ func (c *DbArchQueueCollector) Collect(ch chan<- prometheus.Metric) {
 		)
 	}
 
-	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error iterating V$ARCH_QUEUE rows", c.dataSource), zap.Error(err))
-	}
+	_ = rows.Err()
 }
 
 func (c *DbArchQueueCollector) checkWaitingFieldExists(ctx context.Context) bool {
 	c.waitingFieldCheckOnce.Do(func() {
 		var count int
-		if err := c.db.QueryRowContext(ctx, config.QueryArchQueueWaitingFieldExists).Scan(&count); err != nil {
-			c.log().Warnf("[%s] Failed to check V$ARCH_QUEUE WAITING field: %v", c.dataSource, err)
+		if err := c.database(c.db).QueryRowContext(probeContext(ctx), config.QueryArchQueueWaitingFieldExists).Scan(&count); err != nil {
+
 			c.waitingFieldExists = false
 			return
 		}

@@ -3,7 +3,6 @@ package collector
 import (
 	"dameng_exporter/config"
 	"dameng_exporter/db"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 

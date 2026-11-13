@@ -5,9 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"strings"
 	"time"
 )
@@ -64,15 +62,15 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryCheckPointInfoSql)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryCheckPointInfoSql)
 	if err != nil {
 		//if strings.EqualFold(err.Error(), "CKPT") { // 检查视图不存在的特定错误
 		if strings.Contains(err.Error(), "v$CKPT") {
-			c.log().Warnf("[%s] v$CKPT view does not exist, skipping future queries: %v", c.dataSource, err)
+
 			c.viewExists = false
 			return
 		}
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -81,13 +79,12 @@ func (c *CkptCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info CkptInfo
 		if err := rows.Scan(&info.CkptTotalCount, &info.CkptReserveCount, &info.CkptFlushedPages, &info.CkptTimeUsed); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+
 			continue
 		}
 		ckptInfos = append(ckptInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 

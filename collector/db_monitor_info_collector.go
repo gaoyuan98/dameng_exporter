@@ -5,12 +5,9 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
-	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
 	"sync"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 )
 
 // 定义数据结构
@@ -47,8 +44,8 @@ func (c *MonitorInfoCollector) checkDmMonitorExists(ctx context.Context) bool {
 	c.viewCheckOnce.Do(func() {
 		const query = "SELECT COUNT(1) FROM V$DYNAMIC_TABLES WHERE NAME = 'V$DMMONITOR'"
 		var count int
-		if err := c.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
-			c.log().Warnf("[%s] Failed to check V$DMMONITOR existence: %v", c.dataSource, err)
+		if err := c.database(c.db).QueryRowContext(probeContext(ctx), query).Scan(&count); err != nil {
+
 			c.viewChecked = false
 			return
 		}
@@ -96,9 +93,9 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	rows, err := c.db.QueryContext(ctx, config.QueryMonitorInfoSqlStr)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryMonitorInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -107,15 +104,13 @@ func (c *MonitorInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info MonitorInfo
 		if err := rows.Scan(&info.DwConnTime, &info.MonConfirm, &info.MonId, &info.MonIp, &info.MonVersion, &info.Mid); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+
 			continue
 		}
 		monitorInfos = append(monitorInfos, info)
 	}
 
-	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
-	}
+	_ = rows.Err()
 	// 发送数据到 Prometheus
 	for _, info := range monitorInfos {
 		dwConnTime := utils.NullStringToString(info.DwConnTime)

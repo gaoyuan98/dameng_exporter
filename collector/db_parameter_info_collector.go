@@ -5,9 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -56,9 +54,9 @@ func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryParameterInfoSql)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryParameterInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -67,13 +65,12 @@ func (c *IniParameterCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info IniParameterInfo
 		if err := rows.Scan(&info.ParaName, &info.ParaValue); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+
 			continue
 		}
 		iniParameterInfos = append(iniParameterInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 

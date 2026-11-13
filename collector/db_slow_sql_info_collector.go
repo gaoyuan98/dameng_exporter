@@ -5,9 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -74,9 +72,9 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(dataSourceConfig.QueryTimeout)*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, dataSourceConfig.SlowSqlTime, dataSourceConfig.SlowSqlMaxRows)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryDbSlowSqlInfoSqlStr, dataSourceConfig.SlowSqlTime, dataSourceConfig.SlowSqlMaxRows)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -85,15 +83,13 @@ func (c *SessionInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info SessionInfo
 		if err := rows.Scan(&info.ExecTime, &info.SlowSQL, &info.SessID, &info.CurrSch, &info.ThrdID, &info.LastRecvTime, &info.ConnIP); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+
 			continue
 		}
 		sessionInfos = append(sessionInfos, info)
 	}
 
-	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
-	}
+	_ = rows.Err()
 	// 发送数据到 Prometheus
 	for _, info := range sessionInfos {
 		sessionID := utils.NullStringToString(info.SessID)

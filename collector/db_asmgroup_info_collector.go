@@ -5,11 +5,9 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
+	"github.com/prometheus/client_golang/prometheus"
 	"sync"
 	"time"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 )
 
 const (
@@ -92,9 +90,9 @@ func (c *AsmGroupInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	rows, err := c.db.QueryContext(ctx, config.QueryAsmGroupInfoSqlStr)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryAsmGroupInfoSqlStr)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -102,8 +100,7 @@ func (c *AsmGroupInfoCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info asmGroupInfo
 		if err := rows.Scan(&info.groupID, &info.groupName, &info.groupType, &info.totalMB, &info.freeMB, &info.usedPct); err != nil {
-			c.log().Desugar().Error("Error scanning V$ASMGROUP row",
-				zap.Error(err))
+
 			continue
 		}
 
@@ -140,16 +137,14 @@ func (c *AsmGroupInfoCollector) Collect(ch chan<- prometheus.Metric) {
 		)
 	}
 
-	if err := rows.Err(); err != nil {
-		c.log().Warnf("[%s] Iterating V$ASMGROUP rows failed: %v", c.dataSource, err)
-	}
+	_ = rows.Err()
 }
 
 func (c *AsmGroupInfoCollector) checkAsmGroupViewExists(ctx context.Context) bool {
 	c.viewCheckOnce.Do(func() {
 		var count int
-		if err := c.db.QueryRowContext(ctx, config.QueryAsmGroupViewExistsSqlStr).Scan(&count); err != nil {
-			c.log().Warnf("[%s] Failed to check V$ASMGROUP existence: %v", c.dataSource, err)
+		if err := c.database(c.db).QueryRowContext(probeContext(ctx), config.QueryAsmGroupViewExistsSqlStr).Scan(&count); err != nil {
+
 			c.viewExists = false
 			return
 		}
@@ -165,8 +160,8 @@ func (c *AsmGroupInfoCollector) checkAsmGroupViewExists(ctx context.Context) boo
 func (c *AsmGroupInfoCollector) checkAsmGroupTypeColumnExists(ctx context.Context) bool {
 	c.columnCheckOnce.Do(func() {
 		var count int
-		if err := c.db.QueryRowContext(ctx, config.QueryAsmGroupTypeColumnExistsSqlStr).Scan(&count); err != nil {
-			c.log().Warnf("[%s] Failed to check V$ASMGROUP.TYPE column existence: %v", c.dataSource, err)
+		if err := c.database(c.db).QueryRowContext(probeContext(ctx), config.QueryAsmGroupTypeColumnExistsSqlStr).Scan(&count); err != nil {
+
 			c.typeColumnExists = false
 			return
 		}

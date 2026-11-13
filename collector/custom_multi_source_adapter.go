@@ -4,12 +4,11 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/db"
 	"dameng_exporter/logger"
-	"strings"
-	"sync"
-
 	"github.com/duke-git/lancet/v2/fileutil"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+	"strings"
+	"sync"
 )
 
 // CustomMetricsMultiSourceAdapter 专门处理自定义指标的多数据源适配器
@@ -49,7 +48,9 @@ func (a *CustomMetricsMultiSourceAdapter) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (a *CustomMetricsMultiSourceAdapter) Collect(ch chan<- prometheus.Metric) {
-	a.collectWithRound(ch, nil)
+	round := newCollectionRound()
+	a.collectWithRound(ch, round)
+	round.finish(nil)
 }
 
 func (a *CustomMetricsMultiSourceAdapter) collectWithRound(ch chan<- prometheus.Metric, round *collectionRound) {
@@ -106,7 +107,7 @@ func buildCustomMetricsAdapter(poolManager *db.DBPoolManager) *CustomMetricsMult
 			if fileutil.IsExist(ds.CustomMetricsFile) {
 				customConfig, err := config.ParseCustomConfig(ds.CustomMetricsFile)
 				if err != nil {
-					logger.Logger.Error("Failed to parse custom metrics config",
+					logger.Logger.Desugar().Error("Failed to parse custom metrics config",
 						zap.String("datasource", ds.Name),
 						zap.String("file", ds.CustomMetricsFile),
 						zap.Error(err))

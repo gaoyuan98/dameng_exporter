@@ -48,24 +48,9 @@ func InitLogger() {
 	fileWriter := zapcore.AddSync(lumberjackLogger)
 	consoleWriter := zapcore.AddSync(os.Stdout)
 
-	// 创建紧凑的编码器配置
-	encoderConfig := zapcore.EncoderConfig{
-		TimeKey:        "ts",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalColorLevelEncoder, // 日志级别带颜色输出
-		EncodeTime:     customTimeEncoder,                // ISO8601 时间格式
-		EncodeDuration: zapcore.StringDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder, // 简短调用者信息
-	}
-
 	// 创建文件和控制台编码器
-	fileEncoder := zapcore.NewJSONEncoder(encoderConfig)
-	consoleEncoder := zapcore.NewConsoleEncoder(encoderConfig)
+	fileEncoder := zapcore.NewJSONEncoder(encoderConfig(false))
+	consoleEncoder := zapcore.NewConsoleEncoder(encoderConfig(true))
 
 	// 获取配置的日志级别
 	logLevel := getLogLevel(config.Global.GetLogLevel())
@@ -76,13 +61,33 @@ func InitLogger() {
 		zapcore.NewCore(consoleEncoder, zapcore.NewMultiWriteSyncer(consoleWriter), logLevel),
 	)
 
-	// 创建日志记录器实例，并添加调用信息和堆栈跟踪
-	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+	// 添加调用位置；需要堆栈的事件由调用点显式提供。
+	logger := zap.New(core, zap.AddCaller())
 	Logger = logger.Sugar()
 }
 
+func encoderConfig(console bool) zapcore.EncoderConfig {
+	level := zapcore.CapitalLevelEncoder
+	if console {
+		level = zapcore.CapitalColorLevelEncoder
+	}
+	return zapcore.EncoderConfig{
+		TimeKey:        "ts",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    level,
+		EncodeTime:     customTimeEncoder, // ISO8601 时间格式
+		EncodeDuration: zapcore.StringDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder, // 简短调用者信息
+	}
+}
+
 func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(t.Format("2006-01-02 15:04:05"))
+	enc.AppendString(t.Format("2006-01-02T15:04:05.000Z07:00"))
 }
 
 // Sync 确保所有缓冲日志条目在程序退出前被刷新
@@ -90,4 +95,15 @@ func Sync() {
 	if Logger != nil {
 		_ = Logger.Sync() // 刷新日志，确保日志被完整输出
 	}
+}
+
+// DiagnosticLogger lets tracing avoid formatting disabled DEBUG details.
+type DiagnosticLogger struct{ *zap.SugaredLogger }
+
+func (l DiagnosticLogger) DebugEnabled() bool { return l.Desugar().Core().Enabled(zapcore.DebugLevel) }
+func Diagnostics() DiagnosticLogger {
+	if Logger == nil {
+		return DiagnosticLogger{zap.NewNop().Sugar()}
+	}
+	return DiagnosticLogger{Logger}
 }

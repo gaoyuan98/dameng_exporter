@@ -4,6 +4,7 @@ import (
 	"context"
 	"dameng_exporter/config"
 	"dameng_exporter/db"
+	"dameng_exporter/diagnostics"
 	"dameng_exporter/logger"
 	"database/sql"
 	"errors"
@@ -55,28 +56,25 @@ func CheckDBConnectionWithSource(dbConn *sql.DB, dataSource string, logs ...*zap
 }
 
 // 封装通用的错误处理逻辑（带数据源标识）
-func HandleDbQueryErrorWithSource(err error, dataSource string, logs ...*zap.SugaredLogger) {
-	log := queryLogger(logs)
-	if errors.Is(err, context.DeadlineExceeded) {
-		log.Errorf("[%s] 查询超时: %v", dataSource, err)
-	} else {
-		log.Errorf("[%s] 查询数据库时发生错误: %v", dataSource, err)
-	}
+func HandleDbQueryErrorWithSource(err error, dataSource string, run *diagnostics.RunTrace, log *zap.SugaredLogger) {
+	restore := run.Stage("worker", "error_handling")
+	defer restore()
+
 	if dataSource == "" || err == nil {
 		return
 	}
 
 	// 针对网络故障等致命错误直接触发降级，避免所有采集器在同一轮内重复阻塞
 	if shouldForceDegrade(err) {
-		triggerFastDegrade(dataSource, err, log)
+		triggerFastDegrade(dataSource, err, run, log)
 		return
 	}
 
-	triggerHealthCheckOnError(dataSource, log)
+	triggerHealthCheckOnError(dataSource, run, log)
 }
 
 // triggerHealthCheckOnError 在禁用周期探活时补充一次点对点健康检查
-func triggerHealthCheckOnError(dataSource string, logs ...*zap.SugaredLogger) {
+func triggerHealthCheckOnError(dataSource string, run *diagnostics.RunTrace, logs ...*zap.SugaredLogger) {
 	log := queryLogger(logs)
 	if dataSource == "" || config.Global.GetEnableHealthPing() {
 		return
@@ -100,9 +98,12 @@ func triggerHealthCheckOnError(dataSource string, logs ...*zap.SugaredLogger) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSeconds)*time.Second)
 	defer cancel()
 
-	if err := pool.DB.PingContext(ctx); err != nil {
+	restore := run.Stage("worker", "health_check")
+	err := pool.DB.PingContext(ctx)
+	restore()
+	if err != nil {
 		log.Warnf("[%s] 确认性健康检查失败，标记数据源不可用: %v", dataSource, err)
-		manager.MarkDatasourceFailed(dataSource, err, log)
+		manager.MarkDatasourceFailedObserved(dataSource, err, run, log)
 	}
 }
 
@@ -135,7 +136,7 @@ func shouldForceDegrade(err error) bool {
 }
 
 // triggerFastDegrade 在确认数据源仍处于健康状态时，直接标记为失败
-func triggerFastDegrade(dataSource string, reason error, logs ...*zap.SugaredLogger) {
+func triggerFastDegrade(dataSource string, reason error, run *diagnostics.RunTrace, logs ...*zap.SugaredLogger) {
 	if dataSource == "" {
 		return
 	}
@@ -150,7 +151,7 @@ func triggerFastDegrade(dataSource string, reason error, logs ...*zap.SugaredLog
 		return
 	}
 
-	manager.MarkDatasourceFailed(dataSource, reason, logs...)
+	manager.MarkDatasourceFailedObserved(dataSource, reason, run, logs...)
 }
 
 // containsAny 判断字符串是否包含关键字列表中的任意一个

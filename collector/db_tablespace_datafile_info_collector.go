@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -58,13 +57,8 @@ func (c *TableSpaceDateFileInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *TableSpaceDateFileInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	c.CollectWithResult(ch)
-}
-
-func (c *TableSpaceDateFileInfoCollector) CollectWithResult(ch chan<- prometheus.Metric) (result CollectorOutcome) {
-	cacheFallback := false
-	defer func() { result.CacheFallback = cacheFallback }()
-	validRows, readReason := 0, ""
+	readReason := ""
+	c.cache("database", false)
 
 	//保存全局结果对象，可以用来做缓存以及序列化
 	var tablespaceInfos []TableSpaceDateFileInfo
@@ -74,8 +68,8 @@ func (c *TableSpaceDateFileInfoCollector) CollectWithResult(ch chan<- prometheus
 	if cachedJSON, found := config.GetFromCache(cacheKey); found {
 		var cachedInfos []TableSpaceDateFileInfo
 		if err := json.Unmarshal([]byte(cachedJSON), &cachedInfos); err != nil {
-			cacheFallback = true
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error unmarshaling cached data", c.dataSource), zap.Error(err))
+			c.cache("database", true)
+			c.businessError("business_validation", err)
 		} else {
 			c.log().Debugf("[%s] Use cache TablespaceDateFile data", c.dataSource)
 			// 使用缓存的数据
@@ -83,40 +77,38 @@ func (c *TableSpaceDateFileInfoCollector) CollectWithResult(ch chan<- prometheus
 				ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
 				ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
 			}
-			return CollectorOutcome{State: OutcomeUnknown, Reason: "cache_unverified", DataOrigin: "cache"}
+			c.cache("cache", false)
+			return
 		}
 	}
 
 	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
-		return databaseOutcome(OutcomeFailed, "datasource_unavailable")
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryTablespaceFileSqlStr)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryTablespaceFileSqlStr)
 	if err != nil {
-		outcome := queryFailure(ctx, err)
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
-		return outcome
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
+		return
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var info TableSpaceDateFileInfo
 		if err := rows.Scan(&info.Path, &info.TotalSize, &info.FreeSize, &info.AutoExtend, &info.NextSize, &info.MaxSize); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+
 			readReason = "scan_error"
 			continue
 		}
-		validRows++
 		tablespaceInfos = append(tablespaceInfos, info)
 	}
 	if err := rows.Err(); err != nil {
 		readReason = "rows_error"
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+
 	}
-	result = tableOutcome(validRows, readReason, cacheFallback)
 	// 发送数据到 Prometheus
 	for _, info := range tablespaceInfos {
 		ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.Path, info.AutoExtend, info.NextSize, info.MaxSize)
@@ -124,19 +116,19 @@ func (c *TableSpaceDateFileInfoCollector) CollectWithResult(ch chan<- prometheus
 	}
 	// Keep partial rows in this scrape, but never reuse them as a complete cache.
 	if readReason != "" {
-		return result
+		return
 	}
 
 	// 将 TablespaceInfo 切片序列化为 JSON 字符串
 	valueJSON, err := json.Marshal(tablespaceInfos)
 	if err != nil {
 		// 处理序列化错误
-		c.log().Desugar().Error(fmt.Sprintf("[%s] TablespaceInfo marshal error", c.dataSource), zap.Error(err))
-		return result
+		c.businessError("business_validation", err)
+		return
 	}
 	// 将查询结果存入缓存，重用之前定义的cacheKey
 	config.SetCache(cacheKey, string(valueJSON), time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
 	c.log().Debugf("[%s] TablespaceFileInfoCollector exec finish", c.dataSource)
 
-	return result
+	return
 }

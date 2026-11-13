@@ -6,9 +6,8 @@ import (
 	"dameng_exporter/logger"
 	"dameng_exporter/utils"
 	"database/sql"
-	"strings"
-
 	"github.com/prometheus/client_golang/prometheus"
+	"strings"
 )
 
 // RegisterMultiSourceCollectors 注册多数据源收集器

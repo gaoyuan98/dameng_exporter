@@ -5,10 +5,8 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
-	"time"
-
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
+	"time"
 )
 
 // DBSessionsStatusCollector 结构体
@@ -49,40 +47,33 @@ func (c *DBSessionsStatusCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *DBSessionsStatusCollector) Collect(ch chan<- prometheus.Metric) {
-	c.CollectWithResult(ch)
-}
-
-func (c *DBSessionsStatusCollector) CollectWithResult(ch chan<- prometheus.Metric) CollectorOutcome {
 
 	// 完整读取成功后再输出，避免将查询失败或部分结果误报为零。
 	var sessionsStatusInfos []DBSessionsStatusInfo
 
 	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
-		return databaseOutcome(OutcomeFailed, "datasource_unavailable")
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryDBSessionsStatusSqlStr, config.ExporterAppName)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryDBSessionsStatusSqlStr, config.ExporterAppName)
 	if err != nil {
-		outcome := queryFailure(ctx, err)
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
-		return outcome
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
+		return
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var info DBSessionsStatusInfo
 		if err := rows.Scan(&info.stateType, &info.countVal); err != nil {
-			c.log().Desugar().Error("Error scanning session row", zap.Error(err))
-			return databaseOutcome(OutcomeFailed, "scan_error")
+			return
 		}
 		sessionsStatusInfos = append(sessionsStatusInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error("Error with rows", zap.Error(err))
-		return databaseOutcome(OutcomeFailed, "rows_error")
+		return
 	}
 
 	// 过滤采集连接后可能没有 ACTIVE/IDLE；查询成功时明确输出零。
@@ -98,6 +89,6 @@ func (c *DBSessionsStatusCollector) CollectWithResult(ch chan<- prometheus.Metri
 		}
 	}
 
-	return databaseOutcome(OutcomeSuccess, "")
+	return
 
 }

@@ -69,6 +69,49 @@ func testLogPool(t *testing.T, source string, queryErr error) *db.DataSourcePool
 	return &db.DataSourcePool{Name: source, DB: conn, Labels: map[string]string{"datasource": source}}
 }
 
+func TestLicenseDateParseFailureIsReported(t *testing.T) {
+	logs := setupCollectionLogTest(t)
+	conn := sql.OpenDB(sessionTestConnector{query: func(context.Context, string, []driver.NamedValue) (driver.Rows, error) {
+		return &outcomeRows{columns: 1, values: [][]driver.Value{{"invalid-date"}}}, nil
+	}})
+	t.Cleanup(func() { conn.Close() })
+
+	round := newCollectionRound()
+	out := make(chan prometheus.Metric, 1)
+	collectWithLogging(out, &db.DataSourcePool{Name: "license", DB: conn}, NewDbLicenseCollector(conn), round, false, 0)
+	round.finish(nil)
+
+	errors := logs.FilterMessage("collector_error").All()
+	if len(errors) != 1 || errors[0].ContextMap()["reason"] != "license_date_parse" {
+		t.Fatalf("missing license parse error: %v", errors)
+	}
+	if len(out) != 0 || logs.FilterMessage("scrape_finished").All()[0].ContextMap()["issue_runs"] != int64(1) {
+		t.Fatal("invalid license date must omit the metric and mark the round as failed")
+	}
+}
+
+func TestStandaloneCollectorReportsCacheParseFailure(t *testing.T) {
+	logs := setupCollectionLogTest(t)
+	f := businessFixtures()[0]
+	resetFixtureCache(t, f)
+	config.SetCache(f.cacheKey+"_fixture", "{", time.Minute)
+	conn, calls := fixtureDB(t, f, [][]driver.Value{f.row}, nil, nil, nil)
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(fixtureCollector(f, conn))
+
+	families, err := reg.Gather()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if *calls != 1 || len(families) != 3 {
+		t.Fatalf("database fallback changed: queries=%d, families=%d", *calls, len(families))
+	}
+	errors := logs.FilterMessage("collector_error").All()
+	if len(errors) != 1 || errors[0].ContextMap()["reason"] != "business_validation" {
+		t.Fatalf("standalone cache parse failure was not logged: %v", errors)
+	}
+}
+
 func TestConcurrentScrapesKeepErrorsAndSummaryTogether(t *testing.T) {
 	logs := setupCollectionLogTest(t)
 	entered, release := make(chan struct{}, 2), make(chan struct{})
@@ -139,7 +182,7 @@ func TestConcurrentScrapesKeepErrorsAndSummaryTogether(t *testing.T) {
 		}
 		for _, entry := range finished {
 			f := entry.ContextMap()
-			if f["datasource"] == "permission_denied" && (f["outcome"] != OutcomeFailed || f["observed_error_logs"] != int64(1) || f["samples"] != int64(0)) {
+			if f["datasource"] == "permission_denied" && (f["issue"] != true || f["samples"] != int64(0)) {
 				t.Fatalf("query error lost: %v", f)
 			}
 		}
@@ -156,7 +199,7 @@ func TestConcurrentScrapesKeepErrorsAndSummaryTogether(t *testing.T) {
 }
 
 func TestNoMetricsIsNotAnErrorAndPanicIsReported(t *testing.T) {
-	setupCollectionLogTest(t)
+	logs := setupCollectionLogTest(t)
 	pool := testLogPool(t, "test", nil)
 	round := newCollectionRound()
 	for _, action := range []func(*loggingTestCollector, chan<- prometheus.Metric){
@@ -165,12 +208,11 @@ func TestNoMetricsIsNotAnErrorAndPanicIsReported(t *testing.T) {
 	} {
 		collectWithLogging(make(chan prometheus.Metric, 1), pool, &loggingTestCollector{collect: action}, round, false, time.Second)
 	}
-	if round.results[0].Outcome != OutcomeUnknown || round.results[0].Errors != 0 {
-		t.Fatalf("empty result treated as failure: %+v", round.results[0])
+	round.finish(nil)
+	if logs.FilterMessage("collector_panic").Len() != 1 || logs.FilterMessage("scrape_finished").All()[0].ContextMap()["issue_runs"] != int64(1) {
+		t.Fatal("panic fact lost")
 	}
-	if round.results[1].Execution != "panic" || round.results[1].Errors != 1 {
-		t.Fatalf("panic hidden: %+v", round.results[1])
-	}
+
 }
 
 func TestFastTimeoutStopsForwardingAndRetainsLateErrorID(t *testing.T) {
@@ -184,14 +226,12 @@ func TestFastTimeoutStopsForwardingAndRetainsLateErrorID(t *testing.T) {
 		defer close(exited)
 		ch <- prometheus.MustNewConstMetric(logTestDesc, prometheus.GaugeValue, 1)
 		<-release
-		c.log().Error("late_query_error")
+		c.businessError("late_query_error", errors.New("late"))
 		ch <- prometheus.MustNewConstMetric(logTestDesc, prometheus.GaugeValue, 2)
 	}}
 	out := make(chan prometheus.Metric, 5)
 	collectWithLogging(out, pool, collector, round, true, 20*time.Millisecond)
-	if len(round.results) != 1 || round.results[0].Execution != "timeout" {
-		t.Fatalf("missing timeout: %+v", round.results)
-	}
+
 	round.finish(nil)
 	// Like Registry.Gather, close the output after Collect returns. Late sends would panic.
 	close(out)
@@ -201,7 +241,7 @@ func TestFastTimeoutStopsForwardingAndRetainsLateErrorID(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("background collector was not drained")
 	}
-	late := logs.FilterMessage("late_query_error").All()
+	late := logs.FilterMessage("collector_error").All()
 	if len(late) != 1 || late[0].ContextMap()["scrape_id"] != logs.FilterMessage("scrape_finished").All()[0].ContextMap()["scrape_id"] {
 		t.Fatal("late error lost original round")
 	}
@@ -216,22 +256,25 @@ func TestFastTimeoutStopsForwardingAndRetainsLateErrorID(t *testing.T) {
 }
 
 func TestFastDropsAreReported(t *testing.T) {
-	setupCollectionLogTest(t)
+	logs := setupCollectionLogTest(t)
 	round := newCollectionRound()
 	collector := &loggingTestCollector{collect: func(c *loggingTestCollector, ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(logTestDesc, prometheus.GaugeValue, 1)
 	}}
 	// No receiver: existing fast mode drops instead of blocking.
 	collectWithLogging(make(chan prometheus.Metric), testLogPool(t, "full", nil), collector, round, true, time.Second)
-	if !round.results[0].knownFailed() || round.results[0].DroppedSamples != 1 {
-		t.Fatalf("silent drop: %+v", round.results)
+	round.finish(nil)
+	f := logs.FilterMessage("scrape_finished").All()[0].ContextMap()
+	if f["issue_runs"] != int64(1) || f["dropped_samples"] != int64(1) {
+		t.Fatal(f)
 	}
+
 }
 
 func TestBlockingSlowCollectorStillWaitsForMetrics(t *testing.T) {
 	logs := setupCollectionLogTest(t)
 	cfg := config.DefaultMultiSourceConfig
-	cfg.CollectorSlowThresholdMs = 15
+	cfg.ScrapeSlowThresholdMs = 15
 	config.Global.Init(&cfg)
 	pool := testLogPool(t, "slow", nil)
 	round := newCollectionRound()
@@ -248,10 +291,10 @@ func TestBlockingSlowCollectorStillWaitsForMetrics(t *testing.T) {
 		close(done)
 	}()
 	deadline := time.Now().Add(time.Second)
-	for logs.FilterMessage("collector_slow").Len() == 0 && time.Now().Before(deadline) {
+	for logs.FilterMessage("scrape_diagnostic").Len() == 0 && time.Now().Before(deadline) {
 		time.Sleep(time.Millisecond)
 	}
-	if logs.FilterMessage("collector_slow").Len() != 1 {
+	if logs.FilterMessage("scrape_diagnostic").Len() != 1 {
 		t.Fatal("missing in-progress slow collector warning")
 	}
 	select {
@@ -265,9 +308,11 @@ func TestBlockingSlowCollectorStillWaitsForMetrics(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("blocking collection did not finish")
 	}
-	if len(out) != 1 || round.results[0].Execution == "timeout" || !round.results[0].Slow {
-		t.Fatalf("blocking behavior changed: %+v", round.results)
+	round.finish(nil)
+	if len(out) != 1 || logs.FilterMessage("scrape_finished").All()[0].ContextMap()["frontend_timeout_runs"] != int64(0) {
+		t.Fatal("blocking behavior changed")
 	}
+
 }
 
 func TestUnavailableDatasourceAppearsWithoutRunningCollectors(t *testing.T) {
@@ -296,10 +341,10 @@ func TestUnavailableDatasourceAppearsWithoutRunningCollectors(t *testing.T) {
 		t.Fatal("missing health metric after aggregate registration")
 	}
 	entries := logs.FilterMessage("scrape_finished").All()
-	sources := entries[0].ContextMap()["unavailable_datasources"].([]interface{})
-	if len(sources) != 1 || sources[0] != "offline" {
-		t.Fatalf("unavailable sources: %v", sources)
+	if entries[0].ContextMap()["unavailable_datasource_count"] != int64(1) {
+		t.Fatal(entries)
 	}
+
 }
 
 func TestIndependentRegistriesRegisterAndGatherConcurrently(t *testing.T) {

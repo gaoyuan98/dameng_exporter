@@ -5,10 +5,8 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
-	"time"
-
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
+	"time"
 )
 
 // 定义数据结构
@@ -55,9 +53,9 @@ func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 	defer cancel()
 
 	// 执行查询
-	rows, err := c.db.QueryContext(ctx, config.QueryRapplyTimeDiffSql)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryRapplyTimeDiffSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -66,13 +64,12 @@ func (c *DbRapplyTimeDiffCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info RapplyTimeDiff
 		if err := rows.Scan(&info.TimeDiff); err != nil {
-			c.log().Desugar().Error("Error scanning row", zap.Error(err))
+
 			continue
 		}
 		rapplyTimeDiffs = append(rapplyTimeDiffs, info)
 	}
 	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error("Error with rows", zap.Error(err))
 		return
 	}
 

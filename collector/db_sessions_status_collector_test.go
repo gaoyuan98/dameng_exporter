@@ -136,38 +136,32 @@ func TestDBSessionsStatusOutcomes(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			rows := [][]driver.Value{f.row}
 			var queryErr, readErr error
-			want := databaseOutcome(OutcomeSuccess, "")
+			wantIssue := false
 			wantSamples := 2
 			switch name {
 			case "empty":
 				rows = nil
 			case "query":
 				queryErr = errors.New("denied")
-				want.State, want.Reason = OutcomeFailed, "query_error"
+				wantIssue = true
 				wantSamples = 0
 			case "timeout":
 				queryErr = context.DeadlineExceeded
-				want.State, want.Reason = OutcomeFailed, "query_timeout"
+				wantIssue = true
 				wantSamples = 0
 			case "scan":
 				rows = append(rows, []driver.Value{"IDLE", "bad"})
-				want.State, want.Reason = OutcomeFailed, "scan_error"
+				wantIssue = true
 				wantSamples = 0
 			case "rows":
 				readErr = errors.New("interrupted")
-				want.State, want.Reason = OutcomeFailed, "rows_error"
+				wantIssue = true
 				wantSamples = 0
 			}
 			conn, calls := fixtureDB(t, f, rows, queryErr, readErr, nil)
-			ch := make(chan prometheus.Metric, 20)
-			got := fixtureCollector(f, conn).(ResultCollector).CollectWithResult(ch)
-			if got != want || len(ch) != wantSamples || *calls != 1 {
-				t.Fatalf("%+v/%d/%d; want %+v/%d/1", got, len(ch), *calls, want, wantSamples)
-			}
-			legacy := make(chan prometheus.Metric, 20)
-			fixtureCollector(f, conn).Collect(legacy)
-			if !reflect.DeepEqual(metricSnapshot(t, ch), metricSnapshot(t, legacy)) || *calls != 2 {
-				t.Fatal("legacy entry point changed samples or repeated query")
+			facts, samples := collectTableFixture(t, f, conn)
+			if facts.Issue != wantIssue || len(samples) != wantSamples || *calls != 1 {
+				t.Fatalf("facts=%+v samples=%d calls=%d", facts, len(samples), *calls)
 			}
 		})
 	}

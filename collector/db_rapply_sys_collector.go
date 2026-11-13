@@ -5,9 +5,7 @@ import (
 	"dameng_exporter/config"
 	"dameng_exporter/utils"
 	"database/sql"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -64,9 +62,9 @@ func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 	defer cancel()
 
 	// 执行查询
-	rows, err := c.db.QueryContext(ctx, config.QueryStandbyInfoSql)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryStandbyInfoSql)
 	if err != nil {
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
 		return
 	}
 	defer rows.Close()
@@ -75,13 +73,12 @@ func (c *DbRapplySysCollector) Collect(ch chan<- prometheus.Metric) {
 	for rows.Next() {
 		var info RapplySysInfo
 		if err := rows.Scan(&info.TaskMemUsed, &info.TaskNum); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+
 			continue
 		}
 		rapplySysInfos = append(rapplySysInfos, info)
 	}
 	if err := rows.Err(); err != nil {
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
 		return
 	}
 

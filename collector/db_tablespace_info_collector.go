@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
 	"time"
 )
 
@@ -64,13 +63,8 @@ func (c *TableSpaceInfoCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *TableSpaceInfoCollector) Collect(ch chan<- prometheus.Metric) {
-	c.CollectWithResult(ch)
-}
-
-func (c *TableSpaceInfoCollector) CollectWithResult(ch chan<- prometheus.Metric) (result CollectorOutcome) {
-	cacheFallback := false
-	defer func() { result.CacheFallback = cacheFallback }()
-	validRows, readReason := 0, ""
+	readReason := ""
+	c.cache("database", false)
 
 	//保存全局结果对象，可以用来做缓存以及序列化
 	var tablespaceInfos []TableSpaceInfo
@@ -80,8 +74,8 @@ func (c *TableSpaceInfoCollector) CollectWithResult(ch chan<- prometheus.Metric)
 	if cachedJSON, found := config.GetFromCache(cacheKey); found {
 		var cachedInfos []TableSpaceInfo
 		if err := json.Unmarshal([]byte(cachedJSON), &cachedInfos); err != nil {
-			cacheFallback = true
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error unmarshaling cached data", c.dataSource), zap.Error(err))
+			c.cache("database", true)
+			c.businessError("business_validation", err)
 		} else {
 			c.log().Debugf("[%s] Use cache TablespaceInfo data", c.dataSource)
 			// 使用缓存的数据
@@ -90,22 +84,22 @@ func (c *TableSpaceInfoCollector) CollectWithResult(ch chan<- prometheus.Metric)
 				ch <- prometheus.MustNewConstMetric(c.freeDesc, prometheus.GaugeValue, info.FreeSize, info.TablespaceName)
 				ch <- prometheus.MustNewConstMetric(c.actUsedRtDesc, prometheus.GaugeValue, info.ActUsedRt, info.TablespaceName)
 			}
-			return CollectorOutcome{State: OutcomeUnknown, Reason: "cache_unverified", DataOrigin: "cache"}
+			c.cache("cache", false)
+			return
 		}
 	}
 
 	if err := utils.CheckDBConnectionWithSource(c.db, c.dataSource, c.log()); err != nil {
-		return databaseOutcome(OutcomeFailed, "datasource_unavailable")
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Global.GetQueryTimeout())*time.Second)
 	defer cancel()
 
-	rows, err := c.db.QueryContext(ctx, config.QueryTablespaceInfoSqlStr)
+	rows, err := c.database(c.db).QueryContext(ctx, config.QueryTablespaceInfoSqlStr)
 	if err != nil {
-		outcome := queryFailure(ctx, err)
-		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.log())
-		return outcome
+		utils.HandleDbQueryErrorWithSource(err, c.dataSource, c.trace, c.log())
+		return
 	}
 	defer rows.Close()
 
@@ -128,21 +122,19 @@ func (c *TableSpaceInfoCollector) CollectWithResult(ch chan<- prometheus.Metric)
 			&totalFreePct,
 			&actUsedRt,
 		); err != nil {
-			c.log().Desugar().Error(fmt.Sprintf("[%s] Error scanning row", c.dataSource), zap.Error(err))
+
 			readReason = "scan_error"
 			continue
 		}
 		info.TotalSize = assignedTotalMB
 		info.FreeSize = assignedFreeMB
 		info.ActUsedRt = actUsedRt
-		validRows++
 		tablespaceInfos = append(tablespaceInfos, info)
 	}
 	if err := rows.Err(); err != nil {
 		readReason = "rows_error"
-		c.log().Desugar().Error(fmt.Sprintf("[%s] Error with rows", c.dataSource), zap.Error(err))
+
 	}
-	result = tableOutcome(validRows, readReason, cacheFallback)
 	// 发送数据到 Prometheus
 	for _, info := range tablespaceInfos {
 		ch <- prometheus.MustNewConstMetric(c.totalDesc, prometheus.GaugeValue, info.TotalSize, info.TablespaceName)
@@ -151,19 +143,19 @@ func (c *TableSpaceInfoCollector) CollectWithResult(ch chan<- prometheus.Metric)
 	}
 	// Keep partial rows in this scrape, but never reuse them as a complete cache.
 	if readReason != "" {
-		return result
+		return
 	}
 
 	// 将 TablespaceInfo 切片序列化为 JSON 字符串
 	valueJSON, err := json.Marshal(tablespaceInfos)
 	if err != nil {
 		// 处理序列化错误
-		c.log().Desugar().Error(fmt.Sprintf("[%s] TablespaceInfo marshal error", c.dataSource), zap.Error(err))
-		return result
+		c.businessError("business_validation", err)
+		return
 	}
 	// 将查询结果存入缓存，重用之前定义的cacheKey
 	config.SetCache(cacheKey, string(valueJSON), time.Minute*time.Duration(config.Global.GetBigKeyDataCacheTime()))
 	//	c.log().Debugf("TablespaceFileInfo exec finish")
 
-	return result
+	return
 }
